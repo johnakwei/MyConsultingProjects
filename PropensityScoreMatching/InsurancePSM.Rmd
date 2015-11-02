@@ -1,0 +1,69 @@
+---
+title: "Propensity Score Matching of Insurance Data"
+author: "John Akwei, Data Science Specialist"
+date: "Friday, September 04, 2015"
+output: html_document
+---
+
+## Synopsis  
+The document performs Propensity Score Matching, in order to find balance between treatment and control groups within a sample of insurance data.  
+  
+#### Required R language packages for Matched Sampling:  
+```{r, message=F, warning=F}
+# install.packages("MatchIt")
+# install.packages("Matching")
+library(MatchIt)
+library(Matching)
+library(data.table)
+require(MatchIt)
+require(Matching)
+```
+
+#### Import of Insurance Data, and data summary:  
+```{r}
+dt <- read.csv("Aim1.csv")
+dt[1:5,]
+```
+
+#### Insurance Data Covariates:  
+```{r}
+names(dt)
+```
+
+#### Subset the Covariates for Matched Sampling:  
+```{r}
+attach(dt)
+dt2 <- cbind(dt[1], dt[13], dt[15:22], dt[25:30], dt[35:36])
+names(dt2)
+```
+
+#### Propensity Score Matching of Insurance Data, (Treatment & Control Groups):  
+```{r}
+m.out <- matchit(insurance ~ ID + routine_checkup + great_health + mother_college + HS_grad + low_income + disability + female + NE_So_region + high_exercise + smoker + race_white + daily_veg + daily_fruit + low_risk_alcohol + overweight_11 + obese_11, data=dt2, method="subclass")
+# , ratio=1
+summary(m.out)
+```
+
+#### Create output data table:  
+```{r}
+matchedIns <- match.data(m.out)
+write.csv(matchedIns, file="MatchedData.csv")
+```
+
+#### Jitter Plot of Propensity Score Matching:  
+```{r, message=F, warning=F}
+plot(m.out, type="jitter")
+```
+
+#### Histogram of Propensity Score Matching:  
+```{r, message=F, warning=F}
+plot(m.out, type="hist")
+```
+
+## T-tests of Predictor Group Balance  
+```{r, echo=F, warning=F, message=F}
+t.test(insurance~great_health, matchedIns)
+t.test(insurance~mother_college, matchedIns)
+t.test(insurance~HS_grad, matchedIns)
+t.test(insurance~low_income, matchedIns)
+```
