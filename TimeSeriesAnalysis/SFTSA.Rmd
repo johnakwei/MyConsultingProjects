@@ -1,0 +1,211 @@
+---
+title: "Product Sales - Time Series Analysis by ContextBase"
+author: "John Akwei, ECMp ERMp Data Scientist"
+date: "October 12, 2015"
+output: html_document
+---
+
+![alt text](ContextBase_Logo.jpg "ContextBase Logo")
+
+# Synopsis
+This document is a time series analysis of the Data using R to help answer the questions below:  
+
+1) Are there some products and product groups where a certain type of marketing can be seen to work?  
+
+2) Are there some products and product groups where it is impossible to see any marketing effect?  
+
+3) Does seasonality need to be considered?  
+
+4) Does trend over time need to be considered?  
+
+5) Can the effect of marketing only be seen in the month during which the marketing occurred, or is there a follow on effect where marketing influences sales in subsequent months?  
+
+6) Are there products where the data is just insufficient to draw any conclusions?  
+
+### First Two Rows of Data:
+```{r, message=F, warning=F}
+library(dplyr)
+library(ggplot2)
+ProductSales <- read.csv("new_clean_data.csv")
+# head(ProductSales, 2)
+```
+
+### Data Categories:  
+```{r}
+names(ProductSales)
+```
+
+### Product Categories:  
+```{r, echo=F, eval=F}
+categorynames <- unique(ProductSales$category_name)
+categorynames
+```
+
+### Product Subcategories:  
+```{r, echo=F, eval=F}
+subcategorynames <- unique(ProductSales$subcategory_name)
+subcategorynames
+```
+
+### Time Series of Promotion Type:  
+```{r}
+promotiontype <- unique(ProductSales$promotion_type)
+promotiontype
+```
+
+```{r}
+promotionPlot <- function(promotionType){
+promotion <- subset(ProductSales, ProductSales$promotion_type==promotionType)
+promotionTS <- ts(promotion, frequency=12, start=c(2010, 1))
+}
+
+ispPlot <- promotionPlot("In-Store Promotion")
+plot.ts(ispPlot[1:10000], col="blue", ylab="Sales", main="Time Series of In-Store Promotion")
+cpPlot <- promotionPlot("Catalogue Promotion")
+plot.ts(cpPlot[1:10000], col="blue", ylab="Sales", main="Time Series of Catalogue Promotion")
+npPlot <- promotionPlot("no_promotion")
+plot.ts(npPlot[1:10000], col="blue", ylab="Sales", main="Time Series of No Promotion")
+```
+
+```{r}
+isPromotion <- function(yesno){
+promotion2 <- subset(ProductSales, ProductSales$promotion==yesno)
+promotion2TS <- ts(promotion2, frequency=12, start=c(2010, 1))
+}
+
+yPlot <- isPromotion("Yes")
+plot.ts(yPlot[1:20000], col="blue", ylab="Sales", main="Yes Promotion Occurring")
+nPlot <- isPromotion("No")
+plot.ts(nPlot[1:20000], col="blue", ylab="Sales", main="No Promotion Occurring")
+```
+
+#### Sales Unit Analysis:  
+```{r}
+SalesUnitTS <- ts(ProductSales$sales_unit, frequency=12, start=c(2010, 1))
+plot.ts(SalesUnitTS[1:100], col="blue", ylab="Sales Unit", main="Sales Unit Plot")
+```
+
+### Time Series of Products:  
+```{r, message=F, warning=F}
+# Plot Creation Function:
+obTimeSeries <- function(subcategory) {
+subcategory1 <- subset(ProductSales, ProductSales$subcategory_name==subcategory)
+subcategory1TS <- ts(subcategory1, frequency=12, start=c(2010, 1))
+}
+```
+
+```{r, echo=F, message=F, warning=F}
+prd1Plot <- obTimeSeries("Face Treatment Other")
+prd2Plot <- obTimeSeries("Foundation")
+prd3Plot <- obTimeSeries("Bronzer")
+```
+
+```{r, message=F, warning=F}
+plot.ts(prd1Plot[1:24], col="green", ylab="Sales", main="Product 1 - Time Series")
+monthNames <- months(ISOdate(2010,1:24,1))
+axis(1, at=1:24, col="lightblue", labels=monthNames, las=2)
+
+plot.ts(prd2Plot[1:24], col="green", ylab="Sales", main="Product 2 - Time Series")
+monthNames <- months(ISOdate(2010,1:24,1))
+axis(1, at=1:24, col="lightblue", labels=monthNames, las=2)
+
+plot.ts(prd3Plot[1:24], col="green", ylab="Sales", main="Product 3 - Time Series")
+monthNames <- months(ISOdate(2010,1:24,1))
+axis(1, at=1:24, col="lightblue", labels=monthNames, las=2)
+```
+
+### Combining Promotion & Product Time Series
+```{r, message=F, warning=F}
+plot.ts(ispPlot[1:10000], col="blue", ylab="Sales", main="In-Store Promotion / Product 1")
+par(new=T)
+plot.ts(prd1Plot[1:10000], col="green", ylab=" ", xlab=" ")
+par(new=F)
+
+plot.ts(ispPlot[1:10000], yaxt='n', col="blue", ylab="Sales", main="In-Store Promotion / Product 2")
+par(new=T)
+plot.ts(prd2Plot[1:10000], col="green", ylab=" ", xlab=" ")
+par(new=F)
+
+plot.ts(ispPlot[1:10000], yaxt='n', col="blue", ylab="Sales", main="In-Store Promotion / Product 3")
+par(new=T)
+plot.ts(prd3Plot[1:10000], col="green", ylab=" ", xlab=" ")
+par(new=F)
+```
+
+### Time Series Examination:  
+```{r, message=F, warning=F}
+StrPlot <- function(subcategory){
+subcategory2 <- subset(ProductSales, ProductSales$subcategory_name==subcategory)
+subcategory2TS <- ts(subcategory2, frequency=12, start=c(2010, 1))
+x <- decompose(subcategory2TS)
+}
+
+adjPlot <- function(subcategory){
+subcategory2 <- subset(ProductSales, ProductSales$subcategory_name==subcategory)
+subcategory2TS <- ts(subcategory2, frequency=12, start=c(2010, 1))
+x <- decompose(subcategory2TS)
+subcategory2TSADJ <- subcategory2TS[1:24] - x$seasonal[1:24]
+}
+
+forecastPlot <- function(subcategory){
+subcategory2 <- subset(ProductSales, ProductSales$subcategory_name==subcategory)
+subcategory2TS <- ts(subcategory2, frequency=12, start=c(2010, 1))
+subcategory2Forecasts <- HoltWinters(subcategory2TS[1:96], beta=F, gamma=F)
+}
+```
+
+```{r, echo=F, message=F, warning=F}
+prd1SeaPlot <- StrPlot("Foundation")
+prd1TrPlot <- StrPlot("Foundation")
+prd1RdPlot <- StrPlot("Foundation")
+prd1AdjPlot <- adjPlot("Foundation")
+prd1FCPlot <- forecastPlot("Foundation")
+```
+
+```{r, message=F, warning=F}
+plot(prd1SeaPlot$seasonal[1:24], type="line", col="orange", ylab="Sales", main="Product 1 - Seasonal Plot")
+monthNames <- months(ISOdate(2008,1:12,1))
+axis(1, at=1:12, col="lightblue", labels=monthNames, las=2)
+
+plot(prd1TrPlot$trend[1:24], type="line", col="orange", ylab="Sales", main="Product 1 - Trend Plot")
+monthNames <- months(ISOdate(2008,1:12,1))
+axis(1, at=1:12, col="lightblue", labels=monthNames, las=2)
+
+plot(prd1RdPlot$random[1:24], type="line", col="orange", ylab="Sales", main="Product 1 - Random Plot")
+monthNames <- months(ISOdate(2008,1:12,1))
+axis(1, at=1:12, col="lightblue", labels=monthNames, las=2)
+
+plot(prd1AdjPlot, type="line", col="orange", ylab="Sales", main="Product 1 - Seasonally Adjusted")
+monthNames <- months(ISOdate(2008,1:12,1))
+axis(1, at=1:12, col="lightblue", labels=monthNames, las=2)
+
+plot(prd1FCPlot, col="orange", ylab="Sales", main="Product 1 - Forecasts")
+print(paste("Forecast error rate = ", prd1FCPlot$SSE, "."))
+monthNames <- months(ISOdate(2008,1:12,1))
+axis(1, at=1:12, col="lightblue", labels=monthNames, las=2)
+```
+
+# Conclusions
+#### 1) Are there some products and product groups where a certain type of marketing can be seen to work?  
+  a. Conclusion: When beginning the analysis of the products, seasonal and overall trends are apparent.  
+
+  b. Analysis of "No" promotion trends shows a match with overall trends. Therefore, when there are no promtions no affect on sales is observed.  
+
+  c. Analysis of In-Store, Catalogue, and "Yes" promotion trends show an affect on sales, over time, very similiar to the analysis of All Subcategory types together.  
+
+  d. The relationships of promotions with individual products requires individual Time Series, Seasonal, Trend, and Forecast analysis of individual products.  
+
+#### 2) Are there some products and product groups where it is impossible to see any marketing effect?  
+  a. Conclusion: Determining this requires individual analysis of all the product categories.  
+
+#### 3) Does seasonality need to be considered?  
+  a. Conclusion: Yes. Determination of seasonal Marketing strategies are only possible via observing seasonal trends.  
+
+#### 4) Does trend over time need to be considered?  
+  a. Conclusion: Yes. Determining the overall effectiveness of Marketing campaigns on specific products, is only possible via observing the sales trend of the product.  
+
+#### 5) Can the effect of marketing only be seen in the month during which the marketing occurred, or is there a follow on effect where marketing influences sales in subsequent months?  
+  a. Conclusion: At this time the effect of promotion campaigns appear to work in real-time, without any residual effect. A possible residual effect is found in the overall sales trend for all products.  
+
+#### 6) Are there products where the data is just insufficient to draw any conclusions?  
+  a. Conclusion: All products observed at this time seem to have varying sales with seasons, In-Store promotions, Catalogue promotions, and "Yes" promotions.  
