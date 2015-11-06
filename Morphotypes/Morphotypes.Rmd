@@ -1,0 +1,116 @@
+---
+title: "Cellulose Morphology Counts"
+subtitle: "(Data Visualization via the internet, by ContextBase)"
+author: "John Akwei, ECMp ERMp Data Scientist"
+date: "October 07, 2015"
+output: html_document
+---
+
+![alt text](ContextBase_Logo.jpg "ContextBase Logo")
+
+## Synopsis
+This document is a presentation of data, (Morphology Counts), in a visual format.  
+
+The Morphology Counts experiment involves extracting intestines of termites, containing different types of treatments (antibiotics), and plating them on selective media to see if bacteria grows.  
+
+There are 4 digits for the plate ID. The first letter indicates the media it was grown on. C stands for cellulose selective media. L stands for lignin selective media and A stands for actinomycete selective media, (bacteria that is specific to that media). I.e specific to lignin should only grow on the lignin media.  
+
+The next digit represents the treatment that was given to the termites that were extracted and plated. C = control, A = ampicillin, R= rifampicin, S = streptomycin. The 3rd digit represents the repeat number. There are 6 repeats of each treatment. The 4th digit represents the jar number. There are 3 jars per repeat. In summary, there are 6 repeats per treatment, and 4 treatments per selective media.  
+
+Morphology Type identifies 35 types of bacteria that were visually identified. This document includes all R coding, (for reproducible research).  
+
+#### Required R coding packages  
+```{r, warning=F, message=F}
+library(ggplot2)
+library(plotrix)
+```
+
+#### Import of the Morphology Data  
+```{r}
+dt <- read.csv("Morphotypes_of_all_media.csv")
+dt2 <- read.csv("New_Cellulose_Morphology_Counts.csv")
+```
+
+#### Subsetting the Morphology Data  
+```{r}
+morphotypes <- dt2[5:39]
+write.csv(morphotypes, file="morphotypes.csv")
+morph.average <- colMeans(morphotypes, na.rm=T)
+ControlAve <- colMeans(morphotypes[1:17,], na.rm=T)
+write.csv(ControlAve, file="ControlAveData.csv")
+AmpicillinAve <- colMeans(morphotypes[18:35,], na.rm=T)
+write.csv(AmpicillinAve, file="AmpicillinAveData.csv")
+RifampicinAve <- colMeans(morphotypes[36:53,], na.rm=T)
+write.csv(RifampicinAve, file="RifampicinAveData.csv")
+StreptomycinAve <- colMeans(morphotypes[54:72,], na.rm=T)
+write.csv(StreptomycinAve, file="StreptomycinAveData.csv")
+```
+
+## Morphology Results Pie Charts  
+```{r}
+slices <- table(ControlAve)
+pct <- round(slices/sum(slices)*100)
+lbls <- paste(names(dt2[5:39]), sep=" ", pct, "%")
+pie(slices, labels=lbls, main="Control Averages Pie Chart")
+
+lbls <- c("X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9", "X10", "X11")
+pie3D(slices,labels=lbls,explode=0.1, main="Control Averages 3D Pie Chart")
+
+slices <- table(AmpicillinAve)
+pct <- round(slices/sum(slices)*100)
+lbls <- paste(names(dt2[5:39]), sep=" ", pct, "%")
+pie(slices, labels=lbls, main="Ampicillin Averages Pie Chart")
+
+lbls <- c("X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9", "X10", "X11", "X12", "X13", "X14", "X15")
+pie3D(slices,labels=lbls,explode=0.1, main="Ampicillin Averages 3D Pie Chart")
+
+slices <- table(RifampicinAve)
+pct <- round(slices/sum(slices)*100)
+lbls <- paste(names(dt2[5:39]), sep=" ", pct, "%")
+pie(slices, labels=lbls, main="Rifampicin Averages Pie Chart")
+
+lbls <- c("X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9", "X10", "X11", "X12")
+pie3D(slices,labels=lbls,explode=0.1, main="Rifampicin Averages 3D Pie Chart")
+
+slices <- table(StreptomycinAve)
+pct <- round(slices/sum(slices)*100)
+lbls <- paste(names(dt2[5:39]), sep=" ", pct, "%")
+pie(slices, labels=lbls, main="Streptomycin Averages Pie Chart")
+
+lbls <- c("X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9", "X10", "X11", "X12", "X13", "X14", "X15")
+pie3D(slices,labels=lbls,explode=0.1, main="Streptomycin Averages 3D Pie Chart")
+```
+
+
+## Other Pie Charts of Morphology Experimental Data 
+```{r}
+slices <- table(morph.average)
+pct <- round(slices/sum(slices)*100)
+lbls <- paste(dt2$Treatment, sep=" ", pct, "%")
+pie(slices, labels=lbls, main="Morphotype Average Pie Chart")
+
+slices <- table(dt2$Treatment)
+lbls <- paste(names(slices))
+# lbls <- paste(names(slices), "\n", slices, sep="")
+pie(slices, labels=lbls, main="Pie Chart of Treatments")
+
+slices <- na.omit(dt2$X2)
+lbls <- paste(dt2$Treatment, sep="", dt2$Jar)
+pie(slices, labels = lbls, main="Type 2 Pie Chart")
+```
+
+
+## Bar Charts of Morphology Experiment Data
+```{r}
+Category1 <- dt2$X2[dt2$Treatment=="Control"]
+barplot(Category1, main="Control Treatment / Morphotype No. 2 Bar Plot")
+
+Category2 <- dt2$X3[dt2$Treatment=="Ampicillin"]
+barplot(Category2, main="Ampicillin Treatment / Morphotype No. 3 Bar Plot")
+
+Category3 <- dt2$X1[dt2$Treatment=="Rifampicin"]
+barplot(Category3, main="Rifampicin Treatment / Morphotype No. 1 Bar Plot")
+
+Category4 <- dt2$X2[dt2$Treatment=="Streptomycin"]
+barplot(Category4, main="Streptomycin Treatment / Morphotype No. 2 Bar Plot")
+```
