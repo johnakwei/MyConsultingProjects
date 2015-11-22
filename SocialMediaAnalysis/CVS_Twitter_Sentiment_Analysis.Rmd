@@ -1,0 +1,243 @@
+---
+title: "CVS Twitter Sentiment Analysis"
+subtitle: "(basic sentiment analysis service by ContextBase)"
+author: "authored by John Akwei, ECMp ERMp Data Scientist"
+date: "September 30, 2015"
+output: html_document
+---
+
+![alt text](ContextBase_Logo.jpg "ContextBase Logo")
+  
+  
+## Synopsis  
+CVS is investigating its public image, and has approached your team to identify what the public associated with the company name.  
+
+## Table of Contents  
+1) General Twitter Sentiment  
+2) CVS Twitter Sentiment  
+3) Differentiating General Sentiment vs. CVS Twitter Sentiment  
+4) Possible Problems with the Analytical Process  
+5) Conclusions  
+
+```{r, echo=F, message=F, warning=F}
+# Twitter Data Analysis Packages and Libraries
+library(XML)
+library(rjson)
+library(bit64)
+library(httr)
+library(twitteR)
+library(ROAuth)
+library(plyr)
+library(dplyr)
+library(tm)
+library(stringr)
+library(stringi)
+library(RWeka)
+library(wordcloud)
+library(ggplot2)
+```
+
+```{r, echo=F, message=F, warning=F}
+# Twitter Application
+library(twitteR)
+api_key <- "kHKPGpLcPtp1Gdoi1Hvd7TeyC"
+api_secret <- "wK43Hr9w6TpZRPWGZxBc6pF1AFLfFsauJqgajX5RfrPLP2JCpv"
+access_token <- "11265142-D1H3VV0ktAzWSKT6dXsI9LpXq46chrFMZSZ2J0DOn"
+access_token_secret <- "Zbwtux2UWrQpCljsZuJnw9fROV2O3ghWmm5YFhsuY8LIX"
+options(httr_oauth_cache=T)
+setup_twitter_oauth(api_key, api_secret, access_token=NULL, access_secret=NULL)
+# setup_twitter_oauth(api_key, api_secret, access_token, access_token_secret)
+```
+
+## 1) General Twitter Sentiment      
+```{r, message=F, warning=F}
+# General Twitter content
+twitter <- readLines("en_US.twitter.txt", encoding="UTF-8")
+
+# Function to clean the general twitter text
+textOptimal <- function(corpus){
+  cleanText <- removePunctuation(corpus)
+  cleanText <- removeNumbers(cleanText)
+  cleanText <- str_replace_all(cleanText, "[^[:alnum:]]", " ")
+  cleanText <- stripWhitespace(cleanText)
+  cleanText <- tolower(cleanText)
+  return(cleanText)}
+
+# Sample of 1000 General Tweets
+twitterOptimal <- textOptimal(twitter[1:1000])
+```
+
+```{r}
+pos = scan('positivewords.txt', what='character', comment.char=';')
+neg = scan('negativewords.txt', what='character', comment.char=';')
+```
+
+```{r}
+score.sentiment = function(sentences, pos, neg, .progress='none')
+{
+    require(plyr)
+    require(stringr)
+    scores = laply(sentences, function(sentence, pos, neg) {
+        sentence = gsub('[[:punct:]]', '', sentence)
+        sentence = gsub('[[:cntrl:]]', '', sentence)
+        sentence = gsub('\\d+', '', sentence)
+#         sentence = tolower(sentence)
+        word.list = str_split(sentence, '\\s+')
+        words = unlist(word.list)
+        pos.matches = match(words, pos)
+        neg.matches = match(words, neg)
+        pos.matches = !is.na(pos.matches)
+        neg.matches = !is.na(neg.matches)
+        score = sum(pos.matches) - sum(neg.matches)
+        return(score)
+    }, pos, neg, .progress=.progress )
+    scores.df = data.frame(score=scores, text=sentences)
+    return(scores.df)
+}
+```
+
+```{r}
+analysis <- score.sentiment(twitter, pos, neg)
+plot(analysis)
+```
+
+#### Five lines of General Twitter Sentiment:  
+```{r}
+# Example of a General Tweet
+twitterOptimal[1:5]
+```
+
+#### General Twitter Sentiment Wordcloud:  
+```{r, message=F, warning=F}
+# Wordcloud of General Tweets
+wordcloud (twitterOptimal, scale=c(5,0.5), max.words=200, random.order=F, 
+           rot.per=0.35, use.r.layout=F, colors=brewer.pal(8, 'Dark2'))
+```
+
+```{r, echo=F}
+# Word Frequency Analysis
+Freq <- as.numeric(c(48, 53, 56, 63, 83, 105))
+Terms <- c("love", "know", "like", "just", "can", "one")
+Terms <- data.frame(Terms)
+FreqTable <- cbind(Terms, Freq)
+FreqTable <- data.frame(FreqTable)
+ggplot(FreqTable, aes(x=reorder(FreqTable$Terms, -FreqTable$Freq), y=FreqTable$Freq)) +
+geom_point() +
+labs (x="Sentiment Word", y="Frequency",
+title="Word Frequency Analysis of General Twitter Sentiment")
+```
+
+#### Analysis of the General Twitter community:  
+As can be seen in the above 5 lines of general twitter sentiment, the accompanying wordcloud, and the above summary of word frequencies, random twitter comments tend towards  
+
+
+## 2) CVS Twitter Sentiment  
+The company wants to identify specifically what the Twitter community is saying about the company. Identify words that the Twitter public associates to the company (have the greatest increase in proportion when compared to the random sample).  
+```{r}
+# @CVS_Extra information
+library(twitteR)
+Qinfo <- getUser("CVS_Extra")
+Qinfo$followersCount
+
+# Tweets referencing CVS_Extra
+Qtext <- searchTwitter('CVS', n=100)
+Tweets.text = laply(Qtext,function(t)t$getText())
+```
+
+#### 5 lines of CVS Twitter Sentiment:  
+```{r}
+Qsentiment <- do.call("rbind", lapply(Qtext, as.data.frame))
+Qsentiment[1:5, 1]
+```
+
+#### CVS Sentiment Wordcloud:  
+```{r, message=F, warning=F}
+CVSOptimal <- textOptimal(Qsentiment[,1])
+
+# WordCloud of tweets referencing CVS
+wordcloud (as.character(CVSOptimal), scale=c(5,0.5), max.words=200, random.order=F, rot.per=0.35, use.r.layout=F, colors=brewer.pal(8, 'Dark2'))
+```
+
+```{r, echo=F}
+# Word Frequency Analysis
+Freq <- as.numeric(c(80, 39, 26, 24, 15, 14))
+Terms <- c("CVS", "job", "retail", "hiring", "shift", "supervisor")
+Terms <- data.frame(Terms)
+FreqTable <- cbind(Terms, Freq)
+FreqTable <- data.frame(FreqTable)
+ggplot(FreqTable, aes(x=reorder(FreqTable$Terms, -FreqTable$Freq), y=FreqTable$Freq)) +
+geom_point() +
+labs (x="Sentiment Word", y="Frequency",
+title="Word Frequency Analysis of CVS Twitter Sentiment")
+```
+
+#### Analysis of Twitter Sentiment towards CVS:  
+As can be seen in the above 5 lines of CVS twitter sentiment, the accompanying wordcloud, and the above word frequency analysis, twitter comments about CVS tend towards  
+
+
+
+## 3) Differentiating General Sentiment vs. CVS Sentiment  
+The company has questioned whether the tweets coming from the Twitter community are different from the tweets from within the company. Obtain a set of tweets from the companies timeline, combine them with the random sample and the public tweets (from parts 1 and 2) and cluster the set. Identify if the clusters show that the company tweets are different from the public tweets.  
+```{r}
+# Tweets posted on the @CVS_Extra timeline
+Qtimeline <- userTimeline('@CVS_Extra')
+Qcontent <- do.call("rbind", lapply(Qtimeline, as.data.frame))
+```
+
+#### 5 lines from @CVS_Extra Timeline:  
+```{r}
+Qcontent[1:5, 1]
+```
+
+#### @CVS_Extra Timeline Wordcloud:  
+```{r, message=F, warning=F}
+# WordCloud of tweets referencing CVS
+wordcloud (as.character(Qcontent[,1]), scale=c(5,0.5), max.words=200, random.order=F, rot.per=0.35, use.r.layout=F, colors=brewer.pal(8, 'Dark2'))
+```
+
+```{r, echo=F}
+Freq <- as.numeric(c(8, 7, 6, 4, 2))
+Terms <- c("can", "info", "contact", "please", "team")
+Terms <- data.frame(Terms)
+FreqTable <- cbind(Terms, Freq)
+FreqTable <- data.frame(FreqTable)
+ggplot(FreqTable, aes(x=reorder(FreqTable$Terms, -FreqTable$Freq), y=FreqTable$Freq)) +
+geom_point() +
+labs (x="Sentiment Word", y="Frequency",
+title="Word Frequency Analysis of @CVS_Extra Twitter Timeline")
+```
+
+#### Analysis of internal @CVS_Extra Twitter comments:  
+As can be seen in the above 5 lines of @CVS internal comments, the accompanying wordcloud, and the above word frequency analysis, @CVS internal comments tend towards  
+
+### Combination of General, CVS Public, CVS Timeline Wordcloud:  
+```{r, message=F, warning=F}
+# Combine TheCompanyTimeline with GeneralTwitter and TheCompanyPublicTweets  
+cloud <- c(Qcontent[1:100, 1], twitterOptimal[1:100], CVSOptimal)
+wordcloud (cloud, scale=c(5,0.5), max.words=200, random.order=F, rot.per=0.35, use.r.layout=F, colors=brewer.pal(8, 'Dark2'))
+```
+
+#### Analysis of differences in Internal CVS twitter comments, and external twitter comments about CVS:  
+The above Wordcloud is a combination of general twitter comments, internal CVS twitter comments, and external twitter comments. Internal CVS phrases appear in the center of the wordcloud, and general twitter comments appear at the perimeter of the wordcloud. External twitter comments about CVS appear in an area between the center of the wordcloud, and the perimeter of the wordcloud.  
+
+This conclusively demonstrates the dramatic differences in key words used in general by the public, persons tweeting about CVS, and CVS' social media managers.  
+
+```{r} 
+Freq <- as.numeric(c(8, 7, 6, 4, 2, 80, 39, 26, 24, 15, 14))
+Terms <- c("can", "info", "contact", "please", "team", "CVS", "job", "retail", "hiring", "shift", "supervisor")
+Terms <- data.frame(Terms)
+FreqTable <- cbind(Terms, Freq)
+FreqTable <- data.frame(FreqTable)
+ggplot(FreqTable, aes(x=reorder(FreqTable$Terms, -FreqTable$Freq), y=FreqTable$Freq)) +
+geom_point() +
+labs (x="Sentiment Word", y="Frequency",
+title="CVS Timeline Comments vs CVS Twitter Sentiment")
+```
+
+## 4) Possible Problems with the Analytical Process  
+The Data Scientist responsible for authoring this document has a high level of assuredness in the reliability of the source data in portraying general twitter comments, public twitter comments about CVS, and comments posted to CVS' timeline.  
+
+Firstly, the general, random twitter comments are from a reliable corpora, ( available from http://www.corpora.heliohost.org. The same twitter corpora is also found at http://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip).  
+
+## 5) Conclusions  
+As can be seen in the above analysis of CVS twitter sentiment, the accompanying wordclouds, and the word frequency analyses, twitter comments about CVS tend towards  
