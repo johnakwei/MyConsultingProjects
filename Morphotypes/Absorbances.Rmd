@@ -1,0 +1,112 @@
+---
+title: "Absorbances"
+author: "John Akwei, ECMp ERMp Data Scientist"
+date: "Tuesday, January 12, 2016"
+output: html_document
+---
+
+# Synopsis  
+The objective of this document is to do statistical analysis on absorbance datasets. Via Data Science analysis, using the R programming language, the document author intends to build an understanding, numerically and statistically, of the difference between the samples, with p-values, etc.  
+
+## Table of Contents  
+1) Correlation Section  
+2) Regression Section 
+
+# 1) Correlation section  
+
+#### The data is cleaned. Each row is a separate record. The first row contains the variable names:  
+#### The cleaned TPI data is read into R: 
+
+#### Processing Requirements  
+```{r, warning=F, message=F}
+setwd("C:/Users/johnakwei/Dropbox/Programming/Morphotypes")
+if (!require("gridExtra")) {install.packages("gridExtra"); require("gridExtra")}
+if (!require("ggplot2")) {install.packages("ggplot2"); require("ggplot2")}
+```
+
+#### Data Input  
+```{r, warning=F, message=F}
+absorbance1 <- read.csv("Absorbances1.csv", header=T)
+absorbance2 <- read.csv("Absorbances2.csv", header=T)
+```
+
+#### Exploratory Data Analysis  
+```{r, warning=F, message=F}
+names(absorbance1)
+names(absorbance2)
+absorbance1$Powder_mg_vs_Absorbance_E_coli <- as.numeric(absorbance1$Powder_mg_vs_Absorbance_E_coli)
+attach(absorbance1)
+
+plot(Powder_mg_vs_Absorbance_E_coli~Sample_1)
+
+ggplot(data=absorbance1, aes(x=as.factor(Powder_mg_vs_Absorbance_E_coli), y=Sample_1)) +
+geom_boxplot(aes(fill=as.factor(Powder_mg_vs_Absorbance_E_coli))) +
+ggtitle("Sample 1 Measurements") +
+xlab("Milligrams") + ylab("Sample 1")
+
+ggplot(data=absorbance1, aes(x=as.factor(Powder_mg_vs_Absorbance_E_coli), y=Sample_2)) + 
+geom_boxplot(aes(fill=as.factor(Powder_mg_vs_Absorbance_E_coli))) +
+ggtitle("Sample 2 Measurements") +
+xlab("Milligrams") + ylab("Sample 2")
+
+Sample_1_Sums <- tapply(absorbance1$Sample_1,
+                           absorbance1$Powder_mg_vs_Absorbance_E_coli, FUN=sum, na.rm=T)
+Sample_1_Sums
+
+plot(Sample_1_Sums, main="Average Absorbance per MG",
+     col.main="blue", xlab="Milligrams", ylab="Sample 1",
+     col.lab="darkblue")
+
+zeroMg <- subset(absorbance1, absorbance1[,1]==0)
+
+zeroMg <- filter(absorbance1,
+                 absorbance1$Powder_mg_vs_Absorbance_E_coli==0)
+
+sample1 <- aggregate(absorbance1$Powder_mg_vs_Absorbance_E_coli~
+                           absorbance1$Sample_1, FUN=sum)
+
+ggplot(absorbance1, aes(x=as.factor(Powder_mg_vs_Absorbance_E_coli),
+                        y=Sample_2)) +
+geom_bar(aes(), stat="identity") +
+xlab('MG') + ylab('Absorbance') +
+ggtitle('Absorbance per MG') +
+theme(plot.title=element_text(color="blue")) +
+theme(axis.title=element_text(color="darkblue"))
+```
+
+## Linear Regression of Data  
+```{r, warning=F, message=F}
+fit <- lm(absorbance1$Powder_mg_vs_Absorbance_E_coli~
+                           absorbance1$Sample_1, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+```
+
+#### Correlating the Data Variables:  
+```{r, warning=F, message=F}
+absorbance1_sample1_Cor <- cor(Powder_mg_vs_Absorbance_E_coli, Sample_1,
+                       method="pearson")
+
+absorbance1_sample2_Cor <- cor(Powder_mg_vs_Absorbance_E_coli, Sample_2,
+                       method="pearson")
+```
+
+#### Significance of the Correlations:  
+```{r, warning=F, message=F}
+absorbance1_sample1_CorTest <- cor.test(Powder_mg_vs_Absorbance_E_coli, Sample_1, method="spearman")
+absorbance1_sample1_CorTest
+```
+
+### Graphs of the Correlated Variables:  
+```{r, warning=F, message=F}
+plot(Powder_mg_vs_Absorbance_E_coli, Sample_1,
+     xlab="MG", ylab="Sample 1", main="Absorbance Correlation",
+     col=unique(Powder_mg_vs_Absorbance_E_coli), pch=19)
+abline(lm(Powder_mg_vs_Absorbance_E_coli~Sample_1), col="#008000")
+legend("right", title="Milligrams", legend=unique(Powder_mg_vs_Absorbance_E_coli), col=unique(Powder_mg_vs_Absorbance_E_coli), cex=.5, pch=19)
+
+plot((Powder_mg_vs_Absorbance_E_coli + absorbance2$Powder_Mg_vs_S_aureus),
+     (absorbance1$Sample_1 + absorbance2$Sample_1),
+     xlab="MG", ylab="Sample 1", main="Absorbance Correlation", pch=19)
+abline(lm((Powder_mg_vs_Absorbance_E_coli + absorbance2$Powder_Mg_vs_S_aureus)~(absorbance1$Sample_1 + absorbance2$Sample_1)), col="#008000")
+```
