@@ -1,5 +1,6 @@
 ---
 title: "E.Coli and S.Aureus Absorbances"
+subtitle: "ContextBase, contextbase.github.io"
 author: "John Akwei, ECMp ERMp Data Scientist"
 date: "January 19, 2016"
 output: html_document
@@ -406,7 +407,7 @@ layout(matrix(c(1,2,3,4),2,2))
 plot(fit)
 ```
 
-#### Correlation of E.Coli Absorbance: Sample 1 - Sample 3:  
+#### Correlation of E.Coli Absorbance: Sample 1 - Sample 7:  
 ```{r, echo=F, warning=F, message=F}
 absorbance1_sample1_CorTest <- cor.test(absorbance1$Powder_mg_vs_Absorbance_E_coli, absorbance1$Sample_1, method="spearman")
 absorbance1_sample1_CorTest
@@ -416,20 +417,38 @@ absorbance1_sample2_CorTest
 
 absorbance1_sample3_CorTest <- cor.test(absorbance1$Powder_mg_vs_Absorbance_E_coli, absorbance1$Sample_3, method="spearman")
 absorbance1_sample3_CorTest
+
+absorbance1_sample4_CorTest <- cor.test(absorbance1$Powder_mg_vs_Absorbance_E_coli, absorbance1$Sample_4, method="spearman")
+absorbance1_sample4_CorTest
+
+absorbance1_sample5_CorTest <- cor.test(absorbance1$Powder_mg_vs_Absorbance_E_coli, absorbance1$Sample_5, method="spearman")
+absorbance1_sample5_CorTest
+
+absorbance1_sample6_CorTest <- cor.test(absorbance1$Powder_mg_vs_Absorbance_E_coli, absorbance1$Sample_6, method="spearman")
+absorbance1_sample6_CorTest
+
+absorbance1_sample7_CorTest <- cor.test(absorbance1$Powder_mg_vs_Absorbance_E_coli, absorbance1$Sample_7, method="spearman")
+absorbance1_sample7_CorTest
 ```
 
 #### Table of Powder mg vs Absorbance E.coli Correlation P-Values  
 ```{r, echo=F, warning=F, message=F}
-pValueTable <- matrix(nrow=3, ncol=2)
+pValueTable <- matrix(nrow=7, ncol=2)
 colnames(pValueTable) <- c("Milligrams" ,"P-Value")
-rownames(pValueTable) <- c("Sample 1", "Sample 2" , "Sample 3")
+rownames(pValueTable) <- c("Sample 1", "Sample 2" , "Sample 3",
+                            "Sample 4", "Sample 5", "Sample 6",
+                            "Sample 7")
 pValueTable[1,] <- c("0 Milligrams", absorbance1_sample1_CorTest$p.value)
 pValueTable[2,] <- c("1 Milligrams", absorbance1_sample2_CorTest$p.value)
 pValueTable[3,] <- c("2 Milligrams", absorbance1_sample3_CorTest$p.value)
+pValueTable[4,] <- c("4 Milligrams", absorbance1_sample4_CorTest$p.value)
+pValueTable[5,] <- c("8 Milligrams", absorbance1_sample5_CorTest$p.value)
+pValueTable[6,] <- c("16 Milligrams", absorbance1_sample6_CorTest$p.value)
+pValueTable[7,] <- c("24 Milligrams", absorbance1_sample7_CorTest$p.value)
 pValueTable
 ```
 
-#### Correlation of S.Aureus Absorbance: Sample 1 - Sample 3:  
+#### Correlation of S.Aureus Absorbance: Sample 1 - Sample 7:  
 ```{r, echo=F, warning=F, message=F}
 absorbance2_sample1_CorTest <- cor.test(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sample_1, method="spearman")
 absorbance2_sample1_CorTest
@@ -439,16 +458,34 @@ absorbance2_sample2_CorTest
 
 absorbance2_sample3_CorTest <- cor.test(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sampele_3, method="spearman")
 absorbance2_sample3_CorTest
+
+absorbance2_sample4_CorTest <- cor.test(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sample_4, method="spearman")
+absorbance2_sample4_CorTest
+
+absorbance2_sample5_CorTest <- cor.test(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sample_5, method="spearman")
+absorbance2_sample5_CorTest
+
+absorbance2_sample6_CorTest <- cor.test(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sample_6, method="spearman")
+absorbance2_sample6_CorTest
+
+absorbance2_sample7_CorTest <- cor.test(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sample_7, method="spearman")
+absorbance2_sample7_CorTest
 ```
 
 #### Table of Powder mg vs Absorbance S.Aureus Correlation P-Values  
 ```{r, echo=F, warning=F, message=F}
-pValueTable2 <- matrix(nrow=3, ncol=2)
+pValueTable2 <- matrix(nrow=7, ncol=2)
 colnames(pValueTable2) <- c("Milligrams" ,"P-Value")
-rownames(pValueTable2) <- c("Sample 1", "Sample 2" , "Sample 3")
-pValueTable2[1,] <- c("0 Milligrams", absorbance1_sample1_CorTest$p.value)
-pValueTable2[2,] <- c("1 Milligrams", absorbance1_sample2_CorTest$p.value)
-pValueTable2[3,] <- c("2 Milligrams", absorbance1_sample3_CorTest$p.value)
+rownames(pValueTable2) <- c("Sample 1", "Sample 2" , "Sample 3",
+                            "Sample 4", "Sample 5", "Sample 6",
+                            "Sample 7")
+pValueTable2[1,] <- c("0 Milligrams", absorbance2_sample1_CorTest$p.value)
+pValueTable2[2,] <- c("1 Milligrams", absorbance2_sample2_CorTest$p.value)
+pValueTable2[3,] <- c("2 Milligrams", absorbance2_sample3_CorTest$p.value)
+pValueTable2[4,] <- c("4 Milligrams", absorbance2_sample4_CorTest$p.value)
+pValueTable2[5,] <- c("8 Milligrams", absorbance2_sample5_CorTest$p.value)
+pValueTable2[6,] <- c("16 Milligrams", absorbance2_sample6_CorTest$p.value)
+pValueTable2[7,] <- c("24 Milligrams", absorbance2_sample7_CorTest$p.value)
 pValueTable2
 ```
 
@@ -460,64 +497,112 @@ E_Coli_Ttest_2 <- t.test(absorbance1$Powder_mg_vs_Absorbance_E_coli,
                          absorbance1$Sample_2)
 E_Coli_Ttest_3 <- t.test(absorbance1$Powder_mg_vs_Absorbance_E_coli,
                          absorbance1$Sample_3)
+E_Coli_Ttest_4 <- t.test(absorbance1$Powder_mg_vs_Absorbance_E_coli,
+                         absorbance1$Sample_4)
+E_Coli_Ttest_5 <- t.test(absorbance1$Powder_mg_vs_Absorbance_E_coli,
+                         absorbance1$Sample_5)
+E_Coli_Ttest_6 <- t.test(absorbance1$Powder_mg_vs_Absorbance_E_coli,
+                         absorbance1$Sample_6)
+E_Coli_Ttest_7 <- t.test(absorbance1$Powder_mg_vs_Absorbance_E_coli,
+                         absorbance1$Sample_7)
 S_Aureus_Ttest_1 <- t.test(absorbance2$Powder_Mg_vs_S_aureus,
                            absorbance2$Sample_1)
 S_Aureus_Ttest_2 <-t.test(absorbance2$Powder_Mg_vs_S_aureus,
                           absorbance2$Sample_2)
 S_Aureus_Ttest_3 <-t.test(absorbance2$Powder_Mg_vs_S_aureus,
                           absorbance2$Sampele_3)
+S_Aureus_Ttest_4 <-t.test(absorbance2$Powder_Mg_vs_S_aureus,
+                          absorbance2$Sample_4)
+S_Aureus_Ttest_5 <-t.test(absorbance2$Powder_Mg_vs_S_aureus,
+                          absorbance2$Sample_5)
+S_Aureus_Ttest_6 <-t.test(absorbance2$Powder_Mg_vs_S_aureus,
+                          absorbance2$Sample_6)
+S_Aureus_Ttest_7 <-t.test(absorbance2$Powder_Mg_vs_S_aureus,
+                          absorbance2$Sample_7)
 ```
 
 #### E.Coli T-Test Comparisons - Table 1  
 ```{r, echo=F, warning=F, message=F}
-EColi_tTestTable <- matrix(nrow=3, ncol=3)
+EColi_tTestTable <- matrix(nrow=7, ncol=3)
 colnames(EColi_tTestTable) <- c("Milligrams" ,"P-Value",
                                 "Alternate Hypothesis")
-rownames(EColi_tTestTable) <- c("Sample 1", "Sample 2" , "Sample 3")
+rownames(EColi_tTestTable) <- c("Sample 1", "Sample 2" , "Sample 3",
+                                "Sample 4", "Sample 5", "Sample 6",
+                                "Sample 7")
 EColi_tTestTable[1,] <- c("0 Milligrams", E_Coli_Ttest_1$p.value,
                           E_Coli_Ttest_1$alternative)
 EColi_tTestTable[2,] <- c("1 Milligrams", E_Coli_Ttest_2$p.value,
                           E_Coli_Ttest_2$alternative)
 EColi_tTestTable[3,] <- c("2 Milligrams", E_Coli_Ttest_3$p.value,
                           E_Coli_Ttest_3$alternative)
+EColi_tTestTable[4,] <- c("4 Milligrams", E_Coli_Ttest_4$p.value,
+                          E_Coli_Ttest_4$alternative)
+EColi_tTestTable[5,] <- c("8 Milligrams", E_Coli_Ttest_5$p.value,
+                          E_Coli_Ttest_5$alternative)
+EColi_tTestTable[6,] <- c("16 Milligrams", E_Coli_Ttest_6$p.value,
+                          E_Coli_Ttest_6$alternative)
+EColi_tTestTable[7,] <- c("24 Milligrams", E_Coli_Ttest_7$p.value,
+                          E_Coli_Ttest_7$alternative)
 EColi_tTestTable
 ```
 
 #### E.Coli T-Test Comparisons - Table 2  
 ```{r, echo=F, warning=F, message=F}
-EColi_tTestTable2 <- matrix(nrow=3, ncol=3)
+EColi_tTestTable2 <- matrix(nrow=7, ncol=3)
 colnames(EColi_tTestTable2) <- c("Milligrams" , "Confidence Int Low",
                                 "Confidence Int High")
-rownames(EColi_tTestTable2) <- c("Sample 1", "Sample 2" , "Sample 3")
+rownames(EColi_tTestTable2) <- c("Sample 1", "Sample 2" , "Sample 3",
+                                 "Sample 4", "Sample 5", "Sample 6",
+                                 "Sample 7")
 EColi_tTestTable2[1,] <- c("0 Milligrams", E_Coli_Ttest_1$conf)
 EColi_tTestTable2[2,] <- c("1 Milligrams", E_Coli_Ttest_2$conf)
 EColi_tTestTable2[3,] <- c("2 Milligrams", E_Coli_Ttest_3$conf)
+EColi_tTestTable2[4,] <- c("4 Milligrams", E_Coli_Ttest_4$conf)
+EColi_tTestTable2[5,] <- c("8 Milligrams", E_Coli_Ttest_5$conf)
+EColi_tTestTable2[6,] <- c("16 Milligrams", E_Coli_Ttest_6$conf)
+EColi_tTestTable2[7,] <- c("24 Milligrams", E_Coli_Ttest_7$conf)
 EColi_tTestTable2
 ```
 
 #### S.Aureus T-Test Comparisons - Table 1  
 ```{r, echo=F, warning=F, message=F}
-SAureus_tTestTable <- matrix(nrow=3, ncol=3)
+SAureus_tTestTable <- matrix(nrow=7, ncol=3)
 colnames(SAureus_tTestTable) <- c("Milligrams" ,"P-Value",
                                 "Alternate Hypothesis")
-rownames(SAureus_tTestTable) <- c("Sample 1", "Sample 2" , "Sample 3")
+rownames(SAureus_tTestTable) <- c("Sample 1", "Sample 2" , "Sample 3",
+                                  "Sample 4", "Sample 5", "Sample 6",
+                                  "Sample 7")
 SAureus_tTestTable[1,] <- c("0 Milligrams", S_Aureus_Ttest_1$p.value,
                           S_Aureus_Ttest_1$alternative)
 SAureus_tTestTable[2,] <- c("1 Milligrams", S_Aureus_Ttest_2$p.value,
                           S_Aureus_Ttest_2$alternative)
 SAureus_tTestTable[3,] <- c("2 Milligrams", S_Aureus_Ttest_3$p.value,
                           S_Aureus_Ttest_3$alternative)
+SAureus_tTestTable[4,] <- c("4 Milligrams", S_Aureus_Ttest_4$p.value,
+                          S_Aureus_Ttest_4$alternative)
+SAureus_tTestTable[5,] <- c("8 Milligrams", S_Aureus_Ttest_5$p.value,
+                          S_Aureus_Ttest_5$alternative)
+SAureus_tTestTable[6,] <- c("16 Milligrams", S_Aureus_Ttest_6$p.value,
+                          S_Aureus_Ttest_6$alternative)
+SAureus_tTestTable[7,] <- c("24 Milligrams", S_Aureus_Ttest_7$p.value,
+                          S_Aureus_Ttest_7$alternative)
 SAureus_tTestTable
 ```
 
 #### S.Aureus T-Test Comparisons - Table 2  
 ```{r, echo=F, warning=F, message=F}
-SAureus_tTestTable2 <- matrix(nrow=3, ncol=3)
+SAureus_tTestTable2 <- matrix(nrow=7, ncol=3)
 colnames(SAureus_tTestTable2) <- c("Milligrams" , "Confidence Int Low",
                                 "Confidence Int High")
-rownames(SAureus_tTestTable2) <- c("Sample 1", "Sample 2" , "Sample 3")
+rownames(SAureus_tTestTable2) <- c("Sample 1", "Sample 2" , "Sample 3",
+                                   "Sample 4", "Sample 5", "Sample 6",
+                                   "Sample 7")
 SAureus_tTestTable2[1,] <- c("0 Milligrams", S_Aureus_Ttest_1$conf)
 SAureus_tTestTable2[2,] <- c("1 Milligrams", S_Aureus_Ttest_2$conf)
 SAureus_tTestTable2[3,] <- c("2 Milligrams", S_Aureus_Ttest_3$conf)
+SAureus_tTestTable2[4,] <- c("4 Milligrams", S_Aureus_Ttest_4$conf)
+SAureus_tTestTable2[5,] <- c("8 Milligrams", S_Aureus_Ttest_5$conf)
+SAureus_tTestTable2[6,] <- c("16 Milligrams", S_Aureus_Ttest_6$conf)
+SAureus_tTestTable2[7,] <- c("24 Milligrams", S_Aureus_Ttest_7$conf)
 SAureus_tTestTable2
 ```
