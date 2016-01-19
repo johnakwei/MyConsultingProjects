@@ -1,26 +1,24 @@
 ---
-title: "Absorbances"
+title: "E.Coli and S.Aureus Absorbances"
 author: "John Akwei, ECMp ERMp Data Scientist"
-date: "Tuesday, January 12, 2016"
+date: "January 19, 2016"
 output: html_document
 ---
 
 # Synopsis  
-The objective of this document is to do statistical analysis on absorbance datasets. Via Data Science analysis, using the R programming language, the document author intends to build an understanding, numerically and statistically, of the difference between the samples, with p-values, etc.  
+The objective of this document is to do statistical analysis on absorbance datasets. Via Data Science analysis, (using the R programming language), the document author intends to build an understanding, numerically and statistically, of the difference between the samples, with p-values, t-tests, etc.  
 
 ## Table of Contents  
-1) Correlation Section  
-2) Regression Section 
+1) Graphs of Data  
+2) Linear Regression, Correlation, and T-Tests  
 
-# 1) Correlation section  
+# 1) Graphs of Data  
 
-#### The data is cleaned. Each row is a separate record. The first row contains the variable names:  
-#### The cleaned TPI data is read into R: 
+#### The data is cleaned. Each row is a separate record. The first row contains the variable names. Then the cleaned data is read into R: 
 
 #### Processing Requirements  
 ```{r, warning=F, message=F}
 setwd("C:/Users/johnakwei/Dropbox/Programming/Morphotypes")
-if (!require("gridExtra")) {install.packages("gridExtra"); require("gridExtra")}
 if (!require("ggplot2")) {install.packages("ggplot2"); require("ggplot2")}
 ```
 
@@ -36,116 +34,364 @@ names(absorbance1)
 names(absorbance2)
 absorbance1$Powder_mg_vs_Absorbance_E_coli <- as.numeric(absorbance1$Powder_mg_vs_Absorbance_E_coli)
 absorbance2$Powder_Mg_vs_S_aureus <- as.numeric(absorbance2$Powder_Mg_vs_S_aureus)
-attach(absorbance1)
-attach(absorbance2)
+```
 
-plot(Powder_mg_vs_Absorbance_E_coli~Sample_1,
-     main="Ave E.Coli Absorbance per MG",
-     col.main="blue", xlab="Milligrams", ylab="Sample 1",
+## Graphs  
+```{r, echo=F, warning=F, message=F}
+plot(absorbance1$Powder_mg_vs_Absorbance_E_coli, absorbance1$Sample_1,
+     main="E.Coli Sample 1 Absorbance per MG",
+     col.main="blue", xlab="Milligrams (3 measurements per MG)",
+     ylab="Sample 1 Absorbance",
      col.lab="darkblue")
+abline(lm(absorbance1$Sample_1~absorbance1$Powder_mg_vs_Absorbance_E_coli), col="#008000")
 
-plot(Powder_Mg_vs_S_aureus~absorbance2$Sample_1,
-     main="Ave S.Aureus Absorbance per MG",
-     col.main="blue", xlab="Milligrams", ylab="Sample 1",
+plot(absorbance1$Powder_mg_vs_Absorbance_E_coli, absorbance1$Sample_2,
+     main="E.Coli Sample 2 Absorbance per MG",
+     col.main="blue", xlab="Milligrams (3 measurements per MG)",
+     ylab="Sample 2 Absorbance",
      col.lab="darkblue")
+abline(lm(absorbance1$Sample_2~absorbance1$Powder_mg_vs_Absorbance_E_coli), col="#008000")
 
-ggplot(absorbance1, aes(x=as.factor(Powder_mg_vs_Absorbance_E_coli),
-                        y=Sample_1)) +
-geom_boxplot(aes(fill=as.factor(Powder_mg_vs_Absorbance_E_coli))) +
-ggtitle("E.Coli Sample 1 Measurements") +
-xlab("Milligrams") + ylab("E.Coli Sample 1")
+plot(absorbance1$Powder_mg_vs_Absorbance_E_coli, absorbance1$Sample_3,
+     main="E.Coli Sample 3 Absorbance per MG",
+     col.main="blue", xlab="Milligrams (3 measurements per MG)",
+     ylab="Sample 3 Absorbance",
+     col.lab="darkblue")
+abline(lm(absorbance1$Sample_3~absorbance1$Powder_mg_vs_Absorbance_E_coli), col="#008000")
 
-ggplot(absorbance2, aes(x=as.factor(Powder_Mg_vs_S_aureus),
+plot(absorbance1$Powder_mg_vs_Absorbance_E_coli, absorbance1$Sample_4,
+     main="E.Coli Sample 4 Absorbance per MG",
+     col.main="blue", xlab="Milligrams (3 measurements per MG)",
+     ylab="Sample 4 Absorbance",
+     col.lab="darkblue")
+abline(lm(absorbance1$Sample_4~absorbance1$Powder_mg_vs_Absorbance_E_coli), col="#008000")
+
+plot(absorbance1$Powder_mg_vs_Absorbance_E_coli, absorbance1$Sample_5,
+     main="E.Coli Sample 5 Absorbance per MG",
+     col.main="blue", xlab="Milligrams (3 measurements per MG)",
+     ylab="Sample 5 Absorbance",
+     col.lab="darkblue")
+abline(lm(absorbance1$Sample_5~absorbance1$Powder_mg_vs_Absorbance_E_coli), col="#008000")
+
+plot(absorbance1$Powder_mg_vs_Absorbance_E_coli, absorbance1$Sample_6,
+     main="E.Coli Sample 6 Absorbance per MG",
+     col.main="blue", xlab="Milligrams (3 measurements per MG)",
+     ylab="Sample 6 Absorbance",
+     col.lab="darkblue")
+abline(lm(absorbance1$Sample_6~absorbance1$Powder_mg_vs_Absorbance_E_coli), col="#008000")
+
+plot(absorbance1$Powder_mg_vs_Absorbance_E_coli, absorbance1$Sample_7,
+     main="E.Coli Sample 7 Absorbance per MG",
+     col.main="blue", xlab="Milligrams (3 measurements per MG)",
+     ylab="Sample 7 Absorbance",
+     col.lab="darkblue")
+abline(lm(absorbance1$Sample_7~absorbance1$Powder_mg_vs_Absorbance_E_coli), col="#008000")
+
+plot(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sample_1,
+     main="S.Aureus Sample 1 Absorbance per MG",
+     col.main="blue", xlab="Milligrams (3 measurements per MG)",
+     ylab="Sample 1 Absorbance",
+     col.lab="darkblue")
+abline(lm(absorbance2$Sample_1~absorbance2$Powder_Mg_vs_S_aureus),
+       col="#008000")
+
+plot(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sample_2,
+     main="S.Aureus Sample 2 Absorbance per MG",
+     col.main="blue", xlab="Milligrams (3 measurements per MG)",
+     ylab="Sample 2 Absorbance",
+     col.lab="darkblue")
+abline(lm(absorbance2$Sample_2~absorbance2$Powder_Mg_vs_S_aureus),
+       col="#008000")
+
+plot(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sampele_3,
+     main="S.Aureus Sample 3 Absorbance per MG",
+     col.main="blue", xlab="Milligrams (3 measurements per MG)",
+     ylab="Sample 3 Absorbance",
+     col.lab="darkblue")
+abline(lm(absorbance2$Sampele_3~absorbance2$Powder_Mg_vs_S_aureus),
+       col="#008000")
+
+plot(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sample_4,
+     main="S.Aureus Sample 4 Absorbance per MG",
+     col.main="blue", xlab="Milligrams (3 measurements per MG)",
+     ylab="Sample 4 Absorbance",
+     col.lab="darkblue")
+abline(lm(absorbance2$Sample_4~absorbance2$Powder_Mg_vs_S_aureus),
+       col="#008000")
+
+plot(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sample_5,
+     main="S.Aureus Sample 5 Absorbance per MG",
+     col.main="blue", xlab="Milligrams (3 measurements per MG)",
+     ylab="Sample 5 Absorbance",
+     col.lab="darkblue")
+abline(lm(absorbance2$Sample_5~absorbance2$Powder_Mg_vs_S_aureus),
+       col="#008000")
+
+plot(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sample_6,
+     main="S.Aureus Sample 6 Absorbance per MG",
+     col.main="blue", xlab="Milligrams (3 measurements per MG)",
+     ylab="Sample 6 Absorbance",
+     col.lab="darkblue")
+abline(lm(absorbance2$Sample_6~absorbance2$Powder_Mg_vs_S_aureus),
+       col="#008000")
+
+plot(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sample_7,
+     main="S.Aureus Sample 7 Absorbance per MG",
+     col.main="blue", xlab="Milligrams (3 measurements per MG)",
+     ylab="Sample 7 Absorbance",
+     col.lab="darkblue")
+abline(lm(absorbance2$Sample_7~absorbance2$Powder_Mg_vs_S_aureus),
+       col="#008000")
+
+ggplot(absorbance1, aes(x=as.factor(absorbance1$Powder_mg_vs_Absorbance_E_coli), y=absorbance1$Sample_1)) +
+geom_boxplot(aes(fill=as.factor(absorbance1$Powder_mg_vs_Absorbance_E_coli))) +
+ggtitle("E.Coli Absorbance per MG - Sample 1 - Medians") +
+xlab("Quantities in Milligrams") + ylab("E.Coli Absorbance - Sample 1") +
+labs(fill="Milligrams")
+
+ggplot(absorbance1, aes(x=as.factor(absorbance1$Powder_mg_vs_Absorbance_E_coli), y=absorbance1$Sample_2)) + 
+geom_boxplot(aes(fill=as.factor(absorbance1$Powder_mg_vs_Absorbance_E_coli))) +
+ggtitle("E.Coli Absorbance per MG - Sample 2 - Medians") +
+xlab("Quantities in Milligrams") + ylab("E.Coli Absorbance - Sample 2") +
+labs(fill="Milligrams")
+
+ggplot(absorbance1, aes(x=as.factor(absorbance1$Powder_mg_vs_Absorbance_E_coli), y=absorbance1$Sample_3)) + 
+geom_boxplot(aes(fill=as.factor(absorbance1$Powder_mg_vs_Absorbance_E_coli))) +
+ggtitle("E.Coli Absorbance per MG - Sample 3 - Medians") +
+xlab("Quantities in Milligrams") + ylab("E.Coli Absorbance - Sample 3") +
+labs(fill="Milligrams")
+
+ggplot(absorbance1, aes(x=as.factor(absorbance1$Powder_mg_vs_Absorbance_E_coli), y=absorbance1$Sample_4)) + 
+geom_boxplot(aes(fill=as.factor(absorbance1$Powder_mg_vs_Absorbance_E_coli))) +
+ggtitle("E.Coli Absorbance per MG - Sample 4 - Medians") +
+xlab("Quantities in Milligrams") + ylab("E.Coli Absorbance - Sample 4") +
+labs(fill="Milligrams")
+
+ggplot(absorbance1, aes(x=as.factor(absorbance1$Powder_mg_vs_Absorbance_E_coli), y=absorbance1$Sample_5)) + 
+geom_boxplot(aes(fill=as.factor(absorbance1$Powder_mg_vs_Absorbance_E_coli))) +
+ggtitle("E.Coli Absorbance per MG - Sample 5 - Medians") +
+xlab("Quantities in Milligrams") + ylab("E.Coli Absorbance - Sample 5") +
+labs(fill="Milligrams")
+
+ggplot(absorbance1, aes(x=as.factor(absorbance1$Powder_mg_vs_Absorbance_E_coli), y=absorbance1$Sample_6)) + 
+geom_boxplot(aes(fill=as.factor(absorbance1$Powder_mg_vs_Absorbance_E_coli))) +
+ggtitle("E.Coli Absorbance per MG - Sample 6 - Medians") +
+xlab("Quantities in Milligrams") + ylab("E.Coli Absorbance - Sample 6") +
+labs(fill="Milligrams")
+
+ggplot(absorbance1, aes(x=as.factor(absorbance1$Powder_mg_vs_Absorbance_E_coli), y=absorbance1$Sample_7)) + 
+geom_boxplot(aes(fill=as.factor(absorbance1$Powder_mg_vs_Absorbance_E_coli))) +
+ggtitle("E.Coli Absorbance per MG - Sample 7 - Medians") +
+xlab("Quantities in Milligrams") + ylab("E.Coli Absorbance - Sample 7") +
+labs(fill="Milligrams")
+
+ggplot(absorbance2, aes(x=as.factor(absorbance2$Powder_Mg_vs_S_aureus),
                              y=absorbance2$Sample_1)) +
-geom_boxplot(aes(fill=as.factor(Powder_Mg_vs_S_aureus))) +
-ggtitle("S.Aureus Sample 1 Measurements") +
-xlab("Milligrams") + ylab("S.Aureus Sample 1")
+geom_boxplot(aes(fill=as.factor(absorbance2$Powder_Mg_vs_S_aureus))) +
+ggtitle("S.Aureus Absorbance per MG - Sample 1 - Medians") +
+xlab("Quantities in Milligrams") + ylab("S.Aureus Absorbance - Sample 1") +
+labs(fill="Milligrams")
 
-ggplot(absorbance1, aes(x=as.factor(Powder_mg_vs_Absorbance_E_coli), y=Sample_2)) + 
-geom_boxplot(aes(fill=as.factor(Powder_mg_vs_Absorbance_E_coli))) +
-ggtitle("E.Coli Sample 2 Measurements") +
-xlab("Milligrams") + ylab("E.Coli Sample 2")
-
-ggplot(absorbance2, aes(x=as.factor(Powder_Mg_vs_S_aureus),
+ggplot(absorbance2, aes(x=as.factor(absorbance2$Powder_Mg_vs_S_aureus),
                              y=absorbance2$Sample_2)) +
-geom_boxplot(aes(fill=as.factor(Powder_Mg_vs_S_aureus))) +
-ggtitle("S.Aureus Sample 2 Measurements") +
-xlab("Milligrams") + ylab("S.Aureus Sample 2")
+geom_boxplot(aes(fill=as.factor(absorbance2$Powder_Mg_vs_S_aureus))) +
+ggtitle("S.Aureus Absorbance per MG - Sample 2 - Medians") +
+xlab("Quantities in Milligrams") + ylab("S.Aureus Absorbance - Sample 2") +
+labs(fill="Milligrams")
 
+ggplot(absorbance2, aes(x=as.factor(absorbance2$Powder_Mg_vs_S_aureus),
+                             y=absorbance2$Sampele_3)) +
+geom_boxplot(aes(fill=as.factor(absorbance2$Powder_Mg_vs_S_aureus))) +
+ggtitle("S.Aureus Absorbance per MG - Sample 3 - Medians") +
+xlab("Quantities in Milligrams") + ylab("S.Aureus Absorbance - Sample 3") +
+labs(fill="Milligrams")
+
+ggplot(absorbance2, aes(x=as.factor(absorbance2$Powder_Mg_vs_S_aureus),
+                             y=absorbance2$Sample_4)) +
+geom_boxplot(aes(fill=as.factor(absorbance2$Powder_Mg_vs_S_aureus))) +
+ggtitle("S.Aureus Absorbance per MG - Sample 4 - Medians") +
+xlab("Quantities in Milligrams") + ylab("S.Aureus Absorbance - Sample 4") +
+labs(fill="Milligrams")
+
+ggplot(absorbance2, aes(x=as.factor(absorbance2$Powder_Mg_vs_S_aureus),
+                             y=absorbance2$Sample_5)) +
+geom_boxplot(aes(fill=as.factor(absorbance2$Powder_Mg_vs_S_aureus))) +
+ggtitle("S.Aureus Absorbance per MG - Sample 5 - Medians") +
+xlab("Quantities in Milligrams") + ylab("S.Aureus Absorbance - Sample 5") +
+labs(fill="Milligrams")
+
+ggplot(absorbance2, aes(x=as.factor(absorbance2$Powder_Mg_vs_S_aureus),
+                             y=absorbance2$Sample_6)) +
+geom_boxplot(aes(fill=as.factor(absorbance2$Powder_Mg_vs_S_aureus))) +
+ggtitle("S.Aureus Absorbance per MG - Sample 6 - Medians") +
+xlab("Quantities in Milligrams") + ylab("S.Aureus Absorbance - Sample 6") +
+labs(fill="Milligrams")
+
+ggplot(absorbance2, aes(x=as.factor(absorbance2$Powder_Mg_vs_S_aureus),
+                             y=absorbance2$Sample_7)) +
+geom_boxplot(aes(fill=as.factor(absorbance2$Powder_Mg_vs_S_aureus))) +
+ggtitle("S.Aureus Absorbance per MG - Sample 7 - Medians") +
+xlab("Quantities in Milligrams") + ylab("S.Aureus Absorbance - Sample 7") +
+labs(fill="Milligrams")
+```
+
+#### E.Coli Sample 1 - Sums of 3 Measurements per MG  
+```{r, echo=F, warning=F, message=F}
 EColi_Sample_1_Sums <- tapply(absorbance1$Sample_1,
-                           absorbance1$Powder_mg_vs_Absorbance_E_coli, FUN=sum, na.rm=T)
+absorbance1$Powder_mg_vs_Absorbance_E_coli, FUN=sum, na.rm=T)
 EColi_Sample_1_Sums
 
-SAureus_Sample_1_Sums <- tapply(absorbance2$Sample_1,
-                           absorbance2$Powder_Mg_vs_S_aureus, FUN=sum, na.rm=T)
-SAureus_Sample_1_Sums
-
-EColi_Sample_2_Sums <- tapply(absorbance1$Sample_2,
-                           absorbance1$Powder_mg_vs_Absorbance_E_coli, FUN=sum, na.rm=T)
-EColi_Sample_2_Sums
-
-SAureus_Sample_2_Sums <- tapply(absorbance2$Sample_2,
-                           absorbance2$Powder_Mg_vs_S_aureus, FUN=sum, na.rm=T)
-SAureus_Sample_2_Sums
-
-plot(EColi_Sample_1_Sums, main="Ave E.Coli Absorbance per MG",
-     col.main="blue", xlab="Milligrams", ylab="E.Coli Sample 1",
-     col.lab="darkblue")
-
-plot(SAureus_Sample_1_Sums, main="Ave S.Aureus Absorbance per MG",
-     col.main="blue", xlab="Milligrams", ylab="S.Aureus Sample 1",
-     col.lab="darkblue")
-
-plot(EColi_Sample_2_Sums, main="Ave E.Coli Absorbance per MG",
-     col.main="blue", xlab="Milligrams", ylab="E.Coli Sample 2",
-     col.lab="darkblue")
-
-plot(SAureus_Sample_2_Sums, main="Ave S.Aureus Absorbance per MG",
-     col.main="blue", xlab="Milligrams", ylab="S.Aureus Sample 2",
-     col.lab="darkblue")
-
-zeroMg <- subset(absorbance1, absorbance1[,1]==0)
-
-zeroMg <- filter(absorbance1,
-                 absorbance1$Powder_mg_vs_Absorbance_E_coli==0)
-
-sample1 <- aggregate(absorbance1$Powder_mg_vs_Absorbance_E_coli~
-                           absorbance1$Sample_1, FUN=sum)
-
-ggplot(absorbance1, aes(x=as.factor(Powder_mg_vs_Absorbance_E_coli),
-                        y=Sample_1)) +
+ggplot(absorbance1, aes(x=as.factor(absorbance1$Powder_mg_vs_Absorbance_E_coli), y=absorbance1$Sample_1)) +
 geom_bar(aes(), stat="identity") +
 xlab('Milligrams') + ylab('E.coli Absorbance Sample 1') +
-ggtitle('E.Coli absorbance per MG') +
+ggtitle('E.Coli Sample 1 absorbance (Sums of 3 measurements per MG)') +
 theme(plot.title=element_text(color="blue")) +
 theme(axis.title=element_text(color="darkblue"))
 
-ggplot(absorbance2, aes(x=as.factor(Powder_Mg_vs_S_aureus),
-                        y=absorbance2$Sample_1)) +
-geom_bar(aes(), stat="identity") +
-xlab('Milligrams') + ylab('S.Aureus Absorbance Sample 1') +
-ggtitle('S.Aureus absorbance per MG') +
-theme(plot.title=element_text(color="blue")) +
-theme(axis.title=element_text(color="darkblue"))
-
-ggplot(absorbance1, aes(x=as.factor(Powder_mg_vs_Absorbance_E_coli),
-                        y=Sample_2)) +
+EColi_Sample_2_Sums <- tapply(absorbance1$Sample_2,
+absorbance1$Powder_mg_vs_Absorbance_E_coli, FUN=sum, na.rm=T)
+EColi_Sample_2_Sums
+ggplot(absorbance1, aes(x=as.factor(absorbance1$Powder_mg_vs_Absorbance_E_coli), y=absorbance1$Sample_2)) +
 geom_bar(aes(), stat="identity") +
 xlab('Milligrams') + ylab('E.coli Absorbance Sample 2') +
-ggtitle('E.Coli absorbance per MG') +
+ggtitle('E.Coli Sample 2 absorbance (Sums of 3 measurements per MG)') +
 theme(plot.title=element_text(color="blue")) +
 theme(axis.title=element_text(color="darkblue"))
 
-ggplot(absorbance2, aes(x=as.factor(Powder_Mg_vs_S_aureus),
-                        y=absorbance2$Sample_2)) +
+EColi_Sample_3_Sums <- tapply(absorbance1$Sample_3,
+absorbance1$Powder_mg_vs_Absorbance_E_coli, FUN=sum, na.rm=T)
+EColi_Sample_3_Sums
+ggplot(absorbance1, aes(x=as.factor(absorbance1$Powder_mg_vs_Absorbance_E_coli), y=absorbance1$Sample_3)) +
 geom_bar(aes(), stat="identity") +
-xlab('Milligrams') + ylab('S.Aureus Absorbance Sample 2') +
-ggtitle('S.Aureus absorbance per MG') +
+xlab('Milligrams') + ylab('E.coli Absorbance Sample 3') +
+ggtitle('E.Coli Sample 3 absorbance (Sums of 3 measurements per MG)') +
+theme(plot.title=element_text(color="blue")) +
+theme(axis.title=element_text(color="darkblue"))
+
+EColi_Sample_4_Sums <- tapply(absorbance1$Sample_4,
+absorbance1$Powder_mg_vs_Absorbance_E_coli, FUN=sum, na.rm=T)
+EColi_Sample_4_Sums
+ggplot(absorbance1, aes(x=as.factor(absorbance1$Powder_mg_vs_Absorbance_E_coli), y=absorbance1$Sample_4)) +
+geom_bar(aes(), stat="identity") +
+xlab('Milligrams') + ylab('E.coli Absorbance Sample 4') +
+ggtitle('E.Coli Sample 4 absorbance (Sums of 3 measurements per MG)') +
+theme(plot.title=element_text(color="blue")) +
+theme(axis.title=element_text(color="darkblue"))
+
+EColi_Sample_5_Sums <- tapply(absorbance1$Sample_5,
+absorbance1$Powder_mg_vs_Absorbance_E_coli, FUN=sum, na.rm=T)
+EColi_Sample_5_Sums
+ggplot(absorbance1, aes(x=as.factor(absorbance1$Powder_mg_vs_Absorbance_E_coli), y=absorbance1$Sample_5)) +
+geom_bar(aes(), stat="identity") +
+xlab('Milligrams') + ylab('E.coli Absorbance Sample 2') +
+ggtitle('E.Coli Sample 5 absorbance (Sums of 3 measurements per MG)') +
+theme(plot.title=element_text(color="blue")) +
+theme(axis.title=element_text(color="darkblue"))
+
+EColi_Sample_6_Sums <- tapply(absorbance1$Sample_6,
+absorbance1$Powder_mg_vs_Absorbance_E_coli, FUN=sum, na.rm=T)
+EColi_Sample_6_Sums
+ggplot(absorbance1, aes(x=as.factor(absorbance1$Powder_mg_vs_Absorbance_E_coli), y=absorbance1$Sample_6)) +
+geom_bar(aes(), stat="identity") +
+xlab('Milligrams') + ylab('E.coli Absorbance Sample 6') +
+ggtitle('E.Coli Sample 6 absorbance (Sums of 3 measurements per MG)') +
+theme(plot.title=element_text(color="blue")) +
+theme(axis.title=element_text(color="darkblue"))
+
+EColi_Sample_7_Sums <- tapply(absorbance1$Sample_7,
+absorbance1$Powder_mg_vs_Absorbance_E_coli, FUN=sum, na.rm=T)
+EColi_Sample_7_Sums
+ggplot(absorbance1, aes(x=as.factor(absorbance1$Powder_mg_vs_Absorbance_E_coli), y=absorbance1$Sample_7)) +
+geom_bar(aes(), stat="identity") +
+xlab('Milligrams') + ylab('E.coli Absorbance Sample 7') +
+ggtitle('E.Coli Sample 7 absorbance (Sums of 3 measurements per MG)') +
 theme(plot.title=element_text(color="blue")) +
 theme(axis.title=element_text(color="darkblue"))
 ```
 
-## Linear Regression of Data  
+#### S.Aureus Sample 1 - Sums of 3 Measurements per MG  
+```{r, echo=F, warning=F, message=F}
+SAureus_Sample_1_Sums <- tapply(absorbance2$Sample_1,
+                           absorbance2$Powder_Mg_vs_S_aureus, FUN=sum, na.rm=T)
+SAureus_Sample_1_Sums
+ggplot(absorbance2, aes(x=as.factor(absorbance2$Powder_Mg_vs_S_aureus),
+                        y=absorbance2$Sample_1)) +
+geom_bar(aes(), stat="identity") +
+xlab('Milligrams') + ylab('S.Aureus Absorbance Sample 1') +
+ggtitle('S.Aureus Sample 1 absorbance (Sums of 3 measurements per MG)') +
+theme(plot.title=element_text(color="blue")) +
+theme(axis.title=element_text(color="darkblue"))
+
+SAureus_Sample_2_Sums <- tapply(absorbance2$Sample_2,
+                           absorbance2$Powder_Mg_vs_S_aureus, FUN=sum, na.rm=T)
+SAureus_Sample_2_Sums
+ggplot(absorbance2, aes(x=as.factor(absorbance2$Powder_Mg_vs_S_aureus),
+                        y=absorbance2$Sample_2)) +
+geom_bar(aes(), stat="identity") +
+xlab('Milligrams') + ylab('S.Aureus Absorbance Sample 2') +
+ggtitle('S.Aureus Sample 2 absorbance (Sums of 3 measurements per MG)') +
+theme(plot.title=element_text(color="blue")) +
+theme(axis.title=element_text(color="darkblue"))
+
+SAureus_Sampele_3_Sums <- tapply(absorbance2$Sampele_3,
+                           absorbance2$Powder_Mg_vs_S_aureus, FUN=sum, na.rm=T)
+SAureus_Sampele_3_Sums
+ggplot(absorbance2, aes(x=as.factor(absorbance2$Powder_Mg_vs_S_aureus),
+                        y=absorbance2$Sampele_3)) +
+geom_bar(aes(), stat="identity") +
+xlab('Milligrams') + ylab('S.Aureus Absorbance Sample 3') +
+ggtitle('S.Aureus Sample 3 absorbance (Sums of 3 measurements per MG)') +
+theme(plot.title=element_text(color="blue")) +
+theme(axis.title=element_text(color="darkblue"))
+
+SAureus_Sample_4_Sums <- tapply(absorbance2$Sample_4,
+                           absorbance2$Powder_Mg_vs_S_aureus, FUN=sum, na.rm=T)
+SAureus_Sample_4_Sums
+ggplot(absorbance2, aes(x=as.factor(absorbance2$Powder_Mg_vs_S_aureus),
+                        y=absorbance2$Sample_4)) +
+geom_bar(aes(), stat="identity") +
+xlab('Milligrams') + ylab('S.Aureus Absorbance Sample 4') +
+ggtitle('S.Aureus Sample 4 absorbance (Sums of 3 measurements per MG)') +
+theme(plot.title=element_text(color="blue")) +
+theme(axis.title=element_text(color="darkblue"))
+
+SAureus_Sample_5_Sums <- tapply(absorbance2$Sample_5,
+                           absorbance2$Powder_Mg_vs_S_aureus, FUN=sum, na.rm=T)
+SAureus_Sample_5_Sums
+ggplot(absorbance2, aes(x=as.factor(absorbance2$Powder_Mg_vs_S_aureus),
+                        y=absorbance2$Sample_5)) +
+geom_bar(aes(), stat="identity") +
+xlab('Milligrams') + ylab('S.Aureus Absorbance Sample 5') +
+ggtitle('S.Aureus Sample 5 absorbance (Sums of 3 measurements per MG)') +
+theme(plot.title=element_text(color="blue")) +
+theme(axis.title=element_text(color="darkblue"))
+
+SAureus_Sample_6_Sums <- tapply(absorbance2$Sample_6,
+                           absorbance2$Powder_Mg_vs_S_aureus, FUN=sum, na.rm=T)
+SAureus_Sample_6_Sums
+ggplot(absorbance2, aes(x=as.factor(absorbance2$Powder_Mg_vs_S_aureus),
+                        y=absorbance2$Sample_6)) +
+geom_bar(aes(), stat="identity") +
+xlab('Milligrams') + ylab('S.Aureus Absorbance Sample 6') +
+ggtitle('S.Aureus Sample 6 absorbance (Sums of 3 measurements per MG)') +
+theme(plot.title=element_text(color="blue")) +
+theme(axis.title=element_text(color="darkblue"))
+
+SAureus_Sample_7_Sums <- tapply(absorbance2$Sample_7,
+                           absorbance2$Powder_Mg_vs_S_aureus, FUN=sum, na.rm=T)
+SAureus_Sample_7_Sums
+ggplot(absorbance2, aes(x=as.factor(absorbance2$Powder_Mg_vs_S_aureus),
+                        y=absorbance2$Sample_7)) +
+geom_bar(aes(), stat="identity") +
+xlab('Milligrams') + ylab('S.Aureus Absorbance Sample 7') +
+ggtitle('S.Aureus Sample 7 absorbance (Sums of 3 measurements per MG)') +
+theme(plot.title=element_text(color="blue")) +
+theme(axis.title=element_text(color="darkblue"))
+```
+
+# 2) Linear Regression, Correlation, and T-Tests  
+
+#### Linear Regression of E.Coli Sample 1 Data  
 ```{r, warning=F, message=F}
 fit <- lm(absorbance1$Powder_mg_vs_Absorbance_E_coli~
                            absorbance1$Sample_1, na.rm=T)
@@ -153,32 +399,125 @@ layout(matrix(c(1,2,3,4),2,2))
 plot(fit)
 ```
 
-#### Correlating the Data Variables:  
+#### Linear Regression of S.Aureus Sample 1 Data  
 ```{r, warning=F, message=F}
-absorbance1_sample1_Cor <- cor(Powder_mg_vs_Absorbance_E_coli, Sample_1,
-                       method="pearson")
-
-absorbance1_sample2_Cor <- cor(Powder_mg_vs_Absorbance_E_coli, Sample_2,
-                       method="pearson")
+fit <- lm(absorbance2$Powder_Mg_vs_S_aureus~absorbance2$Sample_1, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
 ```
 
-#### Significance of the Correlations:  
-```{r, warning=F, message=F}
-absorbance1_sample1_CorTest <- cor.test(Powder_mg_vs_Absorbance_E_coli, Sample_1, method="spearman")
+#### Correlation of E.Coli Absorbance: Sample 1 - Sample 3:  
+```{r, echo=F, warning=F, message=F}
+absorbance1_sample1_CorTest <- cor.test(absorbance1$Powder_mg_vs_Absorbance_E_coli, absorbance1$Sample_1, method="spearman")
 absorbance1_sample1_CorTest
+
+absorbance1_sample2_CorTest <- cor.test(absorbance1$Powder_mg_vs_Absorbance_E_coli, absorbance1$Sample_2, method="spearman")
+absorbance1_sample2_CorTest
+
+absorbance1_sample3_CorTest <- cor.test(absorbance1$Powder_mg_vs_Absorbance_E_coli, absorbance1$Sample_3, method="spearman")
+absorbance1_sample3_CorTest
 ```
 
-### Graphs of the Correlated Variables:  
-```{r, warning=F, message=F}
-plot(Powder_mg_vs_Absorbance_E_coli, Sample_1,
-     xlab="MG", ylab="E.Coli Sample 1", main="E.Coli Absorbance Correlation",
-     col=unique(Powder_mg_vs_Absorbance_E_coli), pch=19)
-abline(lm(Powder_mg_vs_Absorbance_E_coli~Sample_1), col="#008000")
-legend("right", title="Milligrams", legend=unique(Powder_mg_vs_Absorbance_E_coli), col=unique(Powder_mg_vs_Absorbance_E_coli), cex=.5, pch=19)
+#### Table of Powder mg vs Absorbance E.coli Correlation P-Values  
+```{r, echo=F, warning=F, message=F}
+pValueTable <- matrix(nrow=3, ncol=2)
+colnames(pValueTable) <- c("Milligrams" ,"P-Value")
+rownames(pValueTable) <- c("Sample 1", "Sample 2" , "Sample 3")
+pValueTable[1,] <- c("0 Milligrams", absorbance1_sample1_CorTest$p.value)
+pValueTable[2,] <- c("1 Milligrams", absorbance1_sample2_CorTest$p.value)
+pValueTable[3,] <- c("2 Milligrams", absorbance1_sample3_CorTest$p.value)
+pValueTable
+```
 
-plot((Powder_mg_vs_Absorbance_E_coli + absorbance2$Powder_Mg_vs_S_aureus),
-     (absorbance1$Sample_1 + absorbance2$Sample_1),
-     xlab="Milligrams", ylab="Sample 1",
-     main="E.Coli vs S.Aureus Absorbance Correlation", pch=19)
-abline(lm((Powder_mg_vs_Absorbance_E_coli + absorbance2$Powder_Mg_vs_S_aureus)~(absorbance1$Sample_1 + absorbance2$Sample_1)), col="#008000")
+#### Correlation of S.Aureus Absorbance: Sample 1 - Sample 3:  
+```{r, echo=F, warning=F, message=F}
+absorbance2_sample1_CorTest <- cor.test(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sample_1, method="spearman")
+absorbance2_sample1_CorTest
+
+absorbance2_sample2_CorTest <- cor.test(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sample_2, method="spearman")
+absorbance2_sample2_CorTest
+
+absorbance2_sample3_CorTest <- cor.test(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sampele_3, method="spearman")
+absorbance2_sample3_CorTest
+```
+
+#### Table of Powder mg vs Absorbance S.Aureus Correlation P-Values  
+```{r, echo=F, warning=F, message=F}
+pValueTable2 <- matrix(nrow=3, ncol=2)
+colnames(pValueTable2) <- c("Milligrams" ,"P-Value")
+rownames(pValueTable2) <- c("Sample 1", "Sample 2" , "Sample 3")
+pValueTable2[1,] <- c("0 Milligrams", absorbance1_sample1_CorTest$p.value)
+pValueTable2[2,] <- c("1 Milligrams", absorbance1_sample2_CorTest$p.value)
+pValueTable2[3,] <- c("2 Milligrams", absorbance1_sample3_CorTest$p.value)
+pValueTable2
+```
+
+## T-Tests  
+```{r,  echo=F, warning=F, message=F}
+E_Coli_Ttest_1 <- t.test(absorbance1$Powder_mg_vs_Absorbance_E_coli,
+                         absorbance1$Sample_1)
+E_Coli_Ttest_2 <- t.test(absorbance1$Powder_mg_vs_Absorbance_E_coli,
+                         absorbance1$Sample_2)
+E_Coli_Ttest_3 <- t.test(absorbance1$Powder_mg_vs_Absorbance_E_coli,
+                         absorbance1$Sample_3)
+S_Aureus_Ttest_1 <- t.test(absorbance2$Powder_Mg_vs_S_aureus,
+                           absorbance2$Sample_1)
+S_Aureus_Ttest_2 <-t.test(absorbance2$Powder_Mg_vs_S_aureus,
+                          absorbance2$Sample_2)
+S_Aureus_Ttest_3 <-t.test(absorbance2$Powder_Mg_vs_S_aureus,
+                          absorbance2$Sampele_3)
+```
+
+#### E.Coli T-Test Comparisons - Table 1  
+```{r, echo=F, warning=F, message=F}
+EColi_tTestTable <- matrix(nrow=3, ncol=3)
+colnames(EColi_tTestTable) <- c("Milligrams" ,"P-Value",
+                                "Alternate Hypothesis")
+rownames(EColi_tTestTable) <- c("Sample 1", "Sample 2" , "Sample 3")
+EColi_tTestTable[1,] <- c("0 Milligrams", E_Coli_Ttest_1$p.value,
+                          E_Coli_Ttest_1$alternative)
+EColi_tTestTable[2,] <- c("1 Milligrams", E_Coli_Ttest_2$p.value,
+                          E_Coli_Ttest_2$alternative)
+EColi_tTestTable[3,] <- c("2 Milligrams", E_Coli_Ttest_3$p.value,
+                          E_Coli_Ttest_3$alternative)
+EColi_tTestTable
+```
+
+#### E.Coli T-Test Comparisons - Table 2  
+```{r, echo=F, warning=F, message=F}
+EColi_tTestTable2 <- matrix(nrow=3, ncol=3)
+colnames(EColi_tTestTable2) <- c("Milligrams" , "Confidence Int Low",
+                                "Confidence Int High")
+rownames(EColi_tTestTable2) <- c("Sample 1", "Sample 2" , "Sample 3")
+EColi_tTestTable2[1,] <- c("0 Milligrams", E_Coli_Ttest_1$conf)
+EColi_tTestTable2[2,] <- c("1 Milligrams", E_Coli_Ttest_2$conf)
+EColi_tTestTable2[3,] <- c("2 Milligrams", E_Coli_Ttest_3$conf)
+EColi_tTestTable2
+```
+
+#### S.Aureus T-Test Comparisons - Table 1  
+```{r, echo=F, warning=F, message=F}
+SAureus_tTestTable <- matrix(nrow=3, ncol=3)
+colnames(SAureus_tTestTable) <- c("Milligrams" ,"P-Value",
+                                "Alternate Hypothesis")
+rownames(SAureus_tTestTable) <- c("Sample 1", "Sample 2" , "Sample 3")
+SAureus_tTestTable[1,] <- c("0 Milligrams", S_Aureus_Ttest_1$p.value,
+                          S_Aureus_Ttest_1$alternative)
+SAureus_tTestTable[2,] <- c("1 Milligrams", S_Aureus_Ttest_2$p.value,
+                          S_Aureus_Ttest_2$alternative)
+SAureus_tTestTable[3,] <- c("2 Milligrams", S_Aureus_Ttest_3$p.value,
+                          S_Aureus_Ttest_3$alternative)
+SAureus_tTestTable
+```
+
+#### S.Aureus T-Test Comparisons - Table 2  
+```{r, echo=F, warning=F, message=F}
+SAureus_tTestTable2 <- matrix(nrow=3, ncol=3)
+colnames(SAureus_tTestTable2) <- c("Milligrams" , "Confidence Int Low",
+                                "Confidence Int High")
+rownames(SAureus_tTestTable2) <- c("Sample 1", "Sample 2" , "Sample 3")
+SAureus_tTestTable2[1,] <- c("0 Milligrams", S_Aureus_Ttest_1$conf)
+SAureus_tTestTable2[2,] <- c("1 Milligrams", S_Aureus_Ttest_2$conf)
+SAureus_tTestTable2[3,] <- c("2 Milligrams", S_Aureus_Ttest_3$conf)
+SAureus_tTestTable2
 ```
