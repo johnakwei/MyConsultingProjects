@@ -104,12 +104,12 @@ plot(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sample_2,
 abline(lm(absorbance2$Sample_2~absorbance2$Powder_Mg_vs_S_aureus),
        col="#008000")
 
-plot(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sampele_3,
+plot(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sample_3,
      main="S.Aureus Sample 3 Absorbance per MG",
      col.main="blue", xlab="Milligrams (3 measurements per MG)",
      ylab="Sample 3 Absorbance",
      col.lab="darkblue")
-abline(lm(absorbance2$Sampele_3~absorbance2$Powder_Mg_vs_S_aureus),
+abline(lm(absorbance2$Sample_3~absorbance2$Powder_Mg_vs_S_aureus),
        col="#008000")
 
 plot(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sample_4,
@@ -201,7 +201,7 @@ xlab("Quantities in Milligrams") + ylab("S.Aureus Absorbance - Sample 2") +
 labs(fill="Milligrams")
 
 ggplot(absorbance2, aes(x=as.factor(absorbance2$Powder_Mg_vs_S_aureus),
-                             y=absorbance2$Sampele_3)) +
+                             y=absorbance2$Sample_3)) +
 geom_boxplot(aes(fill=as.factor(absorbance2$Powder_Mg_vs_S_aureus))) +
 ggtitle("S.Aureus Absorbance per MG - Sample 3 - Medians") +
 xlab("Quantities in Milligrams") + ylab("S.Aureus Absorbance - Sample 3") +
@@ -334,11 +334,11 @@ ggtitle('S.Aureus Sample 2 absorbance (Sums of 3 measurements per MG)') +
 theme(plot.title=element_text(color="blue")) +
 theme(axis.title=element_text(color="darkblue"))
 
-SAureus_Sampele_3_Sums <- tapply(absorbance2$Sampele_3,
+SAureus_Sample_3_Sums <- tapply(absorbance2$Sample_3,
                            absorbance2$Powder_Mg_vs_S_aureus, FUN=sum, na.rm=T)
-SAureus_Sampele_3_Sums
+SAureus_Sample_3_Sums
 ggplot(absorbance2, aes(x=as.factor(absorbance2$Powder_Mg_vs_S_aureus),
-                        y=absorbance2$Sampele_3)) +
+                        y=absorbance2$Sample_3)) +
 geom_bar(aes(), stat="identity") +
 xlab('Milligrams') + ylab('S.Aureus Absorbance Sample 3') +
 ggtitle('S.Aureus Sample 3 absorbance (Sums of 3 measurements per MG)') +
@@ -400,9 +400,99 @@ layout(matrix(c(1,2,3,4),2,2))
 plot(fit)
 ```
 
+#### Linear Regression of E.Coli Sample 2 Data  
+```{r, echo=F, warning=F, message=F}
+fit <- lm(absorbance1$Powder_mg_vs_Absorbance_E_coli~
+                           absorbance1$Sample_2, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+```
+
+#### Linear Regression of E.Coli Sample 3 Data  
+```{r, echo=F, warning=F, message=F}
+fit <- lm(absorbance1$Powder_mg_vs_Absorbance_E_coli~
+                           absorbance1$Sample_3, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+```
+
+#### Linear Regression of E.Coli Sample 4 Data  
+```{r, echo=F, warning=F, message=F}
+fit <- lm(absorbance1$Powder_mg_vs_Absorbance_E_coli~
+                           absorbance1$Sample_4, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+```
+
+#### Linear Regression of E.Coli Sample 5 Data  
+```{r, echo=F, warning=F, message=F}
+fit <- lm(absorbance1$Powder_mg_vs_Absorbance_E_coli~
+                           absorbance1$Sample_5, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+```
+
+#### Linear Regression of E.Coli Sample 6 Data  
+```{r, echo=F, warning=F, message=F}
+fit <- lm(absorbance1$Powder_mg_vs_Absorbance_E_coli~
+                           absorbance1$Sample_6, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+```
+
+#### Linear Regression of E.Coli Sample 7 Data  
+```{r, echo=F, warning=F, message=F}
+fit <- lm(absorbance1$Powder_mg_vs_Absorbance_E_coli~
+                           absorbance1$Sample_7, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+```
+
 #### Linear Regression of S.Aureus Sample 1 Data  
-```{r, warning=F, message=F}
+```{r, echo=F, warning=F, message=F}
 fit <- lm(absorbance2$Powder_Mg_vs_S_aureus~absorbance2$Sample_1, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+```
+
+#### Linear Regression of S.Aureus Sample 2 Data  
+```{r, echo=F, warning=F, message=F}
+fit <- lm(absorbance2$Powder_Mg_vs_S_aureus~absorbance2$Sample_2, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+```
+
+#### Linear Regression of S.Aureus Sample 3 Data  
+```{r, echo=F, warning=F, message=F}
+fit <- lm(absorbance2$Powder_Mg_vs_S_aureus~absorbance2$Sample_3, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+```
+
+#### Linear Regression of S.Aureus Sample 4 Data  
+```{r, echo=F, warning=F, message=F}
+fit <- lm(absorbance2$Powder_Mg_vs_S_aureus~absorbance2$Sample_4, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+```
+
+#### Linear Regression of S.Aureus Sample 5 Data  
+```{r, echo=F, warning=F, message=F}
+fit <- lm(absorbance2$Powder_Mg_vs_S_aureus~absorbance2$Sample_5, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+```
+
+#### Linear Regression of S.Aureus Sample 6 Data  
+```{r, echo=F, warning=F, message=F}
+fit <- lm(absorbance2$Powder_Mg_vs_S_aureus~absorbance2$Sample_6, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+```
+
+#### Linear Regression of S.Aureus Sample 7 Data  
+```{r, echo=F, warning=F, message=F}
+fit <- lm(absorbance2$Powder_Mg_vs_S_aureus~absorbance2$Sample_7, na.rm=T)
 layout(matrix(c(1,2,3,4),2,2))
 plot(fit)
 ```
@@ -456,7 +546,7 @@ absorbance2_sample1_CorTest
 absorbance2_sample2_CorTest <- cor.test(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sample_2, method="spearman")
 absorbance2_sample2_CorTest
 
-absorbance2_sample3_CorTest <- cor.test(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sampele_3, method="spearman")
+absorbance2_sample3_CorTest <- cor.test(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sample_3, method="spearman")
 absorbance2_sample3_CorTest
 
 absorbance2_sample4_CorTest <- cor.test(absorbance2$Powder_Mg_vs_S_aureus, absorbance2$Sample_4, method="spearman")
@@ -510,7 +600,7 @@ S_Aureus_Ttest_1 <- t.test(absorbance2$Powder_Mg_vs_S_aureus,
 S_Aureus_Ttest_2 <-t.test(absorbance2$Powder_Mg_vs_S_aureus,
                           absorbance2$Sample_2)
 S_Aureus_Ttest_3 <-t.test(absorbance2$Powder_Mg_vs_S_aureus,
-                          absorbance2$Sampele_3)
+                          absorbance2$Sample_3)
 S_Aureus_Ttest_4 <-t.test(absorbance2$Powder_Mg_vs_S_aureus,
                           absorbance2$Sample_4)
 S_Aureus_Ttest_5 <-t.test(absorbance2$Powder_Mg_vs_S_aureus,
