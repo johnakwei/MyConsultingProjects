@@ -10,7 +10,7 @@
 
 <meta name="author" content="John Akwei, ECMp ERMp Data Scientist" />
 
-<meta name="date" content="2016-01-19" />
+<meta name="date" content="2016-01-21" />
 
 <title>E.Coli and S.Aureus Absorbances</title>
 
@@ -65,18 +65,20 @@ img {
 <h1 class="title">E.Coli and S.Aureus Absorbances</h1>
 <h1 class="subtitle">ContextBase, contextbase.github.io</h1>
 <h4 class="author"><em>John Akwei, ECMp ERMp Data Scientist</em></h4>
-<h4 class="date"><em>January 19, 2016</em></h4>
+<h4 class="date"><em>January 21, 2016</em></h4>
 </div>
 
 
 <div id="synopsis" class="section level1">
 <h1>Synopsis</h1>
 <p>The objective of this document is to do statistical analysis on absorbance datasets. Via Data Science analysis, (using the R programming language), the document author intends to build an understanding, numerically and statistically, of the difference between the samples, with p-values, t-tests, etc.</p>
+<p>The free, open source application RStudio, (version 0.98.1103), was used for the analysis. The version of the R programming language used was, R version 3.2.0 (2015-04-16). The PC operating system is Windows 8.1.</p>
 <div id="table-of-contents" class="section level2">
 <h2>Table of Contents</h2>
 <ol style="list-style-type: decimal">
 <li>Graphs of Data<br /></li>
-<li>Linear Regression, Correlation, and T-Tests</li>
+<li>Linear Regression, Correlation, and T-Tests<br /></li>
+<li>Conclusions</li>
 </ol>
 </div>
 </div>
@@ -425,6 +427,16 @@ plot(fit)</code></pre>
 ## Sample 7 &quot;24 Milligrams&quot; &quot;3.49673571504999&quot; &quot;11.2608833325691&quot;</code></pre>
 </div>
 </div>
+</div>
+<div id="conclusions" class="section level1">
+<h1>Conclusions</h1>
+<p>There is a lot of information in the tests within this document. A thorough interpretation would require extensive documentation. The basis of the tests is the accuracy of predictor variables on response variables, and the Null Hypothesis.</p>
+<p>In the first set of tests, Linear Regression, four plots are produced. The first Linear Regression plot, Residuals vs. Fitted, shows the linearity of the E.Coli/S.Aureus absorbtion experiments. The Residual vs. Fitted graphs show that non-linear relationships usually aren’t encountered in the experiments. The one exception is E.Coli Sample 7, that shows non-linear relationships. S.Aureus Sample 4, Sample 5, and Sample 7 show non-linear relationships.</p>
+<p>The second Linear Regression plot, Normal Q-Q, shows the accuracy of the Regression Model via alignment of data points on the regression line. In all the E.Coli/S.Aureus Sample Quantities, the Normal Q-Q plot shows the predictive ability of the data is reliably accurate. Generally the data points are on the regression line for all Samples.</p>
+<p>The third Linear Regression plot, Scale-Location, shows homoscedasticity, or equal distribution of residuals along the range of predictors. Generally, in the E.Coli/S.Aureus absorbtion experiments, an equal distribution of residuals is found, usually with a greater distribution of residuals at higher milligrams of powder.</p>
+<p>The last Linear Regression plot, Residuals vs Leverage, directs the experiment designer to influential cases, within the data. Because the “Cook’s Distance” line is visible in most of the graphs, there are cases within the Samples that appear influential to the the Regression line of the experiment data. The specific data point is labeled within the “Residuals vs Leverage” plots.</p>
+<p>The next set of tests, the Spearman’s Rank Correlation, provides the coefficient, Rho, and tests the Null Hypothesis, (that the opposite of the experiments assumptions are correct). The test statistic number, “S=”, is the square of the differences in the data. Within the E.Coli/S.Aureus absorbtion experiments, a test statistic of around 2800-3000 is found. Therefore, a high accuracy of test results, generally. The P-Values are lower than 0.05, therefore showing accurate predictor to response characteristics. The Null Hypothesis, or Alternate Hypothesis, is not supported in all the experiments. The Spearman’s Rank, or rho, never equals 0, and therefore the Null Hypothesis isn’t supported.</p>
+<p>The final tests, the T-Tests, show a P-Value of below 0.05. Therefore, the test results predict the behavior of the response variables accurately. The Alternate Hypothesis results are two-sided. Therefore, the parameters of the experiments are not equal to the value given by the Null Hypothesis. The 95% Confidence Intervals of the Samples are from around 3 to 11. Because the median is above 1.5, the Null Hypothesis is rejected.</p>
 </div>
 
 
