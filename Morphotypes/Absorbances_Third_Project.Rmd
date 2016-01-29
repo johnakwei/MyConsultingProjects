@@ -9,7 +9,13 @@ output: html_document
 # Synopsis  
 This document is the third analysis of absorbance data involving E.Coli and S.Aureus. Via Data Science analysis, (using the R programming language), the document author intends to build an understanding, numerically and statistically, of the difference between the samples, with p-values, t-tests, etc.  
 
-The dataset examined is: fib_vs_ABS_ecoli_.xlsx  
+The datasets examined are:  
+Dataset 3 - fib_vs_ABS_ecoli_.xlsx  
+Dataset 4 - fib_vs_ABS_s_aureus2.xlsx  
+Dataset 5 - disc_ecoli.xlsx  
+Dataset 6 - disc_SA.xlsx  
+Dataset 7 - fill_vs_ecoli.xlsx   
+Dataset 8 - fil_vs_S_aureus2.xlsx    
 
 The data is re-formatted, in order that each row is a separate record, and the first row contains the variable names.  
 
@@ -22,211 +28,486 @@ if (!require("ggplot2")) {install.packages("ggplot2"); require("ggplot2")}
 if (!require("xlsx")) {install.packages("xlsx"); require("xlsx")}
 ```
 
-# Data Input  
+# Dataset 3 - Data Input  
 ```{r, warning=F, message=F}
 fib_vs_ABS_ecoli_ <- read.xlsx("fib_vs_ABS_ecoli_.xlsx", 1)
+```
+```{r, echo=F, warning=F, message=F}
+fib.vs.ABS.e.Coli <- matrix(nrow=27, ncol=2)
+colnames(fib.vs.ABS.e.Coli) <- c("fib_vs_ABS_e_coli", "Sample_1")
+fib.vs.ABS.e.Coli <- data.frame(fib.vs.ABS.e.Coli)
+
+fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli[1:3] <- 0
+fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli[4:6] <- 1
+fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli[7:9] <- 2
+fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli[10:12] <- 3
+fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli[13:15] <- 4
+fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli[16:18] <- 5
+fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli[19:21] <- 6
+fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli[22:24] <- 7
+fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli[25:27] <- 8
+
+fib.vs.ABS.e.Coli$Sample_1[1:3] <- fib_vs_ABS_ecoli_$X0mg
+fib.vs.ABS.e.Coli$Sample_1[4:6] <- fib_vs_ABS_ecoli_$sample.1
+fib.vs.ABS.e.Coli$Sample_1[7:9] <- fib_vs_ABS_ecoli_$sample.2
+fib.vs.ABS.e.Coli$Sample_1[10:12] <- fib_vs_ABS_ecoli_$sample.3
+fib.vs.ABS.e.Coli$Sample_1[13:15] <- fib_vs_ABS_ecoli_$sample.4
+fib.vs.ABS.e.Coli$Sample_1[16:18] <- fib_vs_ABS_ecoli_$sample.5
+fib.vs.ABS.e.Coli$Sample_1[19:21] <- fib_vs_ABS_ecoli_$sample.6
+fib.vs.ABS.e.Coli$Sample_1[22:24] <- fib_vs_ABS_ecoli_$sample.7
+fib.vs.ABS.e.Coli$Sample_1[25:27] <- fib_vs_ABS_ecoli_$sample.8
 ```
 
 # Dataset 3 - Graphs, Linear Regression, Correlation, and T-Tests  
 ```{r, warning=F, message=F}
-fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli[1] <- "1"
-fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli[2] <- "2"
-fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli[3] <- "3"
-rLine <- coef(lm(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli~
-                   fib_vs_ABS_ecoli_$X0mg, data=fib_vs_ABS_ecoli_))
+plot(fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli, fib.vs.ABS.e.Coli$Sample_1,
+     main="E.Coli Dataset 3 Absorbance per MG",
+     col.main="blue", xlab="Milligrams (3 measurements per MG)",
+     ylab="Dataset 3 Absorbance",
+     col.lab="darkblue")
+abline(lm(fib.vs.ABS.e.Coli$Sample_1~fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli),
+       col="#008000")
+
+ggplot(fib.vs.ABS.e.Coli,
+       aes(x=as.factor(fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli),
+           y=fib.vs.ABS.e.Coli$Sample_1)) + 
+geom_boxplot(aes(fill=as.factor(fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli))) +
+ggtitle("E.Coli Absorbance per MG - Dataset 3 - Medians") +
+xlab("Quantities in Milligrams") + ylab("E.Coli Absorbance - Dataset 3") +
+labs(fill="Milligrams")
+
+rLine <- coef(lm(fib.vs.ABS.e.Coli$Sample_1[4:27]~
+                   fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli[4:27],
+                 data=fib.vs.ABS.e.Coli[4:27,]))
 layout(matrix(1,1,1))
-ggplot(fib_vs_ABS_ecoli_, aes(x=as.factor(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-                              y=fib_vs_ABS_ecoli_$X0mg)) +
+ggplot(fib.vs.ABS.e.Coli[4:27,],
+       aes(x=as.factor(fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli[4:27]),
+                              y=fib.vs.ABS.e.Coli$Sample_1[4:27])) +
   geom_bar(aes(), stat="identity",
-           fill=as.factor(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli)) +
-  ggtitle("fib_vs_ABS_ecoli_ Control 0mg") +
-  xlab("Samples") + ylab("Control - 0mg - Absorbance") +
+           fill=as.factor(fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli[4:27])) +
+  ggtitle("fib_vs_ABS_ecoli_ Absorbance per MG") +
+  xlab("Samples (without Control 0 MG)") +
+  ylab("fib_vs_ABS_ecoli_ Absorbance") +
   theme(plot.title=element_text(color="blue")) +
   theme(axis.title=element_text(color="darkblue")) +
   geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
 
-fit <- lm(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli~fib_vs_ABS_ecoli_$X0mg)
+fit <- lm(fib.vs.ABS.e.Coli$Sample_1~
+                   fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli)
 layout(matrix(c(1,2,3,4),2,2))
 plot(fit)
-cor.test(as.numeric(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-         fib_vs_ABS_ecoli_$X0mg, method="spearman")
-t.test(as.numeric(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-       fib_vs_ABS_ecoli_$X0mg)
+cor.test(as.numeric(fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli),
+         fib.vs.ABS.e.Coli$Sample_1, method="spearman")
+t.test(as.numeric(fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli),
+         fib.vs.ABS.e.Coli$Sample_1)
+```
 
-rLine <- coef(lm(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli~
-                   fib_vs_ABS_ecoli_$sample.1, data=fib_vs_ABS_ecoli_))
+# Dataset 4 - Data Input  
+```{r, warning=F, message=F}
+fib_vs_ABS_s_aureus2 <- read.xlsx("fib_vs_ABS_s_aureus2.xlsx", 1)
+```
+
+```{r,  echo=F, warning=F, message=F}
+fib_vs_ABS_s_Aureus2 <- matrix(nrow=27, ncol=2)
+colnames(fib_vs_ABS_s_Aureus2) <- c("fib_vs_ABS_s_Aureus", "Sample_1")
+fib_vs_ABS_s_Aureus2 <- data.frame(fib_vs_ABS_s_Aureus2)
+
+fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus[1:3] <- 0
+fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus[4:6] <- 1
+fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus[7:9] <- 2
+fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus[10:12] <- 3
+fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus[13:15] <- 4
+fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus[16:18] <- 5
+fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus[19:21] <- 6
+fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus[22:24] <- 7
+fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus[25:27] <- 8
+
+fib_vs_ABS_s_Aureus2$Sample_1[1:3] <- fib_vs_ABS_s_aureus2$X0.mg
+fib_vs_ABS_s_Aureus2$Sample_1[4:6] <- fib_vs_ABS_s_aureus2$sample1
+fib_vs_ABS_s_Aureus2$Sample_1[7:9] <- fib_vs_ABS_s_aureus2$sample.2
+fib_vs_ABS_s_Aureus2$Sample_1[10:12] <- fib_vs_ABS_s_aureus2$sample.3
+fib_vs_ABS_s_Aureus2$Sample_1[13:15] <- fib_vs_ABS_s_aureus2$sample.4
+fib_vs_ABS_s_Aureus2$Sample_1[16:18] <- fib_vs_ABS_s_aureus2$X.sample.5
+fib_vs_ABS_s_Aureus2$Sample_1[19:21] <- fib_vs_ABS_s_aureus2$X.sample.6
+fib_vs_ABS_s_Aureus2$Sample_1[22:24] <- fib_vs_ABS_s_aureus2$sample.7
+fib_vs_ABS_s_Aureus2$Sample_1[25:27] <- fib_vs_ABS_s_aureus2$sample.8
+```
+
+# Dataset 4 - Graphs, Linear Regression, Correlation, and T-Tests  
+```{r, warning=F, message=F}
+plot(fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus, fib_vs_ABS_s_Aureus2$Sample_1,
+     main="S.Aureus Dataset 4 Absorbance per MG",
+     col.main="blue", xlab="Milligrams (3 measurements per MG)",
+     ylab="Dataset 4 Absorbance",
+     col.lab="darkblue")
+abline(lm(fib_vs_ABS_s_Aureus2$Sample_1~
+            fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus),
+       col="#008000")
+
+ggplot(fib_vs_ABS_s_Aureus2,
+       aes(x=as.factor(fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus),
+           y=fib_vs_ABS_s_Aureus2$Sample_1)) + 
+geom_boxplot(aes(fill=as.factor(fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus))) +
+ggtitle("S.Aureus Absorbance per MG - Dataset 4 - Medians") +
+xlab("Quantities in Milligrams") + ylab("S.Aureus Absorbance - Dataset 4") +
+labs(fill="Milligrams")
+
+rLine <- coef(lm(fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus[4:27]~
+                   fib_vs_ABS_s_Aureus2$Sample_1[4:27],
+                 data=fib_vs_ABS_s_Aureus2[4:27,]))
 layout(matrix(1,1,1))
-ggplot(fib_vs_ABS_ecoli_, aes(x=as.factor(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-                              y=fib_vs_ABS_ecoli_$sample.1)) +
+ggplot(fib.vs.ABS.e.Coli[4:27,],
+       aes(x=as.factor(fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus[4:27]),
+                              y=fib_vs_ABS_s_Aureus2$Sample_1[4:27])) +
   geom_bar(aes(), stat="identity",
-           fill=as.factor(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli)) +
-  ggtitle("fib_vs_ABS_ecoli_ Sample 1") +
-  xlab("Samples") + ylab("Sample 1 Absorbance") +
+           fill=as.factor(fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus[4:27])) +
+  ggtitle("fib_vs_ABS_s_Aureus2 Absorbance per MG") +
+  xlab("Samples (without Control 0 MG)") +
+  ylab("fib_vs_ABS_s_Aureus2 Absorbance") +
   theme(plot.title=element_text(color="blue")) +
   theme(axis.title=element_text(color="darkblue")) +
   geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
 
-fit <- lm(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli~
-            fib_vs_ABS_ecoli_$sample.1, na.rm=T)
+fit <- lm(fib_vs_ABS_s_Aureus2$Sample_1~
+                   fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus)
 layout(matrix(c(1,2,3,4),2,2))
 plot(fit)
-cor.test(as.numeric(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-         fib_vs_ABS_ecoli_$sample.1, method="spearman")
-t.test(as.numeric(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-       fib_vs_ABS_ecoli_$sample.1)
+cor.test(as.numeric(fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus),
+         fib_vs_ABS_s_Aureus2$Sample_1, method="spearman")
+t.test(as.numeric(fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus),
+         fib_vs_ABS_s_Aureus2$Sample_1)
+```
 
-rLine <- coef(lm(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli~
-                   fib_vs_ABS_ecoli_$sample.2, data=fib_vs_ABS_ecoli_))
+# Dataset 5 - Data Input  
+```{r, warning=F, message=F}
+disc_ecoli <- read.xlsx("disc_ecoli.xlsx", 1)
+```
+
+```{r, echo=F, warning=F, message=F}
+disc.vs.abs.e.Coli <- matrix(nrow=51, ncol=2)
+colnames(disc.vs.abs.e.Coli) <- c("disc_vs_abs_eColi", "Sample_1")
+disc.vs.abs.e.Coli <- data.frame(disc.vs.abs.e.Coli)
+
+disc.vs.abs.e.Coli$disc_vs_abs_eColi[1:3] <- 0
+disc.vs.abs.e.Coli$disc_vs_abs_eColi[4:6] <- 1
+disc.vs.abs.e.Coli$disc_vs_abs_eColi[7:9] <- 2
+disc.vs.abs.e.Coli$disc_vs_abs_eColi[10:12] <- 3
+disc.vs.abs.e.Coli$disc_vs_abs_eColi[13:15] <- 4
+disc.vs.abs.e.Coli$disc_vs_abs_eColi[16:18] <- 5
+disc.vs.abs.e.Coli$disc_vs_abs_eColi[19:21] <- 6
+disc.vs.abs.e.Coli$disc_vs_abs_eColi[22:24] <- 7
+disc.vs.abs.e.Coli$disc_vs_abs_eColi[25:27] <- 8
+disc.vs.abs.e.Coli$disc_vs_abs_eColi[28:30] <- 9
+disc.vs.abs.e.Coli$disc_vs_abs_eColi[31:33] <- 10
+disc.vs.abs.e.Coli$disc_vs_abs_eColi[34:36] <- 11
+disc.vs.abs.e.Coli$disc_vs_abs_eColi[37:39] <- 12
+disc.vs.abs.e.Coli$disc_vs_abs_eColi[40:42] <- 13
+disc.vs.abs.e.Coli$disc_vs_abs_eColi[43:45] <- 14
+disc.vs.abs.e.Coli$disc_vs_abs_eColi[46:48] <- 15
+disc.vs.abs.e.Coli$disc_vs_abs_eColi[49:51] <- 16
+
+disc.vs.abs.e.Coli$Sample_1[1:3] <- disc_ecoli$X0.mg
+disc.vs.abs.e.Coli$Sample_1[4:6] <- disc_ecoli$X1
+disc.vs.abs.e.Coli$Sample_1[7:9] <- disc_ecoli$X2
+disc.vs.abs.e.Coli$Sample_1[10:12] <- disc_ecoli$X3
+disc.vs.abs.e.Coli$Sample_1[13:15] <- disc_ecoli$X4
+disc.vs.abs.e.Coli$Sample_1[16:18] <- disc_ecoli$X5
+disc.vs.abs.e.Coli$Sample_1[19:21] <- disc_ecoli$X6
+disc.vs.abs.e.Coli$Sample_1[22:24] <- disc_ecoli$X7
+disc.vs.abs.e.Coli$Sample_1[25:27] <- disc_ecoli$X8
+disc.vs.abs.e.Coli$Sample_1[28:30] <- disc_ecoli$X9
+disc.vs.abs.e.Coli$Sample_1[31:33] <- disc_ecoli$X10
+disc.vs.abs.e.Coli$Sample_1[34:36] <- disc_ecoli$X11
+disc.vs.abs.e.Coli$Sample_1[37:39] <- disc_ecoli$X12
+disc.vs.abs.e.Coli$Sample_1[40:42] <- disc_ecoli$X13
+disc.vs.abs.e.Coli$Sample_1[43:45] <- disc_ecoli$X14
+disc.vs.abs.e.Coli$Sample_1[46:48] <- disc_ecoli$X15
+disc.vs.abs.e.Coli$Sample_1[49:51] <- disc_ecoli$X16
+```
+
+# Dataset 5 - Graphs, Linear Regression, Correlation, and T-Tests  
+```{r, warning=F, message=F}
+plot(disc.vs.abs.e.Coli$disc_vs_abs_eColi, disc.vs.abs.e.Coli$Sample_1,
+     main="E.Coli Dataset 5 Absorbance per MG",
+     col.main="blue", xlab="Milligrams (3 measurements per MG)",
+     ylab="Dataset 5 Absorbance",
+     col.lab="darkblue")
+abline(lm(disc.vs.abs.e.Coli$Sample_1~disc.vs.abs.e.Coli$disc_vs_abs_eColi),
+       col="#008000")
+
+ggplot(disc.vs.abs.e.Coli,
+       aes(x=as.factor(disc.vs.abs.e.Coli$disc_vs_abs_eColi),
+           y=disc.vs.abs.e.Coli$Sample_1)) + 
+geom_boxplot(aes(fill=as.factor(disc.vs.abs.e.Coli$disc_vs_abs_eColi))) +
+ggtitle("E.Coli Absorbance per MG - Dataset 5 - Medians") +
+xlab("Quantities in Milligrams") + ylab("E.Coli Absorbance - Dataset 5") +
+labs(fill="Milligrams")
+
+rLine <- coef(lm(disc.vs.abs.e.Coli$disc_vs_abs_eColi[4:51]~
+                   disc.vs.abs.e.Coli$Sample_1[4:51],
+                 data=disc.vs.abs.e.Coli[4:51,]))
 layout(matrix(1,1,1))
-ggplot(fib_vs_ABS_ecoli_, aes(x=as.factor(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-                              y=fib_vs_ABS_ecoli_$sample.2)) +
+ggplot(disc.vs.abs.e.Coli[4:51,],
+       aes(x=as.factor(disc.vs.abs.e.Coli$disc_vs_abs_eColi[4:51]),
+                              y=disc.vs.abs.e.Coli$Sample_1[4:51])) +
   geom_bar(aes(), stat="identity",
-           fill=as.factor(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli)) +
-  ggtitle("fib_vs_ABS_ecoli_ Sample 2") +
-  xlab("Samples") + ylab("Sample 2 Absorbance") +
+           fill=as.factor(disc.vs.abs.e.Coli$disc_vs_abs_eColi[4:51])) +
+  ggtitle("disc.vs.abs.e.Coli Absorbance per MG") +
+  xlab("Samples (without Control 0 MG)") +
+  ylab("disc.vs.abs.e.Coli Absorbance") +
   theme(plot.title=element_text(color="blue")) +
   theme(axis.title=element_text(color="darkblue")) +
   geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
 
-fit <- lm(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli~
-            fib_vs_ABS_ecoli_$sample.2, na.rm=T)
+fit <- lm(disc.vs.abs.e.Coli$Sample_1~disc.vs.abs.e.Coli$disc_vs_abs_eColi)
 layout(matrix(c(1,2,3,4),2,2))
 plot(fit)
-cor.test(as.numeric(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-         fib_vs_ABS_ecoli_$sample.2, method="spearman")
-t.test(as.numeric(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-       fib_vs_ABS_ecoli_$sample.2)
+cor.test(as.numeric(disc.vs.abs.e.Coli$disc_vs_abs_eColi),
+         disc.vs.abs.e.Coli$Sample_1, method="spearman")
+t.test(as.numeric(disc.vs.abs.e.Coli$disc_vs_abs_eColi),
+         disc.vs.abs.e.Coli$Sample_1)
+```
 
-rLine <- coef(lm(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli~
-                   fib_vs_ABS_ecoli_$sample.3, data=fib_vs_ABS_ecoli_))
+# Dataset 6 - Data Input  
+```{r, warning=F, message=F}
+disc_SA <- read.xlsx("disc_SA.xlsx", 1)
+```
+
+```{r, echo=F, warning=F, message=F}
+disc.vs.abs.S.Aureus <- matrix(nrow=51, ncol=2)
+colnames(disc.vs.abs.S.Aureus) <- c("disc_vs_abs_S_Aureus", "Sample_1")
+disc.vs.abs.S.Aureus <- data.frame(disc.vs.abs.S.Aureus)
+
+disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus[1:3] <- 0
+disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus[4:6] <- 1
+disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus[7:9] <- 2
+disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus[10:12] <- 3
+disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus[13:15] <- 4
+disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus[16:18] <- 5
+disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus[19:21] <- 6
+disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus[22:24] <- 7
+disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus[25:27] <- 8
+disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus[28:30] <- 9
+disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus[31:33] <- 10
+disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus[34:36] <- 11
+disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus[37:39] <- 12
+disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus[40:42] <- 13
+disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus[43:45] <- 14
+disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus[46:48] <- 15
+disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus[49:51] <- 16
+
+disc.vs.abs.S.Aureus$Sample_1[1:3] <- disc_SA$X0mg
+disc.vs.abs.S.Aureus$Sample_1[4:6] <- disc_SA$X1
+disc.vs.abs.S.Aureus$Sample_1[7:9] <- disc_SA$X2
+disc.vs.abs.S.Aureus$Sample_1[10:12] <- disc_SA$X3
+disc.vs.abs.S.Aureus$Sample_1[13:15] <- disc_SA$X4
+disc.vs.abs.S.Aureus$Sample_1[16:18] <- disc_SA$X5
+disc.vs.abs.S.Aureus$Sample_1[19:21] <- disc_SA$X6
+disc.vs.abs.S.Aureus$Sample_1[22:24] <- disc_SA$X7
+disc.vs.abs.S.Aureus$Sample_1[25:27] <- disc_SA$X8
+disc.vs.abs.S.Aureus$Sample_1[28:30] <- disc_SA$X9
+disc.vs.abs.S.Aureus$Sample_1[31:33] <- disc_SA$X10
+disc.vs.abs.S.Aureus$Sample_1[34:36] <- disc_SA$X11
+disc.vs.abs.S.Aureus$Sample_1[37:39] <- disc_SA$X12
+disc.vs.abs.S.Aureus$Sample_1[40:42] <- disc_SA$X13
+disc.vs.abs.S.Aureus$Sample_1[43:45] <- disc_SA$X14
+disc.vs.abs.S.Aureus$Sample_1[46:48] <- disc_SA$X15
+disc.vs.abs.S.Aureus$Sample_1[49:51] <- disc_SA$X16
+```
+
+# Dataset 6 - Graphs, Linear Regression, Correlation, and T-Tests  
+```{r, warning=F, message=F}
+plot(disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus,
+     disc.vs.abs.S.Aureus$Sample_1,
+     main="S.Aureus Dataset 6 Absorbance per MG",
+     col.main="blue", xlab="Milligrams (3 measurements per MG)",
+     ylab="Dataset 6 Absorbance",
+     col.lab="darkblue")
+abline(lm(disc.vs.abs.S.Aureus$Sample_1~
+            disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus), col="#008000")
+
+ggplot(disc.vs.abs.S.Aureus,
+       aes(x=as.factor(disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus),
+           y=disc.vs.abs.S.Aureus$Sample_1)) + 
+geom_boxplot(aes(fill=as.factor(disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus))) +
+ggtitle("S.Aureus Absorbance per MG - Dataset 6 - Medians") +
+xlab("Quantities in Milligrams") + ylab("S.Aureus Absorbance - Dataset 6") +
+labs(fill="Milligrams")
+
+rLine <- coef(lm(disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus[4:51]~
+                   disc.vs.abs.S.Aureus$Sample_1[4:51],
+                 data=disc.vs.abs.S.Aureus[4:51,]))
 layout(matrix(1,1,1))
-ggplot(fib_vs_ABS_ecoli_, aes(x=as.factor(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-                              y=fib_vs_ABS_ecoli_$sample.3)) +
+ggplot(disc.vs.abs.S.Aureus[4:51,],
+       aes(x=as.factor(disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus[4:51]),
+                              y=disc.vs.abs.S.Aureus$Sample_1[4:51])) +
   geom_bar(aes(), stat="identity",
-           fill=as.factor(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli)) +
-  ggtitle("fib_vs_ABS_ecoli_ Sample 3") +
-  xlab("Samples") + ylab("Sample 3 Absorbance") +
+           fill=as.factor(disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus[4:51])) +
+  ggtitle("disc.vs.abs.S.Aureus Absorbance per MG") +
+  xlab("Samples (without Control 0 MG)") +
+  ylab("disc.vs.abs.S.Aureus Absorbance") +
   theme(plot.title=element_text(color="blue")) +
   theme(axis.title=element_text(color="darkblue")) +
   geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
 
-fit <- lm(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli~
-            fib_vs_ABS_ecoli_$sample.3, na.rm=T)
+fit <- lm(disc.vs.abs.S.Aureus$Sample_1~
+            disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus)
 layout(matrix(c(1,2,3,4),2,2))
 plot(fit)
-cor.test(as.numeric(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-         fib_vs_ABS_ecoli_$sample.3, method="spearman")
-t.test(as.numeric(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-       fib_vs_ABS_ecoli_$sample.3)
+cor.test(as.numeric(disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus),
+         disc.vs.abs.S.Aureus$Sample_1, method="spearman")
+t.test(as.numeric(disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus),
+         disc.vs.abs.S.Aureus$Sample_1)
+```
 
-rLine <- coef(lm(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli~
-                   fib_vs_ABS_ecoli_$sample.4, data=fib_vs_ABS_ecoli_))
+# Dataset 7 - Data Input  
+```{r, warning=F, message=F}
+fill_vs_ecoli <- read.xlsx("fill_vs_ecoli.xlsx", 1)
+```
+
+```{r, echo=F, warning=F, message=F}
+fill_vs_eColi <- matrix(nrow=27, ncol=2)
+colnames(fill_vs_eColi) <- c("fill_vs_ABS_ecoli", "Sample_1")
+fill_vs_eColi <- data.frame(fill_vs_eColi)
+
+fill_vs_eColi$fill_vs_ABS_ecoli[1:3] <- 0
+fill_vs_eColi$fill_vs_ABS_ecoli[4:6] <- 1
+fill_vs_eColi$fill_vs_ABS_ecoli[7:9] <- 2
+fill_vs_eColi$fill_vs_ABS_ecoli[10:12] <- 3
+fill_vs_eColi$fill_vs_ABS_ecoli[13:15] <- 4
+fill_vs_eColi$fill_vs_ABS_ecoli[16:18] <- 5
+fill_vs_eColi$fill_vs_ABS_ecoli[19:21] <- 6
+fill_vs_eColi$fill_vs_ABS_ecoli[22:24] <- 7
+fill_vs_eColi$fill_vs_ABS_ecoli[25:27] <- 8
+
+fill_vs_eColi$Sample_1[1:3] <- fill_vs_ecoli$X0mg
+fill_vs_eColi$Sample_1[4:6] <- fill_vs_ecoli$X1
+fill_vs_eColi$Sample_1[7:9] <- fill_vs_ecoli$X2
+fill_vs_eColi$Sample_1[10:12] <- fill_vs_ecoli$X3
+fill_vs_eColi$Sample_1[13:15] <- fill_vs_ecoli$X4
+fill_vs_eColi$Sample_1[16:18] <- fill_vs_ecoli$X5
+fill_vs_eColi$Sample_1[19:21] <- fill_vs_ecoli$X6
+fill_vs_eColi$Sample_1[22:24] <- fill_vs_ecoli$X7
+fill_vs_eColi$Sample_1[25:27] <- fill_vs_ecoli$X8
+```
+
+# Dataset 7 - Graphs, Linear Regression, Correlation, and T-Tests  
+```{r, warning=F, message=F}
+plot(fill_vs_eColi$fill_vs_ABS_ecoli,
+     fill_vs_eColi$Sample_1,
+     main="S.Aureus Dataset 7 Absorbance per MG",
+     col.main="blue", xlab="Milligrams (3 measurements per MG)",
+     ylab="Dataset 7 Absorbance",
+     col.lab="darkblue")
+abline(lm(fill_vs_eColi$Sample_1~
+            fill_vs_eColi$fill_vs_ABS_ecoli), col="#008000")
+
+ggplot(fill_vs_eColi,
+       aes(x=as.factor(fill_vs_eColi$fill_vs_ABS_ecoli),
+           y=fill_vs_eColi$Sample_1)) + 
+geom_boxplot(aes(fill=as.factor(fill_vs_eColi$fill_vs_ABS_ecoli))) +
+ggtitle("S.Aureus Absorbance per MG - Dataset 7 - Medians") +
+xlab("Quantities in Milligrams") + ylab("S.Aureus Absorbance - Dataset 7") +
+labs(fill="Milligrams")
+
+rLine <- coef(lm(fill_vs_eColi$fill_vs_ABS_ecoli[4:27]~
+                   fill_vs_eColi$Sample_1[4:27],
+                 data=fill_vs_eColi[4:27,]))
 layout(matrix(1,1,1))
-ggplot(fib_vs_ABS_ecoli_, aes(x=as.factor(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-                              y=fib_vs_ABS_ecoli_$sample.4)) +
+ggplot(fill_vs_eColi[4:27,],
+       aes(x=as.factor(fill_vs_eColi$fill_vs_ABS_ecoli[4:27]),
+                              y=fill_vs_eColi$Sample_1[4:27])) +
   geom_bar(aes(), stat="identity",
-           fill=as.factor(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli)) +
-  ggtitle("fib_vs_ABS_ecoli_ Sample 4") +
-  xlab("Samples") + ylab("Sample 4 Absorbance") +
+           fill=as.factor(fill_vs_eColi$fill_vs_ABS_ecoli[4:27])) +
+  ggtitle("fill_vs_eColi Absorbance per MG") +
+  xlab("Samples (without Control 0 MG)") +
+  ylab("fill_vs_eColi Absorbance") +
   theme(plot.title=element_text(color="blue")) +
   theme(axis.title=element_text(color="darkblue")) +
   geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
 
-fit <- lm(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli~
-            fib_vs_ABS_ecoli_$sample.4, na.rm=T)
+fit <- lm(fill_vs_eColi$Sample_1~
+            fill_vs_eColi$fill_vs_ABS_ecoli)
 layout(matrix(c(1,2,3,4),2,2))
 plot(fit)
-cor.test(as.numeric(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-         fib_vs_ABS_ecoli_$sample.4, method="spearman")
-t.test(as.numeric(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-       fib_vs_ABS_ecoli_$sample.4)
+cor.test(as.numeric(fill_vs_eColi$fill_vs_ABS_ecoli),
+         fill_vs_eColi$Sample_1, method="spearman")
+t.test(as.numeric(fill_vs_eColi$fill_vs_ABS_ecoli),
+         fill_vs_eColi$Sample_1)
+```
 
-rLine <- coef(lm(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli~
-                   fib_vs_ABS_ecoli_$sample.5, data=fib_vs_ABS_ecoli_))
+# Dataset 8 - Data Input  
+```{r, warning=F, message=F}
+fil_vs_S_aureus2 <- read.xlsx("fil_vs_S_aureus2.xlsx", 1)
+```
+
+```{r, echo=F, warning=F, message=F}
+fil_vs_S_Aureus2 <- matrix(nrow=27, ncol=2)
+colnames(fil_vs_S_Aureus2) <- c("fil_vs_ABS_S_Aureus", "Sample_1")
+fil_vs_S_Aureus2 <- data.frame(fil_vs_S_Aureus2)
+
+fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus[1:3] <- 0
+fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus[4:6] <- 1
+fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus[7:9] <- 2
+fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus[10:12] <- 3
+fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus[13:15] <- 4
+fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus[16:18] <- 5
+fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus[19:21] <- 6
+fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus[22:24] <- 7
+fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus[25:27] <- 8
+
+fil_vs_S_Aureus2$Sample_1[1:3] <- fil_vs_S_aureus2$X0mg
+fil_vs_S_Aureus2$Sample_1[4:6] <- fil_vs_S_aureus2$X1
+fil_vs_S_Aureus2$Sample_1[7:9] <- fil_vs_S_aureus2$X2
+fil_vs_S_Aureus2$Sample_1[10:12] <- fil_vs_S_aureus2$X3
+fil_vs_S_Aureus2$Sample_1[13:15] <- fil_vs_S_aureus2$X4
+fil_vs_S_Aureus2$Sample_1[16:18] <- fil_vs_S_aureus2$X5
+fil_vs_S_Aureus2$Sample_1[19:21] <- fil_vs_S_aureus2$X6
+fil_vs_S_Aureus2$Sample_1[22:24] <- fil_vs_S_aureus2$X7
+fil_vs_S_Aureus2$Sample_1[25:27] <- fil_vs_S_aureus2$X8
+```
+
+# Dataset 8 - Graphs, Linear Regression, Correlation, and T-Tests  
+```{r, warning=F, message=F}
+plot(fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus,
+     fil_vs_S_Aureus2$Sample_1,
+     main="S.Aureus Dataset 8 Absorbance per MG",
+     col.main="blue", xlab="Milligrams (3 measurements per MG)",
+     ylab="Dataset 6 Absorbance",
+     col.lab="darkblue")
+abline(lm(fil_vs_S_Aureus2$Sample_1~
+            fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus), col="#008000")
+
+ggplot(fil_vs_S_Aureus2,
+       aes(x=as.factor(fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus),
+           y=fil_vs_S_Aureus2$Sample_1)) + 
+geom_boxplot(aes(fill=as.factor(fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus))) +
+ggtitle("S.Aureus Absorbance per MG - Dataset 8 - Medians") +
+xlab("Quantities in Milligrams") + ylab("S.Aureus Absorbance - Dataset 8") +
+labs(fill="Milligrams")
+
+rLine <- coef(lm(fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus[4:27]~
+                   fil_vs_S_Aureus2$Sample_1[4:27],
+                 data=fil_vs_S_Aureus2[4:27,]))
 layout(matrix(1,1,1))
-ggplot(fib_vs_ABS_ecoli_, aes(x=as.factor(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-                              y=fib_vs_ABS_ecoli_$sample.5)) +
+ggplot(fil_vs_S_Aureus2[4:27,],
+       aes(x=as.factor(fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus[4:27]),
+                              y=fil_vs_S_Aureus2$Sample_1[4:27])) +
   geom_bar(aes(), stat="identity",
-           fill=as.factor(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli)) +
-  ggtitle("fib_vs_ABS_ecoli_ Sample 5") +
-  xlab("Samples") + ylab("Sample 5 Absorbance") +
+           fill=as.factor(fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus[4:27])) +
+  ggtitle("fil_vs_S_Aureus2 Absorbance per MG") +
+  xlab("Samples (without Control 0 MG)") +
+  ylab("fil_vs_S_Aureus2 Absorbance") +
   theme(plot.title=element_text(color="blue")) +
   theme(axis.title=element_text(color="darkblue")) +
   geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
 
-# fit <- lm(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli~
-#             fib_vs_ABS_ecoli_$sample.5, na.rm=T)
-# layout(matrix(c(1,2,3,4),2,2))
-# plot(fit)
-
-cor.test(as.numeric(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-         fib_vs_ABS_ecoli_$sample.5, method="spearman")
-t.test(as.numeric(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-       fib_vs_ABS_ecoli_$sample.5)
-
-rLine <- coef(lm(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli~
-                   fib_vs_ABS_ecoli_$sample.6, data=fib_vs_ABS_ecoli_))
-layout(matrix(1,1,1))
-ggplot(fib_vs_ABS_ecoli_, aes(x=as.factor(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-                              y=fib_vs_ABS_ecoli_$sample.6)) +
-  geom_bar(aes(), stat="identity",
-           fill=as.factor(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli)) +
-  ggtitle("fib_vs_ABS_ecoli_ Sample 6") +
-  xlab("Samples") + ylab("Sample 6 Absorbance") +
-  theme(plot.title=element_text(color="blue")) +
-  theme(axis.title=element_text(color="darkblue")) +
-  geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
-
-# fit <- lm(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli~
-#             fib_vs_ABS_ecoli_$sample.6, na.rm=T)
-# layout(matrix(c(1,2,3,4),2,2))
-# plot(fit)
-cor.test(as.numeric(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-         fib_vs_ABS_ecoli_$sample.6, method="spearman")
-t.test(as.numeric(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-       fib_vs_ABS_ecoli_$sample.6)
-
-rLine <- coef(lm(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli~
-                   fib_vs_ABS_ecoli_$sample.7, data=fib_vs_ABS_ecoli_))
-layout(matrix(1,1,1))
-ggplot(fib_vs_ABS_ecoli_, aes(x=as.factor(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-                              y=fib_vs_ABS_ecoli_$sample.7)) +
-  geom_bar(aes(), stat="identity",
-           fill=as.factor(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli)) +
-  ggtitle("fib_vs_ABS_ecoli_ Sample 7") +
-  xlab("Samples") + ylab("Sample 7 Absorbance") +
-  theme(plot.title=element_text(color="blue")) +
-  theme(axis.title=element_text(color="darkblue")) +
-  geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
-
-# fit <- lm(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli~
-#             fib_vs_ABS_ecoli_$sample.7, na.rm=T)
-# layout(matrix(c(1,2,3,4),2,2))
-# plot(fit)
-cor.test(as.numeric(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-         fib_vs_ABS_ecoli_$sample.7, method="spearman")
-t.test(as.numeric(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-       fib_vs_ABS_ecoli_$sample.7)
-
-rLine <- coef(lm(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli~
-                   fib_vs_ABS_ecoli_$sample.8, data=fib_vs_ABS_ecoli_))
-layout(matrix(1,1,1))
-ggplot(fib_vs_ABS_ecoli_, aes(x=as.factor(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-                              y=fib_vs_ABS_ecoli_$sample.8)) +
-  geom_bar(aes(), stat="identity",
-           fill=as.factor(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli)) +
-  ggtitle("fib_vs_ABS_ecoli_ Sample 8") +
-  xlab("Samples") + ylab("Sample 8 Absorbance") +
-  theme(plot.title=element_text(color="blue")) +
-  theme(axis.title=element_text(color="darkblue")) +
-  geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
-
-# fit <- lm(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli~
-#             fib_vs_ABS_ecoli_$sample.8, na.rm=T)
-# layout(matrix(c(1,2,3,4),2,2))
-# plot(fit)
-cor.test(as.numeric(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-         fib_vs_ABS_ecoli_$sample.8, method="spearman")
-t.test(as.numeric(fib_vs_ABS_ecoli_$fib.vs.ABS.e.coli),
-       fib_vs_ABS_ecoli_$sample.8)
+fit <- lm(fil_vs_S_Aureus2$Sample_1~
+            fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+cor.test(as.numeric(fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus),
+         fil_vs_S_Aureus2$Sample_1, method="spearman")
+t.test(as.numeric(fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus),
+         fil_vs_S_Aureus2$Sample_1)
 ```
