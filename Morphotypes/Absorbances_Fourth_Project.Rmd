@@ -1,0 +1,246 @@
+---
+title: "Absorbances Fourth Project"
+subtitle: "ContextBase, http://contextbase.github.io"
+author: "John Akwei, ECMp ERMp Data Scientist"
+date: "January 29, 2016"
+output: html_document
+---
+
+# Synopsis  
+This document is the third analysis of absorbance data involving E.Coli and S.Aureus. Via Data Science analysis, (using the R programming language), the document author intends to build an understanding, numerically and statistically, of the difference between the samples, with p-values, t-tests, etc.  
+
+The dataset examined is: fib_vs_ABS_s_aureus2.xlsx  
+4) disc_ecoli.xlsx  
+5) disc_SA.xlsx  
+6) fill_vs_ecoli.xlsx  
+7) fil_vs_S_aureus2.xlsx
+
+The data is re-formatted, in order that each row is a separate record, and the first row contains the variable names.  
+
+The free, open source application RStudio, (version 0.98.1103), was used for the analysis. The version of the R programming language used was, R version 3.2.0 (2015-04-16). The PC operating system is Windows 8.1.  
+
+#### Processing Requirements  
+```{r, warning=F, message=F}
+setwd("C:/Users/johnakwei/Dropbox/Programming/Morphotypes")
+if (!require("ggplot2")) {install.packages("ggplot2"); require("ggplot2")}
+if (!require("xlsx")) {install.packages("xlsx"); require("xlsx")}
+```
+
+# Data Input  
+```{r, warning=F, message=F}
+fib_vs_ABS_s_aureus2 <- read.xlsx("fib_vs_ABS_s_aureus2.xlsx", 1)
+names(fib_vs_ABS_s_aureus2) <-c("fib.vs.ABS.S.aureus", "X0mg",
+                                "sample.1", "sample.2", "sample.3",
+                                "sample.4", "sample.5", "sample.6",
+                                "sample.7", "sample.8")
+fib.vs.ABS.S.Aureus <- matrix(1,3)
+fib.vs.ABS.S.Aureus[1,] <- 1
+fib.vs.ABS.S.Aureus[2,] <- 2
+fib.vs.ABS.S.Aureus[3,] <- 3
+fib_vs_ABS_s_aureus2 <- cbind(fib.vs.ABS.S.Aureus, fib_vs_ABS_s_aureus2)
+
+disc_ecoli <- read.xlsx("disc_ecoli.xlsx", 1)
+disc_SA <- read.xlsx("disc_SA.xlsx", 1)
+fill_vs_ecoli <- read.xlsx("fill_vs_ecoli.xlsx", 1)
+fil_vs_S_aureus2 <- read.xlsx("fil_vs_S_aureus2.xlsx", 1)
+```
+
+# Dataset 3 - Graphs, Linear Regression, Correlation, and T-Tests  
+```{r, warning=F, message=F}
+rLine <- coef(lm(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus~
+                   fib_vs_ABS_s_aureus2$X0mg, data=fib_vs_ABS_s_aureus2))
+layout(matrix(1,1,1))
+ggplot(fib_vs_ABS_s_aureus2, aes(x=as.factor(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+                              y=fib_vs_ABS_s_aureus2$X0mg)) +
+  geom_bar(aes(), stat="identity",
+           fill=as.factor(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus)) +
+  ggtitle("fib_vs_ABS_s_aureus2 Control 0mg") +
+  xlab("Samples") + ylab("Control - 0mg - Absorbance") +
+  theme(plot.title=element_text(color="blue")) +
+  theme(axis.title=element_text(color="darkblue")) +
+  geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
+
+fit <- lm(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus~fib_vs_ABS_s_aureus2$X0mg)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+cor.test(as.numeric(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+         fib_vs_ABS_s_aureus2$X0mg, method="spearman")
+t.test(as.numeric(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+       fib_vs_ABS_s_aureus2$X0mg)
+
+rLine <- coef(lm(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus~
+                   fib_vs_ABS_s_aureus2$sample.1, data=fib_vs_ABS_s_aureus2))
+layout(matrix(1,1,1))
+ggplot(fib_vs_ABS_s_aureus2, aes(x=as.factor(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+                              y=fib_vs_ABS_s_aureus2$sample.1)) +
+  geom_bar(aes(), stat="identity",
+           fill=as.factor(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus)) +
+  ggtitle("fib_vs_ABS_s_aureus2 Sample 1") +
+  xlab("Samples") + ylab("Sample 1 Absorbance") +
+  theme(plot.title=element_text(color="blue")) +
+  theme(axis.title=element_text(color="darkblue")) +
+  geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
+
+fit <- lm(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus~
+            fib_vs_ABS_s_aureus2$sample.1, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+cor.test(as.numeric(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+         fib_vs_ABS_s_aureus2$sample.1, method="spearman")
+t.test(as.numeric(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+       fib_vs_ABS_s_aureus2$sample.1)
+
+rLine <- coef(lm(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus~
+                   fib_vs_ABS_s_aureus2$sample.2, data=fib_vs_ABS_s_aureus2))
+layout(matrix(1,1,1))
+ggplot(fib_vs_ABS_s_aureus2, aes(x=as.factor(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+                              y=fib_vs_ABS_s_aureus2$sample.2)) +
+  geom_bar(aes(), stat="identity",
+           fill=as.factor(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus)) +
+  ggtitle("fib_vs_ABS_s_aureus2 Sample 2") +
+  xlab("Samples") + ylab("Sample 2 Absorbance") +
+  theme(plot.title=element_text(color="blue")) +
+  theme(axis.title=element_text(color="darkblue")) +
+  geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
+
+fit <- lm(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus~
+            fib_vs_ABS_s_aureus2$sample.2, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+cor.test(as.numeric(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+         fib_vs_ABS_s_aureus2$sample.2, method="spearman")
+t.test(as.numeric(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+       fib_vs_ABS_s_aureus2$sample.2)
+
+rLine <- coef(lm(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus~
+                   fib_vs_ABS_s_aureus2$sample.3, data=fib_vs_ABS_s_aureus2))
+layout(matrix(1,1,1))
+ggplot(fib_vs_ABS_s_aureus2, aes(x=as.factor(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+                              y=fib_vs_ABS_s_aureus2$sample.3)) +
+  geom_bar(aes(), stat="identity",
+           fill=as.factor(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus)) +
+  ggtitle("fib_vs_ABS_s_aureus2 Sample 3") +
+  xlab("Samples") + ylab("Sample 3 Absorbance") +
+  theme(plot.title=element_text(color="blue")) +
+  theme(axis.title=element_text(color="darkblue")) +
+  geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
+
+fit <- lm(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus~
+            fib_vs_ABS_s_aureus2$sample.3, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+cor.test(as.numeric(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+         fib_vs_ABS_s_aureus2$sample.3, method="spearman")
+t.test(as.numeric(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+       fib_vs_ABS_s_aureus2$sample.3)
+
+rLine <- coef(lm(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus~
+                   fib_vs_ABS_s_aureus2$sample.4, data=fib_vs_ABS_s_aureus2))
+layout(matrix(1,1,1))
+ggplot(fib_vs_ABS_s_aureus2, aes(x=as.factor(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+                              y=fib_vs_ABS_s_aureus2$sample.4)) +
+  geom_bar(aes(), stat="identity",
+           fill=as.factor(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus)) +
+  ggtitle("fib_vs_ABS_s_aureus2 Sample 4") +
+  xlab("Samples") + ylab("Sample 4 Absorbance") +
+  theme(plot.title=element_text(color="blue")) +
+  theme(axis.title=element_text(color="darkblue")) +
+  geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
+
+fit <- lm(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus~
+            fib_vs_ABS_s_aureus2$sample.4, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+cor.test(as.numeric(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+         fib_vs_ABS_s_aureus2$sample.4, method="spearman")
+t.test(as.numeric(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+       fib_vs_ABS_s_aureus2$sample.4)
+
+rLine <- coef(lm(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus~
+                   fib_vs_ABS_s_aureus2$sample.5, data=fib_vs_ABS_s_aureus2))
+layout(matrix(1,1,1))
+ggplot(fib_vs_ABS_s_aureus2, aes(x=as.factor(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+                              y=fib_vs_ABS_s_aureus2$sample.5)) +
+  geom_bar(aes(), stat="identity",
+           fill=as.factor(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus)) +
+  ggtitle("fib_vs_ABS_s_aureus2 Sample 5") +
+  xlab("Samples") + ylab("Sample 5 Absorbance") +
+  theme(plot.title=element_text(color="blue")) +
+  theme(axis.title=element_text(color="darkblue")) +
+  geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
+
+# fit <- lm(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus~
+#             fib_vs_ABS_s_aureus2$sample.5, na.rm=T)
+# layout(matrix(c(1,2,3,4),2,2))
+# plot(fit)
+cor.test(as.numeric(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+         fib_vs_ABS_s_aureus2$sample.5, method="spearman")
+t.test(as.numeric(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+       fib_vs_ABS_s_aureus2$sample.5)
+
+rLine <- coef(lm(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus~
+                   fib_vs_ABS_s_aureus2$sample.6, data=fib_vs_ABS_s_aureus2))
+layout(matrix(1,1,1))
+ggplot(fib_vs_ABS_s_aureus2, aes(x=as.factor(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+                              y=fib_vs_ABS_s_aureus2$sample.6)) +
+  geom_bar(aes(), stat="identity",
+           fill=as.factor(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus)) +
+  ggtitle("fib_vs_ABS_s_aureus2 Sample 6") +
+  xlab("Samples") + ylab("Sample 6 Absorbance") +
+  theme(plot.title=element_text(color="blue")) +
+  theme(axis.title=element_text(color="darkblue")) +
+  geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
+
+fit <- lm(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus~
+            fib_vs_ABS_s_aureus2$sample.6, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+cor.test(as.numeric(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+         fib_vs_ABS_s_aureus2$sample.6, method="spearman")
+t.test(as.numeric(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+       fib_vs_ABS_s_aureus2$sample.6)
+
+rLine <- coef(lm(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus~
+                   fib_vs_ABS_s_aureus2$sample.7, data=fib_vs_ABS_s_aureus2))
+layout(matrix(1,1,1))
+ggplot(fib_vs_ABS_s_aureus2, aes(x=as.factor(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+                              y=fib_vs_ABS_s_aureus2$sample.7)) +
+  geom_bar(aes(), stat="identity",
+           fill=as.factor(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus)) +
+  ggtitle("fib_vs_ABS_s_aureus2 Sample 7") +
+  xlab("Samples") + ylab("Sample 7 Absorbance") +
+  theme(plot.title=element_text(color="blue")) +
+  theme(axis.title=element_text(color="darkblue")) +
+  geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
+
+fit <- lm(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus~
+            fib_vs_ABS_s_aureus2$sample.7, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+cor.test(as.numeric(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+         fib_vs_ABS_s_aureus2$sample.7, method="spearman")
+t.test(as.numeric(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+       fib_vs_ABS_s_aureus2$sample.7)
+
+rLine <- coef(lm(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus~
+                   fib_vs_ABS_s_aureus2$sample.8, data=fib_vs_ABS_s_aureus2))
+layout(matrix(1,1,1))
+ggplot(fib_vs_ABS_s_aureus2, aes(x=as.factor(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+                              y=fib_vs_ABS_s_aureus2$sample.8)) +
+  geom_bar(aes(), stat="identity",
+           fill=as.factor(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus)) +
+  ggtitle("fib_vs_ABS_s_aureus2 Sample 8") +
+  xlab("Samples") + ylab("Sample 8 Absorbance") +
+  theme(plot.title=element_text(color="blue")) +
+  theme(axis.title=element_text(color="darkblue")) +
+  geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
+
+fit <- lm(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus~
+            fib_vs_ABS_s_aureus2$sample.8, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+cor.test(as.numeric(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+         fib_vs_ABS_s_aureus2$sample.8, method="spearman")
+t.test(as.numeric(fib_vs_ABS_s_aureus2$fib.vs.ABS.S.Aureus),
+       fib_vs_ABS_s_aureus2$sample.8)
+```

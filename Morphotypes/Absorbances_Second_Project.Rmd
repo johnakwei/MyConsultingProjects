@@ -1,0 +1,132 @@
+---
+title: "Absorbances Second Project"
+subtitle: "ContextBase, http://contextbase.github.io"
+author: "John Akwei, ECMp ERMp Data Scientist"
+date: "January 26, 2016"
+output: html_document
+---
+
+# Synopsis  
+This document is the second analysis of absorbance data involving E.Coli and S.Aureus. Via Data Science analysis, (using the R programming language), the document author intends to build an understanding, numerically and statistically, of the difference between the samples, with p-values, t-tests, etc.
+
+The dataset examined is: Make_Graphs_and_Statistics.docx  
+
+The data is re-formatted, in order that each row is a separate record, and the first row contains the variable names.  
+
+The free, open source application RStudio, (version 0.98.1103), was used for the analysis. The version of the R programming language used was, R version 3.2.0 (2015-04-16). The PC operating system is Windows 8.1.   
+
+#### Processing Requirements  
+```{r, warning=F, message=F}
+setwd("C:/Users/johnakwei/Dropbox/Programming/Morphotypes")
+if (!require("ggplot2")) {install.packages("ggplot2"); require("ggplot2")}
+```
+
+# Data Input  
+```{r, warning=F, message=F}
+absorbances2nd <- read.csv("Second_Absorbances_Project.csv", header=T)
+data1 <- subset(absorbances2nd, absorbances2nd$Graph=="Graph 1")
+data2 <- subset(absorbances2nd, absorbances2nd$Graph=="Graph 2")
+data3 <- subset(absorbances2nd, absorbances2nd$Graph=="Graph 3")
+data1 <- data1[,1:4]
+data1$Absorbance_E_Coli <- as.numeric(data1$Absorbance_E_Coli)
+data2$Absorbance_E_Coli <- as.numeric(data2$Absorbance_E_Coli)
+data2$Absorbance_S_Aureus <- as.numeric(data2$Absorbance_S_Aureus)
+data3$Absorbance_E_Coli <- as.numeric(data3$Absorbance_E_Coli)
+data3$Absorbance_S_Aureus <- as.numeric(data3$Absorbance_S_Aureus)
+```
+
+# Dataset 2 - Graphs, Linear Regression, Correlation, and T-Tests  
+```{r, warning=F, message=F}
+absorbanceHigh <- data1$Absorbance_E_Coli + data1$Accuracy_E_Coli
+absorbanceLow <- data1$Absorbance_E_Coli - data1$Accuracy_E_Coli
+
+rLine <- coef(lm(data1$Material~data1$Absorbance_E_Coli, data=data1))
+ggplot(data1, aes(x=as.factor(data1$Material),
+                        y=data1$Absorbance_E_Coli)) +
+geom_bar(aes(), stat="identity", fill=data1$Material) +
+ggtitle("E.Coli Absorbance - Graph #1 - (5 Samples)") +
+xlab("Samples 1-5") + ylab("Absorbance") +
+theme(plot.title=element_text(color="blue")) +
+theme(axis.title=element_text(color="darkblue")) +
+geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
+
+fit <- lm(as.numeric(data1$Material)~data1$Absorbance_E_Coli, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+cor.test(as.numeric(data1$Material), data1$Absorbance_E_Coli,
+         method="spearman")
+t.test(as.numeric(data1$Material), data1$Absorbance_E_Coli)
+
+rLine <- coef(lm(data2$Material~data2$Absorbance_E_Coli, data=data2))
+layout(matrix(1,1,1))
+ggplot(data2, aes(x=as.factor(data2$Material),
+                        y=data2$Absorbance_E_Coli)) +
+geom_bar(aes(), stat="identity", fill=data2$Material) +
+ggtitle("E.Coli Absorbance - Graph #2 - (6 Samples)") +
+xlab("Samples 1-6") + ylab("Absorbance") +
+theme(plot.title=element_text(color="blue")) +
+theme(axis.title=element_text(color="darkblue")) +
+geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
+
+fit <- lm(as.numeric(data2$Material)~data2$Absorbance_E_Coli, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+cor.test(as.numeric(data2$Material), data2$Absorbance_E_Coli,
+         method="spearman")
+t.test(as.numeric(data2$Material), data2$Absorbance_E_Coli)
+
+rLine <- coef(lm(data2$Material~data2$Absorbance_S_Aureus, data=data2))
+layout(matrix(1,1,1))
+ggplot(data2, aes(x=as.factor(data2$Material),
+                        y=data2$Absorbance_S_Aureus)) +
+geom_bar(aes(), stat="identity", fill=data2$Material) +
+ggtitle("S.Aureus Absorbance - Graph #2 - (6 Samples)") +
+xlab("Samples 1-6") + ylab("Absorbance") +
+theme(plot.title=element_text(color="blue")) +
+theme(axis.title=element_text(color="darkblue")) +
+geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
+
+fit <- lm(as.numeric(data2$Material)~data2$Absorbance_S_Aureus, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+cor.test(as.numeric(data2$Material), data2$Absorbance_S_Aureus,
+         method="spearman")
+t.test(as.numeric(data2$Material), data2$Absorbance_S_Aureus)
+
+data3$Material[1] <- "1"; data3$Material[2] <- "2"
+rLine <- coef(lm(data3$Material~data3$Absorbance_E_Coli, data=data3))
+layout(matrix(1,1,1))
+ggplot(data3, aes(x=as.factor(data3$Material),
+                        y=data3$Absorbance_E_Coli)) +
+geom_bar(aes(), stat="identity", fill=rainbow(7)) +
+ggtitle("E.Coli Absorbance - Graph #3 - (8 Samples)") +
+xlab("Samples 1-8") + ylab("Absorbance") +
+theme(plot.title=element_text(color="blue")) +
+theme(axis.title=element_text(color="darkblue")) +
+geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
+
+fit <- lm(as.numeric(data3$Material)~data3$Absorbance_E_Coli, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+cor.test(as.numeric(data3$Material), data3$Absorbance_E_Coli,
+         method="spearman")
+t.test(as.numeric(data3$Material), data3$Absorbance_E_Coli)
+
+rLine <- coef(lm(data3$Material~data3$Absorbance_S_Aureus, data=data3))
+layout(matrix(1,1,1))
+ggplot(data3, aes(x=as.factor(data3$Material),
+                        y=data3$Absorbance_S_Aureus)) +
+geom_bar(aes(), stat="identity", fill=rainbow(7)) +
+ggtitle("S.Aureus Absorbance - Graph #3 - (8 Samples)") +
+xlab("Samples 1-8") + ylab("Absorbance") +
+theme(plot.title=element_text(color="blue")) +
+theme(axis.title=element_text(color="darkblue")) +
+geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
+
+fit <- lm(as.numeric(data3$Material)~data3$Absorbance_S_Aureus, na.rm=T)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+cor.test(as.numeric(data3$Material), data3$Absorbance_S_Aureus,
+         method="spearman")
+t.test(as.numeric(data3$Material), data3$Absorbance_S_Aureus)
+```
