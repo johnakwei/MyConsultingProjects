@@ -53,10 +53,33 @@ geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
 fit <- lm(as.numeric(data1$Material)~data1$Absorbance_E_Coli, na.rm=T)
 layout(matrix(c(1,2,3,4),2,2))
 plot(fit)
+```
+
+### Graph 1 Linear Regression Plots:  
+1) Residuals vs. Fitted - the shape of the plot shows a linear relationship in the five data points of the Graph #1 data.  
+
+2) Normal Q-Q - shows 3 of the 5 data points corresponding with the theoritical  quantities. Thereby, demonstrating accuracy of the Linear Regression, and predictive ability of the data in Graph #1.  
+
+3) Scale-Location - demonstrates equal distribution of residuals along the range of predictors. Once again, 3 of the data points show linearity.  
+
+4) Residuals vs Leverage - there are influential cases within the Graph #1 data. The specific influential data points are labeled, (data points 2 and 5).  
+
+```{r, warning=F, message=F}
 cor.test(as.numeric(data1$Material), data1$Absorbance_E_Coli,
          method="spearman")
-t.test(as.numeric(data1$Material), data1$Absorbance_E_Coli)
+```
 
+### Graph 1 Spearman's Rank Correlation:  
+The test statistic equals 38, and P-Value equals 0.08, therefore the Graph #1 data points do not demonstrate reliability as predictors. The Spearman's Rank, or rho, never equals 0, and the Null Hypothesis isn't supported. The Graph #1 data still has possible use for response prediction.  
+
+```{r, warning=F, message=F}
+t.test(as.numeric(data1$Material), data1$Absorbance_E_Coli)
+```
+
+### Graph 1 T-Test:  
+The t-test shows a P-Value of above 0.05. Therefore, the Graph #1 test results do not conclusively predict the behavior of the response variables accurately. The Alternate Hypothesis results are two-sided. The Null Hypothesis isn't entirely rejected, because the 95% confidence interval has a median below 1.5.  
+
+```{r, warning=F, message=F}
 rLine <- coef(lm(data2$Material~data2$Absorbance_E_Coli, data=data2))
 layout(matrix(1,1,1))
 ggplot(data2, aes(x=as.factor(data2$Material),
@@ -71,10 +94,33 @@ geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
 fit <- lm(as.numeric(data2$Material)~data2$Absorbance_E_Coli, na.rm=T)
 layout(matrix(c(1,2,3,4),2,2))
 plot(fit)
+```
+
+### Graph 2 - E.Coli Linear Regression Plots:  
+1) Residuals vs. Fitted - the shape of the plot shows a linear relationship in the six data points of the E.Coli Graph #2 data.  
+
+2) Normal Q-Q - shows the data points all corresponding with the theoritical  quantities. Thereby, demonstrating accuracy of the Linear Regression, and the predictive ability of the data in E.Coli Graph #2.  
+
+3) Scale-Location - demonstrates equal distribution of residuals along the range of predictors, with all of the data points showing linearity.  
+
+4) Residuals vs Leverage - demonstrates there are influential cases within the E.Coli Graph #2 data, via the Cook's distance line being within the graph. The specific influential data points are data points 4 and 6.  
+
+```{r, warning=F, message=F}
 cor.test(as.numeric(data2$Material), data2$Absorbance_E_Coli,
          method="spearman")
-t.test(as.numeric(data2$Material), data2$Absorbance_E_Coli)
+```
 
+### Graph 2 - E. Coli - Spearman's Rank Correlation:  
+The E.Coli Graph #2 data points do not demonstrate reliability as predictors. The Spearman's Rank, or rho, never equals 0, and the Null Hypothesis isn't supported. Data within the Graph #2 data has possible use for response prediction, as demonstrated by the Linear Regression above.  
+
+```{r, warning=F, message=F}
+t.test(as.numeric(data2$Material), data2$Absorbance_E_Coli)
+```
+
+### Graph 2 - E. Coli - T-Test:  
+According to this test of the E.Coli Graph #2 data, the test results do not conclusively predict the behavior of the response variables accurately. The Null Hypothesis isn't entirely rejected, because the 95% confidence interval has a median below 1.5.  
+
+```{r, warning=F, message=F}
 rLine <- coef(lm(data2$Material~data2$Absorbance_S_Aureus, data=data2))
 layout(matrix(1,1,1))
 ggplot(data2, aes(x=as.factor(data2$Material),
@@ -89,10 +135,33 @@ geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
 fit <- lm(as.numeric(data2$Material)~data2$Absorbance_S_Aureus, na.rm=T)
 layout(matrix(c(1,2,3,4),2,2))
 plot(fit)
+```
+
+### Graph 2 - S.Aureus - Linear Regression Plots:  
+1) Residuals vs. Fitted - there is a non-linear relationship in the six data points of the S.Aureus Graph #2 data.  
+
+2) Normal Q-Q - the data points aren't in exact correspondence with the theoritical  quantities. Accuracy of the Linear Regression, and the predictive ability of the data in S.Aureus Graph #2, isn't demostrated.  
+
+3) Scale-Location - demonstrates equal distribution of residuals along the range of predictors, with all of the data points showing linearity.  
+
+4) Residuals vs Leverage - demonstrates there are influential cases within the S.Aureus Graph #2 data, via the Cook's distance line being within the graph. The specific influential data points are data points 1 and 4.  
+
+```{r, warning=F, message=F}
 cor.test(as.numeric(data2$Material), data2$Absorbance_S_Aureus,
          method="spearman")
-t.test(as.numeric(data2$Material), data2$Absorbance_S_Aureus)
+```
 
+### Graph 2 - S.Aureus - Spearman's Rank Correlation:  
+According to the Spearman's Rank Correlation, the S.Aureus Graph #2 data points do not demonstrate reliability as predictors. However, the Spearman's Rank, or rho, never equals 0, and the Null Hypothesis isn't supported.  
+
+```{r, warning=F, message=F}
+t.test(as.numeric(data2$Material), data2$Absorbance_S_Aureus)
+```
+
+### Graph 2 - S.Aureus - T-Test:  
+The S.Aureus Graph #2 data test results do not conclusively predict the behavior of the response variables accurately. The Null Hypothesis isn't entirely rejected, because the 95% confidence interval has a median below 1.5.  
+
+```{r, warning=F, message=F}
 data3$Material[1] <- "1"; data3$Material[2] <- "2"
 rLine <- coef(lm(data3$Material~data3$Absorbance_E_Coli, data=data3))
 layout(matrix(1,1,1))
@@ -108,10 +177,33 @@ geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
 fit <- lm(as.numeric(data3$Material)~data3$Absorbance_E_Coli, na.rm=T)
 layout(matrix(c(1,2,3,4),2,2))
 plot(fit)
+```
+
+### Graph 3 - E.Coli - Linear Regression Plots:  
+1) Residuals vs. Fitted - the shape of the plot doesn't show a linear relationship in the eight data points of the E.Coli Graph #3 data.  
+
+2) Normal Q-Q - shows the data points mostly corresponding with the theoritical  quantities. Thereby, demonstrating accuracy of the Linear Regression, and the predictive ability of the data in E.Coli Graph #3.  
+
+3) Scale-Location - demonstrates almost equal distribution of residuals along the range of predictors. A lack of linearity still exists.  
+
+4) Residuals vs Leverage - demonstrates there are influential cases within the E.Coli Graph #3 data, via the Cook's distance line being within the graph. The specific influential data points are data points 3 and 8.  
+
+```{r, warning=F, message=F}
 cor.test(as.numeric(data3$Material), data3$Absorbance_E_Coli,
          method="spearman")
-t.test(as.numeric(data3$Material), data3$Absorbance_E_Coli)
+```
 
+### Graph 3 - E.Coli - Spearman's Rank Correlation:  
+According to the test statistic, and the P-Value, the Graph #3 data points do not demonstrate reliability as predictors. The Spearman's Rank, or rho, never equals 0, and the Null Hypothesis isn't supported. The Linear Regression above demonstrates that the E.Coli Graph #3 data has possible use for response prediction.  
+
+```{r, warning=F, message=F}
+t.test(as.numeric(data3$Material), data3$Absorbance_E_Coli)
+```
+
+### Graph 3 - E.Coli - T-Test:  
+According to this test of the E.Coli Graph #3 data, the test results possibly predict the behavior of the response variables accurately. The Null Hypothesis, (that the data isn't useful for response predictions) is rejected, because the 95% confidence interval has a median above 1.5.  
+
+```{r, warning=F, message=F}
 rLine <- coef(lm(data3$Material~data3$Absorbance_S_Aureus, data=data3))
 layout(matrix(1,1,1))
 ggplot(data3, aes(x=as.factor(data3$Material),
@@ -126,7 +218,28 @@ geom_abline(intercept=rLine[1], slope=rLine[2], col="#008000")
 fit <- lm(as.numeric(data3$Material)~data3$Absorbance_S_Aureus, na.rm=T)
 layout(matrix(c(1,2,3,4),2,2))
 plot(fit)
+```
+
+### Graph 3 - S.Aureus - Linear Regression Plots:  
+1) Residuals vs. Fitted - the shape of the plot doesn't show a linear relationship in the eight data points of the S.Aureus Graph #3 data.  
+
+2) Normal Q-Q - shows the data points exactly corresponding with the theoritical  quantities. Thereby, demonstrating accuracy of the Linear Regression, and the predictive ability of the data in S.Aureus Graph #3.  
+
+3) Scale-Location - demonstrates almost equal distribution of residuals along the range of predictors. A lack of linearity, in the S.Aureus Graph #3 data, still exists.  
+
+4) Residuals vs Leverage - demonstrates that data points 2, 4, and 8, are influential cases within the S.Aureus Graph #3 data.  
+
+```{r, warning=F, message=F}
 cor.test(as.numeric(data3$Material), data3$Absorbance_S_Aureus,
          method="spearman")
+```
+
+### Graph 3 - S.Aureus - Spearman's Rank Correlation:  
+The S.Aureus Graph #3 data points do not demonstrate reliability as predictors.   
+
+```{r, warning=F, message=F}
 t.test(as.numeric(data3$Material), data3$Absorbance_S_Aureus)
 ```
+
+### Graph 3 - S.Aureus - T-Test:  
+According to this test of the S.Aureus Graph #3 data, the test results possibly predict the behavior of the response variables accurately, with a P-Value of 0.4206. The Null Hypothesis is rejected, because the 95% confidence interval has a median above 1.5.  

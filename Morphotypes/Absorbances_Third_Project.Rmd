@@ -96,11 +96,32 @@ fit <- lm(fib.vs.ABS.e.Coli$Sample_1~
                    fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli)
 layout(matrix(c(1,2,3,4),2,2))
 plot(fit)
+```
+
+### Dataset 3 - Linear Regression Plots  
+1) Residuals vs. Fitted - the shape of the plot shows a linear relationship in the eight sets of three data points of the fib_vs_ABS_ecoli_ data.  
+
+2) Normal Q-Q - shows the data points corresponding with the theoritical  quantities. Thereby, demonstrating accuracy of the Linear Regression, and predictive ability of the data in Dataset 3 - fib_vs_ABS_ecoli_.  
+
+3) Scale-Location - demonstrates homoscedasticity, or equal distribution of residuals along the range of predictors.  
+
+4) Residuals vs Leverage - the Cook's distance line is within the plot. Therefore, influential cases exist within Dataset 3. The specific influential data points are labeled, (data points 12 and 28).    
+
+```{r, warning=F, message=F}
 cor.test(as.numeric(fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli),
          fib.vs.ABS.e.Coli$Sample_1, method="spearman")
+```
+
+### Dataset 3 - Spearman's Rank Correlation  
+The test statistic equals 6213.3, therefore the Dataset 3 fib_vs_ABS_ecoli_ data points demonstrate reliability as predictors. The Spearman's Rank, or rho, never equals 0, and the Null Hypothesis isn't supported.  
+
+```{r, warning=F, message=F}
 t.test(as.numeric(fib.vs.ABS.e.Coli$fib_vs_ABS_e_coli),
          fib.vs.ABS.e.Coli$Sample_1)
 ```
+
+### Dataset 3 - T-Test    
+The Null Hypothesis is rejected, because the 95% confidence interval has a median above 1.5. The Alternate Hypothesis results are not equal to zero, therefore not supported by the data. The Dataset 3 test results do not conclusively predict the behavior of the response variables accurately.  
 
 # Dataset 4 - Data Input  
 ```{r, warning=F, message=F}
@@ -172,11 +193,32 @@ fit <- lm(fib_vs_ABS_s_Aureus2$Sample_1~
                    fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus)
 layout(matrix(c(1,2,3,4),2,2))
 plot(fit)
+```
+
+### Dataset 4 - Linear Regression Plots  
+1) Residuals vs. Fitted - the shape of the plot shows a linear relationship in the eight sets of three data points of the fib_vs_ABS_s_Aureus2 data.  
+
+2) Normal Q-Q - demonstrates that Linear Regression maintains accuracy, and proves the predictive ability of Dataset 4 - fib_vs_ABS_s_Aureus2.  
+
+3) Scale-Location - demonstrates homoscedasticity in Dataset 4, (equal distribution of residuals along the range of predictors).  
+
+4) Residuals vs Leverage - the Cook's distance line is visible. Data points 10 and 26 are influential cases in Dataset 4- fib_vs_ABS_s_Aureus2.  
+
+```{r, warning=F, message=F}
 cor.test(as.numeric(fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus),
          fib_vs_ABS_s_Aureus2$Sample_1, method="spearman")
+```
+
+### Dataset 4 - Spearman's Rank Correlation  
+The test statistic equals 6094.8, therefore Dataset 4- fib_vs_ABS_s_Aureus2 demonstrates reliability in response variables being affected by predictor variables. The Spearman's Rank, or rho, never equals 0, and the Null Hypothesis isn't supported.  
+
+```{r, warning=F, message=F}
 t.test(as.numeric(fib_vs_ABS_s_Aureus2$fib_vs_ABS_s_Aureus),
          fib_vs_ABS_s_Aureus2$Sample_1)
 ```
+
+### Dataset 4 - T-Test    
+The 95% confidence interval has a median above 1.5, therefore the Null Hypothesis, (that difference in absorbtion in Dataset 4 - fib_vs_ABS_s_Aureus2 doesn't exist), is rejected. The Alternate Hypothesis results are not equal to zero, therefore not supported by the data.
 
 # Dataset 5 - Data Input  
 ```{r, warning=F, message=F}
@@ -262,11 +304,32 @@ ggplot(disc.vs.abs.e.Coli[4:51,],
 fit <- lm(disc.vs.abs.e.Coli$Sample_1~disc.vs.abs.e.Coli$disc_vs_abs_eColi)
 layout(matrix(c(1,2,3,4),2,2))
 plot(fit)
+```
+
+### Dataset 5 - Linear Regression Plots  
+1) Residuals vs. Fitted - the shape of the plot shows a linear relationship in the sixteen samples of the disc.vs.abs.e.Coli data.  
+
+2) Normal Q-Q - shows the data points corresponding with the theoritical  quantities. Thereby, demonstrating accuracy of the Linear Regression, and predictive ability of the data in Dataset 5 - disc.vs.abs.e.Coli.  
+
+3) Scale-Location - demonstrates homoscedasticity, or equal distribution of residuals along the range of predictors of Dataset 5 - disc.vs.abs.e.Coli.  
+
+4) Residuals vs Leverage - the Cook's distance line is visible, within the plot. Data points 20 and 30 are identified as influential cases in Dataset 5 - disc.vs.abs.e.Coli.    
+
+```{r, warning=F, message=F}
 cor.test(as.numeric(disc.vs.abs.e.Coli$disc_vs_abs_eColi),
          disc.vs.abs.e.Coli$Sample_1, method="spearman")
+```
+
+### Dataset 5 - Spearman's Rank Correlation  
+The test statistic equals 32327, therefore Dataset 5 - disc.vs.abs.e.Coli demonstrates high reliability. The P-Value is lower than 0.05, therefore showing accurate predictor to response characteristics. The Spearman's Rank, or rho, never equals 0, and the Null Hypothesis isn't supported.  
+
+```{r, warning=F, message=F}
 t.test(as.numeric(disc.vs.abs.e.Coli$disc_vs_abs_eColi),
          disc.vs.abs.e.Coli$Sample_1)
 ```
+
+### Dataset 5 - T-Test    
+The Null Hypothesis is rejected, because the 95% confidence interval, of Dataset 5 - disc.vs.abs.e.Coli, has a median above 1.5. The Alternate Hypothesis results are not equal to zero, therefore not supported by the data. 
 
 # Dataset 6 - Data Input  
 ```{r, warning=F, message=F}
@@ -354,11 +417,32 @@ fit <- lm(disc.vs.abs.S.Aureus$Sample_1~
             disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus)
 layout(matrix(c(1,2,3,4),2,2))
 plot(fit)
+```
+
+### Dataset 6 - Linear Regression Plots  
+1) Residuals vs. Fitted - there is a partially linear relationship in the sixteen sets of data points of the Dataset 6 - disc.vs.abs.S.Aureus data.  
+
+2) Normal Q-Q - shows the data points mostly corresponding with the theoritical  quantities. Thereby, demonstrating accuracy of the Linear Regression, and predictive ability of the data in Dataset 6 - disc.vs.abs.S.Aureus data.  
+
+3) Scale-Location - Dataset 6 - disc.vs.abs.S.Aureus, demonstrates homoscedasticity, (equal distribution of residuals along the range of predictors).  
+
+4) Residuals vs Leverage - the Cook's distance line is within the plot. Influential cases within Dataset 6 - disc.vs.abs.S.Aureus data are data points 15 and 30.  
+
+```{r, warning=F, message=F}
 cor.test(as.numeric(disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus),
          disc.vs.abs.S.Aureus$Sample_1, method="spearman")
+```
+
+### Dataset 6 - Spearman's Rank Correlation  
+The test statistic for Dataset 6 - disc.vs.abs.S.Aureus equals 28086, therefore a high accuracy of test results. The P-Value of 0.05456 is near the required P-Value of 0.05. The Spearman's Rank, or rho, never equals 0, and the Null Hypothesis isn't supported.  
+
+```{r, warning=F, message=F}
 t.test(as.numeric(disc.vs.abs.S.Aureus$disc_vs_abs_S_Aureus),
          disc.vs.abs.S.Aureus$Sample_1)
 ```
+
+### Dataset 6 - T-Test    
+The Null Hypothesis is rejected, because the 95% confidence interval has a median above 1.5. The Alternate Hypothesis results are not equal to zero, therefore not supported by the data.  
 
 # Dataset 7 - Data Input  
 ```{r, warning=F, message=F}
@@ -430,11 +514,32 @@ fit <- lm(fill_vs_eColi$Sample_1~
             fill_vs_eColi$fill_vs_ABS_ecoli)
 layout(matrix(c(1,2,3,4),2,2))
 plot(fit)
+```
+
+### Dataset 7 - Linear Regression Plots  
+1) Residuals vs. Fitted - there is a linear relationship in the eight sets of three data points of Dataset 7 - fill_vs_eColi.  
+
+2) Normal Q-Q - shows the data points mostly corresponding with the theoritical  quantities. Thereby, demonstrating accuracy of the Linear Regression of Dataset 7 - fill_vs_eColi.  
+
+3) Scale-Location - demonstrates homoscedasticity exists in Dataset 7 - fill_vs_eColi.  
+
+4) Residuals vs Leverage - the Cook's distance line is within the plot. Therefore, influential cases exist within Dataset 7 - fill_vs_eColi. The specific influential data points are labeled, (data points 13 and 26).    
+
+```{r, warning=F, message=F}
 cor.test(as.numeric(fill_vs_eColi$fill_vs_ABS_ecoli),
          fill_vs_eColi$Sample_1, method="spearman")
+```
+
+### Dataset 7 - Spearman's Rank Correlation  
+The test statistic equals 6367.6, therefore Dataset 7 - fill_vs_eColi demonstrate predictor reliability. The Spearman's Rank, or rho, never equals 0, and the Null Hypothesis isn't supported.  
+
+```{r, warning=F, message=F}
 t.test(as.numeric(fill_vs_eColi$fill_vs_ABS_ecoli),
          fill_vs_eColi$Sample_1)
 ```
+
+### Dataset 7 - T-Test    
+Dataset 7 - fill_vs_eColi test results do not conclusively predict the behavior of the response variables accurately, however the Null Hypothesis is rejected, because the 95% confidence interval has a median above 1.5. The Alternate Hypothesis results are not equal to zero, therefore the Alternate Hypothesis is not supported by the data.  
 
 # Dataset 8 - Data Input  
 ```{r, warning=F, message=F}
@@ -506,8 +611,29 @@ fit <- lm(fil_vs_S_Aureus2$Sample_1~
             fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus)
 layout(matrix(c(1,2,3,4),2,2))
 plot(fit)
+```
+
+### Dataset 8 - Linear Regression Plots  
+1) Residuals vs. Fitted - the shape of the plot does not shows a linear relationship in the eight sets of three data points of the Dataset 8 - fil_vs_S_Aureus2 data.  
+
+2) Normal Q-Q - shows the data points nearly corresponding with the theoritical  quantities, even though not exactly on the regression line. Thereby, demonstrating accuracy of the Linear Regression, and predictive ability of the data in Dataset 8 - fil_vs_S_Aureus2 data.  
+
+3) Scale-Location - demonstrates homoscedasticity, or equal distribution of residuals along the range of predictors in Dataset 8 - fil_vs_S_Aureus2 data.  
+
+4) Residuals vs Leverage - the Cook's distance line is within the plot. Therefore, influential cases exist within Dataset 8 - fil_vs_S_Aureus2 data. The specific influential data points are labeled, (data points 17 and 28).    
+
+```{r, warning=F, message=F}
 cor.test(as.numeric(fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus),
          fil_vs_S_Aureus2$Sample_1, method="spearman")
+```
+
+### Dataset 8 - Spearman's Rank Correlation  
+The test statistic equals 6057.7, therefore Dataset 8 - fil_vs_S_Aureus2 demonstrates predictor reliability. The Spearman's Rank, or rho, is not equal to zero, and the Null Hypothesis isn't supported.  
+
+```{r, warning=F, message=F}
 t.test(as.numeric(fil_vs_S_Aureus2$fil_vs_ABS_S_Aureus),
          fil_vs_S_Aureus2$Sample_1)
 ```
+
+### Dataset 8 - T-Test    
+The Null Hypothesis is rejected, for Dataset 8 - fil_vs_S_Aureus2, because the 95% confidence interval has a median above 1.5. The Alternate Hypothesis results are not equal to zero, therefore not supported by the data.  
