@@ -1,0 +1,210 @@
+---
+title: "Protein Signal Analysis - Phase 1"
+subtitle: "by ContextBase, http://contextbase.github.io"
+author: "John Akwei, ECMp ERMp Data Scientist"
+date: "February 8, 2016"
+output: html_document
+---
+
+# Synopsis  
+This document is comprised of the following R data analysis items:  
+1) Graphs of Protein Data, (with legends), for visualization/understanding the data  
+2) Graphs/Tables, (with legends), of the data parameters, (quartiles, etc.)  
+3) Hypothesis Tests of Protein Data (correlation coefficients, summary stats, (mean, sd), 95% Confidence)  
+4) Notated R Code for future Reproducibility  
+
+The dataset examined is: data_protein.csv  
+
+The following parameters of data_protein.csv are examined:  
+1) a - g are the protein signal values (they are not absolute values), but they are relative for each protein separately. They represent the total amount of protein in that sample.  
+2) V are the variables measured from each of the 61 samples. v8 - v11 weren't done by me and represent fold changes compared to some control.  
+3) V3 is known to be "bad or hi" above 0.7 and is the most important followed by v2 = "bad or hi" at 7 or 8 and above, and then v1 which is considered to be "normal" between 0.86 and 1.76 ug/ml. v3 is the ratio of v2/k (potassium).  
+4) Previous tried: Fisher's exact tests by cross tabulation using hi (0.7) v3 group that contained either hi or lo protein vs the rest of the v3 group < 0.7. Samples hi in v3 are more likely than lo to have hi/lo levels of protein c.  
+
+Data Science Goals:  
+1) To know if my biomarkers (western blot data/signal intensity) can be used to predict elevated levels of some variable.  
+2) To find cutoff points for these markers that could indicate "good" or "bad" (using a certain amount of signal measured).  
+3) Find any meaningful correlations with the proteins of interest (POI), n = 7 columns, that could help predict biological dysfunction.  
+4) Develop a methodical approach to analyzing the data so I can answer those 2 questions.  
+
+#### Processing Requirements  
+```{r, warning=F, message=F}
+# Use setwd() to set working directory to folder w/ relevant files
+setwd("C:/Users/johnakwei/Dropbox/Programming/Morphotypes")
+
+# Check if required R packages are installed. If not, then install.
+if (!require("ggplot2")) {install.packages("ggplot2"); require("ggplot2")}
+```
+
+# Data Input  
+```{r, warning=F, message=F}
+# Read in the .csv datafile from the Working Directory
+data_protein <- read.csv("data_protein.csv", header=T, na.strings="NA")
+```
+
+# Graphs  
+```{r, warning=F, message=F}
+# Define Vertical Lines for the first Graph
+confLine <- coef(lm(data_protein$a~data_protein$a, data=data_protein))
+mLine <- mean(na.omit(data_protein$a))
+sdLine <- sd(na.omit(data_protein$a))
+sdLines <- c(mLine + sdLine, mLine - sdLine) 
+st <- t.test(data_protein$a, data_protein$v3)
+
+# First Graph
+ggplot(data_protein,
+       aes(x=as.factor(data_protein$a), y=data_protein$a)) + 
+geom_point(aes(data_protein$a)) +
+ggtitle("Protein - Signal 'a' Correlation") +
+xlab("a") + ylab("a") +
+geom_vline(xintercept=mLine, col="#1E90FF") +
+geom_vline(xintercept=sdLines[2], col="#008000") +
+geom_vline(xintercept=sdLines[1], col="#008000") +
+geom_vline(xintercept=median(st$conf), col="#FF4500") +
+annotate("text", x=c(sdLines[2],
+                     sdLines[1], median(st$conf),
+                     mLine), y=c(25, 25, 30, 25),
+         label=c("SD Low", "SD High", "95% Conf", "Mean")) +
+theme(plot.title=element_text(color="blue")) +
+theme(axis.title=element_text(color="darkblue")) +
+theme(axis.text.x=element_text(angle=45, hjust=1))
+```
+
+```{r, echo=F, warning=F, message=F}
+# Create labels for first graph, above.
+guideTable <- matrix(nrow=4, ncol=1)
+colnames(guideTable) <- c("Signal_Value_a")
+rownames(guideTable) <- c("Mean =" ,"SD =",
+                          "Conf Low =", "Conf High =")
+guideTable[,1] <- c(mLine, sdLine, st$conf[1], st$conf[2])
+guideTable <- data.frame(guideTable)
+guideTable
+```
+
+# Quantiles of 'a' values
+```{r, warning=F, message=F}
+aQuantile <- quantile(data_protein$a, na.rm=T)
+aQuantile
+```
+
+# Subset 'a' values
+```{r, warning=F, message=F}
+# The entire data_protein data is subsetted based on v3 <> 0.7
+highValues <- subset(data_protein, data_protein$v3 > 0.7)
+highValues <- data.frame(highValues)
+lowValues <- subset(data_protein, data_protein$v3 < 0.7)
+lowValues <- data.frame(lowValues)
+a25quantile <- subset(data_protein, data_protein$a < aQuantile[2])
+```
+
+# Plot High 'a' Values
+```{r, warning=F, message=F}
+# Define Vertical Lines for the High 'a' Values Graph
+mLineHigh <- mean(na.omit(highValues$a))
+sdLineHigh <- sd(na.omit(highValues$a))
+sdLinesHigh <- c(mLineHigh + sdLineHigh, mLineHigh - sdLineHigh) 
+stHigh <- t.test(highValues$a, data_protein$v3)
+
+# High 'a' Values Graph
+ggplot(highValues,
+       aes(x=as.factor(highValues$a), y=highValues$a)) + 
+geom_point(aes(highValues$a)) +
+ggtitle("High 'a' Values Correlation") +
+xlab("'a' Values > 0.7") + ylab("'a' Values > 0.7") +
+geom_vline(xintercept=mLineHigh, col="#1E90FF") +
+geom_vline(xintercept=sdLinesHigh[2], col="#008000") +
+geom_vline(xintercept=sdLinesHigh[1], col="#008000") +
+geom_vline(xintercept=median(stHigh$conf), col="#FF4500") +
+annotate("text", x=c(sdLinesHigh[2],
+                     sdLinesHigh[1], median(st$conf),
+                     mLine), y=c(25, 25, 30, 25),
+         label=c("SD Low", "SD High", "95% Conf", "Mean")) +
+theme(plot.title=element_text(color="blue")) +
+theme(axis.title=element_text(color="darkblue")) +
+theme(axis.text.x=element_text(angle=45, hjust=1))
+```
+
+```{r, echo=F, warning=F, message=F}
+# Create labels for high 'a' graph, above.
+guideTable2 <- matrix(nrow=4, ncol=1)
+colnames(guideTable2) <- c("Signal_Value_a_greater_than_0.7")
+rownames(guideTable2) <- c("Mean =" ,"SD =",
+                          "Conf Low =", "Conf High =")
+guideTable2[,1] <- c(mLineHigh, sdLineHigh, stHigh$conf[1], stHigh$conf[2])
+guideTable2 <- data.frame(guideTable2)
+guideTable2
+```
+
+# Quantiles of High 'a' values
+```{r, warning=F, message=F}
+aQuantileHigh <- quantile(highValues$a, na.rm=T)
+aQuantileHigh
+```
+
+# Plot Low 'a' Values
+```{r, warning=F, message=F}
+# Define Vertical Lines for the Low 'a' Values Graph
+mLineLow <- mean(na.omit(lowValues$a))
+sdLineLow <- sd(na.omit(lowValues$a))
+sdLinesLow <- c(mLineLow + sdLineLow, mLineLow - sdLineLow) 
+stLow <- t.test(lowValues$a, data_protein$v3)
+
+# Low 'a' Values Graph
+ggplot(lowValues,
+       aes(x=as.factor(lowValues$a), y=lowValues$a)) + 
+geom_point(aes(lowValues$a)) +
+ggtitle("Low 'a' Values Correlation") +
+xlab("'a' Values < 0.7") + ylab("'a' Values < 0.7") +
+geom_vline(xintercept=mLineLow, col="#1E90FF") +
+geom_vline(xintercept=sdLinesLow[2], col="#008000") +
+geom_vline(xintercept=sdLinesLow[1], col="#008000") +
+geom_vline(xintercept=median(stLow$conf), col="#FF4500") +
+annotate("text", x=c(sdLinesLow[2],
+                     sdLinesLow[1], median(st$conf),
+                     mLine), y=c(25, 25, 30, 25),
+         label=c("SD Low", "SD High", "95% Conf", "Mean")) +
+theme(plot.title=element_text(color="blue")) +
+theme(axis.title=element_text(color="darkblue")) +
+theme(axis.text.x=element_text(angle=45, hjust=1))
+```
+
+```{r, echo=F, warning=F, message=F}
+# Create labels for low 'a' graph, above.
+guideTable3 <- matrix(nrow=4, ncol=1)
+colnames(guideTable3) <- c("Signal_Value_a_less_than_0.7")
+rownames(guideTable3) <- c("Mean =" ,"SD =",
+                          "Conf Low =", "Conf High =")
+guideTable3[,1] <- c(mLineLow, sdLineLow, stLow$conf[1], stLow$conf[2])
+guideTable3 <- data.frame(guideTable3)
+guideTable3
+```
+
+# Quantiles of Low 'a' values
+```{r, warning=F, message=F}
+aQuantileLow <- quantile(lowValues$a, na.rm=T)
+aQuantileLow
+```
+
+# Linear Regression - Response Variable=Signal "a", Predictor Variable=v3
+```{r, warning=F, message=F}
+# A linear model is created w/ Signal "a" as the Response variable
+# v3 is the Predictor variable
+fit <- lm(data_protein$a~data_protein$v3)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+layout(matrix(1,1,1))
+```
+
+# Correlation  
+```{r, warning=F, message=F}
+# Spearman's test of correlation
+ct <- cor.test(data_protein$a, data_protein$v3, method="spearman")
+ct
+```
+
+# T-Test  
+```{r, warning=F, message=F}
+# The Welsch Two Sample T-Test
+st <- t.test(data_protein$a, data_protein$v3)
+st
+```
