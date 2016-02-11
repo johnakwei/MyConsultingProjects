@@ -2,7 +2,7 @@
 title: "Protein Signal Analysis - Phase 1"
 subtitle: "by ContextBase, http://contextbase.github.io"
 author: "John Akwei, ECMp ERMp Data Scientist"
-date: "February 8, 2016"
+date: "February 11, 2016"
 output: html_document
 ---
 
@@ -54,20 +54,25 @@ st <- t.test(data_protein$a, data_protein$v3)
 # First Graph
 ggplot(data_protein,
        aes(x=as.factor(data_protein$a), y=data_protein$a)) + 
-geom_point(aes(data_protein$a)) +
-ggtitle("Protein - Signal 'a' Correlation") +
-xlab("a") + ylab("a") +
+geom_point(aes(data_protein$a), col="#00CED1") +
+labs(list(title="Protein - Signal 'a' Correlation", x="a",
+          y="a", color="darkblue")) +
 geom_vline(xintercept=mLine, col="#1E90FF") +
 geom_vline(xintercept=sdLines[2], col="#008000") +
 geom_vline(xintercept=sdLines[1], col="#008000") +
-geom_vline(xintercept=median(st$conf), col="#FF4500") +
-annotate("text", x=c(sdLines[2],
-                     sdLines[1], median(st$conf),
-                     mLine), y=c(25, 25, 30, 25),
-         label=c("SD Low", "SD High", "95% Conf", "Mean")) +
-theme(plot.title=element_text(color="blue")) +
-theme(axis.title=element_text(color="darkblue")) +
-theme(axis.text.x=element_text(angle=45, hjust=1))
+geom_vline(xintercept=st$conf[1], col="#FF4500") +
+geom_vline(xintercept=st$conf[2], col="#FF4500") +
+annotate("text", x=c(sdLines[2], sdLines[1], st$conf,
+                     mLine), y=c(25, 25, 30, 40, 25),
+         label=c("SD Low", "SD High", "95% Conf Low",
+                 "95% Conf High", "Mean")) +
+theme(plot.title=element_text(vjust=1, color="blue", size=16,
+                              face="bold.italic")) +
+theme(axis.text.x=element_text(angle=0, hjust=1, color="darkorange",
+                               size=14, face="bold")) +
+theme(axis.text.y=element_text(color="darkorange", size=14, face="bold")) +
+theme(axis.title.x=element_text(color="darkblue", size=14, vjust=0.5),
+      axis.title.y=element_text(color="darkblue", size=14, vjust=0.5))
 ```
 
 ```{r, echo=F, warning=F, message=F}
@@ -108,20 +113,25 @@ stHigh <- t.test(highValues$a, data_protein$v3)
 # High 'a' Values Graph
 ggplot(highValues,
        aes(x=as.factor(highValues$a), y=highValues$a)) + 
-geom_point(aes(highValues$a)) +
-ggtitle("High 'a' Values Correlation") +
-xlab("'a' Values > 0.7") + ylab("'a' Values > 0.7") +
+geom_point(aes(highValues$a), col="#00CED1") +
+labs(list(title="High 'a' Values Correlation", x="'a' Values > 0.7",
+          y="'a' Values > 0.7")) +
 geom_vline(xintercept=mLineHigh, col="#1E90FF") +
 geom_vline(xintercept=sdLinesHigh[2], col="#008000") +
 geom_vline(xintercept=sdLinesHigh[1], col="#008000") +
-geom_vline(xintercept=median(stHigh$conf), col="#FF4500") +
-annotate("text", x=c(sdLinesHigh[2],
-                     sdLinesHigh[1], median(st$conf),
-                     mLine), y=c(25, 25, 30, 25),
-         label=c("SD Low", "SD High", "95% Conf", "Mean")) +
-theme(plot.title=element_text(color="blue")) +
-theme(axis.title=element_text(color="darkblue")) +
-theme(axis.text.x=element_text(angle=45, hjust=1))
+geom_vline(xintercept=stHigh$conf[1], col="#FF4500") +
+geom_vline(xintercept=stHigh$conf[2], col="#FF4500") +
+annotate("text", x=c(sdLines[2], sdLines[1], stHigh$conf,
+                     mLine), y=c(25, 25, 30, 35, 25),
+         label=c("SD Low", "SD High", "95% Conf Low",
+                 "95% Conf High", "Mean")) +
+theme(plot.title=element_text(vjust=1, color="blue", size=16,
+                              face="bold.italic")) +
+theme(axis.text.x=element_text(angle=0, hjust=1, color="orange",
+                               size=14, face="bold")) +
+theme(axis.text.y=element_text(color="orange", size=14, face="bold")) +
+theme(axis.title.x=element_text(color="darkblue", size=14, vjust=0.5),
+      axis.title.y=element_text(color="darkblue", size=14, vjust=0.5))
 ```
 
 ```{r, echo=F, warning=F, message=F}
@@ -150,22 +160,26 @@ sdLinesLow <- c(mLineLow + sdLineLow, mLineLow - sdLineLow)
 stLow <- t.test(lowValues$a, data_protein$v3)
 
 # Low 'a' Values Graph
-ggplot(lowValues,
-       aes(x=as.factor(lowValues$a), y=lowValues$a)) + 
-geom_point(aes(lowValues$a)) +
-ggtitle("Low 'a' Values Correlation") +
-xlab("'a' Values < 0.7") + ylab("'a' Values < 0.7") +
+ggplot(lowValues, aes(x=as.factor(lowValues$a), y=lowValues$a)) + 
+geom_point(aes(lowValues$a), col="#00CED1") +
+labs(list(title="Low 'a' Values Correlation", x="'a' Values < 0.7",
+          y="'a' Values < 0.7")) +
 geom_vline(xintercept=mLineLow, col="#1E90FF") +
 geom_vline(xintercept=sdLinesLow[2], col="#008000") +
 geom_vline(xintercept=sdLinesLow[1], col="#008000") +
-geom_vline(xintercept=median(stLow$conf), col="#FF4500") +
-annotate("text", x=c(sdLinesLow[2],
-                     sdLinesLow[1], median(st$conf),
-                     mLine), y=c(25, 25, 30, 25),
-         label=c("SD Low", "SD High", "95% Conf", "Mean")) +
-theme(plot.title=element_text(color="blue")) +
-theme(axis.title=element_text(color="darkblue")) +
-theme(axis.text.x=element_text(angle=45, hjust=1))
+geom_vline(xintercept=stLow$conf[1], col="#FF4500") +
+geom_vline(xintercept=stLow$conf[2], col="#FF4500") +
+annotate("text", x=c(sdLines[2], sdLines[1], stLow$conf,
+                     mLine), y=c(25, 25, 30, 35, 25),
+         label=c("SD Low", "SD High", "95% Conf Low",
+                 "95% Conf High", "Mean")) +
+theme(plot.title=element_text(vjust=1, color="blue", size=16,
+                              face="bold.italic")) +
+theme(axis.text.x=element_text(angle=0, hjust=1, color="orange",
+                               size=14, face="bold")) +
+theme(axis.text.y=element_text(color="orange", size=14, face="bold")) +
+theme(axis.title.x=element_text(color="darkblue", size=14, vjust=0.5),
+      axis.title.y=element_text(color="darkblue", size=14, vjust=0.5))
 ```
 
 ```{r, echo=F, warning=F, message=F}
@@ -177,6 +191,33 @@ rownames(guideTable3) <- c("Mean =" ,"SD =",
 guideTable3[,1] <- c(mLineLow, sdLineLow, stLow$conf[1], stLow$conf[2])
 guideTable3 <- data.frame(guideTable3)
 guideTable3
+```
+
+```{r, warning=F, message=F, fig.width=11, fig.height=7}
+# Graph of a - g Signal Values for all Samples
+ggplot(data_protein) +
+  geom_point(aes(x=as.factor(data_protein$sample), y=data_protein$a),
+             col="Dodger Blue") +
+  geom_point(aes(x=as.factor(data_protein$sample), y=data_protein$b),
+             col="Forest Green") +
+  geom_point(aes(x=as.factor(data_protein$sample), y=data_protein$c),
+             col="Gold") +
+  geom_point(aes(x=as.factor(data_protein$sample), y=data_protein$d),
+             col="Light Coral") +
+  geom_point(aes(x=as.factor(data_protein$sample), y=data_protein$e),
+             col="Orange Red") +
+  geom_point(aes(x=as.factor(data_protein$sample), y=data_protein$f),
+             col="Magenta") +
+  geom_point(aes(x=as.factor(data_protein$sample), y=data_protein$g),
+             col="Medium Orchid") +
+  ggtitle("Protein - a through g levels") +
+  xlab("Sample") + ylab("a through g Levels") +
+  theme(plot.title=element_text(vjust=1, color="blue", size=16,
+                                face="bold.italic")) +
+  theme(axis.text.x=element_text(angle=45, hjust=1)) +
+  theme(axis.text.y=element_text(color="darkorange", size=12, face="bold")) +
+  theme(axis.title.x=element_text(color="darkblue", size=14, vjust=0.5),
+      axis.title.y=element_text(color="darkblue", size=14, vjust=0.5))
 ```
 
 # Quantiles of Low 'a' values
