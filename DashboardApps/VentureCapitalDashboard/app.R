@@ -14,8 +14,7 @@ library(shinydashboard)
 library(ggplot2)
 
 # Venture Capital Firm data is read in:
-firmData <- read.csv("Clean_Series_A_Research_Calculations.csv",
-                     header=T)
+firmData <- read.csv("Clean_Series_A_Research_Calculations.csv", header=T)
 
 # The Date column is formatted as time data:
 firmData$Date <- strptime(firmData$Date, format="%m/%d/%Y")
@@ -47,48 +46,34 @@ VCInvestAvg <- tapply(firmData$InvestmentAmount,
 # Not available data is removed
 firmData <- na.omit(firmData)
 
-# OutputProcess <- function(VentureFirm, StartUp, InvestType) {
-#   out <- firmData[firmData$VentureFirm==VentureFirm &
-#                     firmData$StartUp==StartUp &
-#                     firmData$InvestmentType==InvestType,]
-#   out
-# }
-
 ui <- dashboardPage(  
   dashboardHeader(title="VC Dashboard"),
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Dashboard 1", tabName="dashboard1",
+      menuItem("Summary Graphs", tabName="dashboard1",
                icon=icon("dashboard")),
       menuItem("Venture Capital Search", tabName="venturesearch",
                icon=icon("dashboard")),
+      menuItem("Data Table", tabName="DataTable",
+               icon=icon("th")),
       menuItem("Documentation", tabName="documentation",
                icon=icon("th"))
     )
   ),
   dashboardBody(
     tabItems(
-      # First tab content
       tabItem(tabName="dashboard1",
               fluidRow(
                 box(plotOutput("plot1", height=400)),
-                box(print(paste("The average of All VC investments
-                        per type is", round(mean(Investments$Amount)),
-                        " Million USD.")), height=100)
+                valueBoxOutput("allInvestmentsBox")
                 ),
               fluidRow(
                 box(plotOutput("plot2", height=400)),
-                box(print(paste("The average total Venture Capitalization
-                        of a StartUp is",
-                        round(mean(StartUpInvestAvg, na.rm=T)),
-                        " Million USD.")), height=100)
+                valueBoxOutput("startupCapitalizationBox")
                 ),
               fluidRow(
                 box(plotOutput("plot3", height=400)),
-                box(print(paste("The average total investments of
-                                Venture Capital Firms is",
-                                round(mean(VCInvestAvg, na.rm=T)),
-                                " Million USD.")), height=100)
+                valueBoxOutput("firmInvestmentsBox")
                 )
     ),
     tabItem(tabName="venturesearch",
@@ -102,12 +87,14 @@ ui <- dashboardPage(
                               as.character(firmData$VentureFirm), width="100%"),
                   uiOutput("StartUpSelector"),
                   uiOutput("InvestTypeSelector")),
-                  box(textOutput('text1'))
-              ),
-#             fluidRow(box(dataTableOutput('vcData'), width="100%"))
-              fluidRow(
-                box(datatable(firmData), width="100%")
-                )
+              valueBoxOutput("text1Box", width=6),
+              valueBoxOutput("text2Box", width=6),
+              valueBoxOutput("text3Box", width=6)
+              )
+            ),
+    tabItem(tabName="DataTable",
+            fluidRow(box(title="Venture Capital Firm Data Table",
+                         width=12, datatable(firmData)))
             ),
     tabItem(tabName="documentation",
             fluidRow(box(h4(print(paste("Introduction")), height=100))),
@@ -120,7 +107,7 @@ ui <- dashboardPage(
               ),
             fluidRow(box(h4(print(paste("Features")), height=100))),
             fluidRow(
-              box(h4(print(paste("Dashboard 1: Generates graphs of
+              box(h4(print(paste("Summary Graphs: Generates graphs of
                                   Sums of Investment Types,
                                   StartUp Investments,
                                   Sums of Investment Firms.")), height=100))),
@@ -150,8 +137,6 @@ ui <- dashboardPage(
 
 server <- function(input, output) {
   
-#   output$vcData <- renderDataTable({datatable(firmData)})
-  
   output$plot1 <- renderPlot({
     ggplot(data=Investments, aes(Type, Amount)) +
       geom_bar(aes(), stat="identity", fill=rainbow(27)) +
@@ -162,12 +147,29 @@ server <- function(input, output) {
       theme(axis.text.x=element_text(angle=45, hjust=1))
   })
   
+  output$allInvestmentsBox <- renderValueBox({
+    valueBox(
+      paste0(round(mean(Investments$Amount))),
+      "The average of All VC investments per type, (in Million USD)",
+      icon=icon("credit-card"),
+      color="purple")
+  })
+  
   output$plot2 <- renderPlot({
     StartUpInvestAvg <- tapply(firmData$InvestmentAmount,
                                firmData$StartUp, FUN=sum, na.rm=T)
     plot(StartUpInvestAvg, main="Average Investment per StartUp (2434 StartUps)",
          col.main="blue", xlab="StartUp", ylab="Investment (Millions)",
          col.lab="darkblue", col=firmData$StartUp)
+  })
+  
+  output$startupCapitalizationBox <- renderValueBox({
+    valueBox(
+      paste0(round(mean(StartUpInvestAvg, na.rm=T))),
+      "The average total Venture Capitalization of a StartUp,
+       (in Million USD)",
+      icon=icon("credit-card"),
+      color="purple")
   })
   
   output$plot3 <- renderPlot({
@@ -178,6 +180,15 @@ server <- function(input, output) {
          col.main="blue", xlab="Venture Capital Firm",
          ylab="Investments (Millions)", col.lab="darkblue",
          col=firmData$VentureFirm)
+  })
+  
+  output$firmInvestmentsBox <- renderValueBox({
+    valueBox(
+      paste0(round(mean(VCInvestAvg, na.rm=T))),
+      "The average total investments of Venture Capital Firms,
+      (in Million USD)",
+      icon=icon("credit-card"),
+      color="purple")
   })
   
   output$StartUpSelector <- renderUI({
@@ -194,18 +205,64 @@ server <- function(input, output) {
     selectInput("InvestType", "Select Investment Type:",
                 as.character(InvestList))})
 
-  output$text1 <- renderPrint({
+#   output$text1 <- renderPrint({
+#     input$VCSearch
+#     isolate({
+#       OutputProcess <- function(VentureFirm, StartUp, InvestType) {
+#         out <- firmData[firmData$VentureFirm==VentureFirm &
+#                           firmData$StartUp==StartUp &
+#                           firmData$InvestmentType==InvestType,]
+#         as.character(out$StartUp)
+#       }
+#     OutputProcess(input$VCSelector, input$StartUps,input$InvestType)
+#     })
+#   })
+  
+  output$text1Box <- renderValueBox({
     input$VCSearch
+    valueBox(
+      isolate({
+        OutputProcess <- function(VentureFirm, StartUp, InvestType) {
+          out <- firmData[firmData$VentureFirm==VentureFirm &
+                            firmData$StartUp==StartUp &
+                            firmData$InvestmentType==InvestType,]
+          as.character(out$StartUp)
+        }
+        OutputProcess(input$VCSelector, input$StartUps,input$InvestType)
+      }),
+      " ", color="purple")
+  })
+  
+output$text2Box <- renderValueBox({
+  input$VCSearch
+  valueBox(
     isolate({
       OutputProcess <- function(VentureFirm, StartUp, InvestType) {
         out <- firmData[firmData$VentureFirm==VentureFirm &
                           firmData$StartUp==StartUp &
                           firmData$InvestmentType==InvestType,]
-        out
+        out$InvestmentAmount
       }
-    OutputProcess(input$VCSelector, input$StartUps,input$InvestType)
-    })
-  })
+      OutputProcess(input$VCSelector, input$StartUps,input$InvestType)
+    }),
+    "in Millions USD", color="purple")
+})
+
+output$text3Box <- renderValueBox({
+  input$VCSearch
+  valueBox(
+    isolate({
+      OutputProcess <- function(VentureFirm, StartUp, InvestType) {
+        out <- firmData[firmData$VentureFirm==VentureFirm &
+                          firmData$StartUp==StartUp &
+                          firmData$InvestmentType==InvestType,]
+        out$InvestmentType
+      }
+      OutputProcess(input$VCSelector, input$StartUps,input$InvestType)
+    }),
+    " ", color="purple")
+})
+
 }
 
 shinyApp(ui, server)
