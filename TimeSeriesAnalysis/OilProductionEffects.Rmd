@@ -1,0 +1,176 @@
+---
+title: "Oil Production Environmental Effects"
+subtitle: "by ContextBase, contextbase.github.io"
+author: "author: John Akwei, ECMp ERMp Data Scientist"
+date: "March 31, 2016"
+output: html_document
+---
+
+##### This document is a examination of the effects of Oil Production, (combined with Average Hourly Temperature, Dew Point, Humidity, and Wind), on the presence of Particulate Matter, Hydrogen Sulfide, Nitrogen Oxides, Ammonia, Carbon Monoxide, and Carbon Dioxide. In order to predict future levels of these chemicals, a polynomial correlation matrix is constructed from 232 samples of the above factors.
+
+```{r, echo=F, warning=F, message=F}
+setwd("C:/Users/johnakwei/Dropbox/Programming/CorrelationAnalysis") Project Files - "Q0873kE5qu230258.xlsx", "Uh2ogykOdx230258.pdf",
+# "z7u1g2E6qs230257.docx"
+
+if (!require("ggplot2")) {install.packages("ggplot2"); require("ggplot2")}
+if (!require("xlsx")) {install.packages("xlsx"); require("xlsx")}
+if (!require("lattice")) {install.packages("lattice"); require("lattice")}
+
+OilData <- read.xlsx("Q0873kE5qu230258.xlsx", 1)
+# OilDataRef <- read.xlsx("Q0873kE5qu230258.xlsx", 1)
+
+names(OilData) <- c("SampleNumber", "Date", "Time", "PM25", "H25",
+              "NOX", "NH3", "CO", "CO2", "O3", "AvgHourTemp",
+              "AvgHourDewPt", "AvgHourHumid", "AvgHourWind",
+              "AvgHourOil")
+
+OilData <- OilData[4:235,]
+
+names(OilData)
+
+head(OilData, 1)
+
+ggplot(OilData, aes(as.numeric(Date), as.numeric(AvgHourTemp))) +
+  geom_line(aes(), col="Dodger Blue") +
+  labs (x="Date", y="Temperature",
+        title="Average Hourly Temperature by Date") +
+  theme(plot.title=element_text(vjust=1, color="blue", size=14,
+                                face="bold.italic")) +
+  theme(axis.title.x=element_text(color="darkorange", size=14, vjust=0.5),
+        axis.title.y=element_text(color="darkorange", size=14, vjust=0.5))
+
+ggplot(OilData, aes(as.numeric(SampleNumber), as.numeric(AvgHourTemp))) +
+  geom_line(aes(), col="Dodger Blue") +
+  labs (x="Sample Number", y="Temperature",
+        title="Average Hourly Temperature by Sample Number") +
+  theme(plot.title=element_text(vjust=1, color="blue", size=14,
+                                face="bold.italic")) +
+  theme(axis.title.x=element_text(color="darkorange", size=14, vjust=0.5),
+        axis.title.y=element_text(color="darkorange", size=14, vjust=0.5))
+
+ggplot(OilData, aes(as.numeric(AvgHourTemp), as.numeric(AvgHourHumid))) +
+  geom_line(aes(), col="Dodger Blue") +
+  labs (x="Temperature", y="Humidity",
+        title="Average Hourly Humidity by Average Hourly Temperature") +
+  theme(plot.title=element_text(vjust=1, color="blue", size=14,
+                                face="bold.italic")) +
+  theme(axis.title.x=element_text(color="darkorange", size=14, vjust=0.5),
+        axis.title.y=element_text(color="darkorange", size=14, vjust=0.5))
+
+ggplot(OilData, aes(as.numeric(AvgHourTemp), as.numeric(AvgHourOil))) +
+  geom_line(aes(), col="Dodger Blue") +
+  labs (x="Temperature", y="Oil Production",
+        title="Oil Production by Average Hourly Temperature") +
+  theme(plot.title=element_text(vjust=1, color="blue", size=14,
+                                face="bold.italic")) +
+  theme(axis.title.x=element_text(color="darkorange", size=14, vjust=0.5),
+        axis.title.y=element_text(color="darkorange", size=14, vjust=0.5))
+
+ggplot(OilData, aes(as.numeric(AvgHourTemp), as.numeric(H25))) +
+  geom_point(aes(color=H25)) +
+  geom_smooth(method='lm', se=TRUE) +
+  labs (x="Temperature", y="Hydrogen Sulfide",
+        title="Hydrogen Sulfide by Average Hourly Temperature") +
+  theme(plot.title=element_text(vjust=1, color="blue", size=14,
+                                face="bold.italic")) +
+  theme(axis.title.x=element_text(color="darkorange", size=14, vjust=0.5),
+        axis.title.y=element_text(color="darkorange", size=14, vjust=0.5))
+
+ggplot(OilData, aes(as.numeric(AvgHourTemp), as.numeric(PM25))) +
+  geom_point(aes(color=PM25)) +
+  geom_smooth(method='lm', se=TRUE) +
+  labs (x="Temperature", y="Particulate Matter (PM2.5)",
+   title="Particulate Matter (PM2.5) by Average Hourly Temperature") +
+  theme(plot.title=element_text(vjust=1, color="blue", size=14,
+                                face="bold.italic")) +
+  theme(axis.title.x=element_text(color="darkorange", size=14, vjust=0.5),
+        axis.title.y=element_text(color="darkorange", size=14, vjust=0.5))
+
+ggplot(OilData, aes(as.numeric(AvgHourOil), as.numeric(PM25))) +
+  geom_point(aes(color=PM25)) +
+  geom_smooth(method='lm', se=TRUE) +
+  labs (x="Oil Prodution", y="Particulate Matter (PM2.5)",
+   title="Oil Production vs PM25 Correlation") +
+  theme(plot.title=element_text(vjust=1, color="blue", size=14,
+                                face="bold.italic")) +
+  theme(axis.title.x=element_text(color="darkorange", size=14, vjust=0.5),
+        axis.title.y=element_text(color="darkorange", size=14, vjust=0.5))
+
+ggplot(OilData, aes(as.numeric(AvgHourOil), as.numeric(H25))) +
+  geom_point(aes(color=H25)) +
+  geom_smooth(method='lm', se=TRUE) +
+  labs (x="Oil Prodution", y="Hydrogen Sulfide (H25)",
+   title="Oil Production vs Hydrogen Sulfide Correlation") +
+  theme(plot.title=element_text(vjust=1, color="blue", size=14,
+                                face="bold.italic")) +
+  theme(axis.title.x=element_text(color="darkorange", size=14, vjust=0.5),
+        axis.title.y=element_text(color="darkorange", size=14, vjust=0.5))
+
+OilData$AvgHourOil <- round(as.numeric(OilData$AvgHourOil), 2)
+
+# Temp_H25_Cor <- cor(na.omit(as.numeric(OilData$AvgHourTemp)),
+#                        na.omit(as.numeric(OilData$H25)),
+#                     method="pearson")
+# 
+# cat("The Average Hourly Temperature vs
+#     Hydrogen Sulfide (H25) correlation coefficient =", Temp_H25_Cor)
+# 
+# Temp_H25_CorTest <- cor.test(as.numeric(OilData$AvgHourTemp),
+#                          as.numeric(OilData$H25), method="spearman")
+
+ggplot(OilData, aes(as.numeric(AvgHourOil), as.numeric(NOX))) +
+  geom_point(aes(color=NOX)) +
+  labs (x="Oil Prodution", y="Nitrogen Oxides (NOX)",
+        title="Oil Production vs Nitrogen Oxides Correlation") +
+  theme(plot.title=element_text(vjust=1, color="blue", size=14,
+                                face="bold.italic")) +
+  theme(axis.title.x=element_text(color="darkorange", size=14, vjust=0.5),
+        axis.title.y=element_text(color="darkorange", size=14, vjust=0.5))
+
+ggplot(OilData, aes(as.numeric(AvgHourDewPt), as.numeric(PM25))) +
+  geom_point(aes(color=PM25)) +
+  geom_smooth(method='lm', se=TRUE) +
+  labs (x="Dew Point", y="Particulate Matter (PM2.5)",
+   title="Average Hourly Dew Point vs PM25 Correlation") +
+  theme(plot.title=element_text(vjust=1, color="blue", size=14,
+                                face="bold.italic")) +
+  theme(axis.title.x=element_text(color="darkorange", size=14, vjust=0.5),
+        axis.title.y=element_text(color="darkorange", size=14, vjust=0.5))
+
+ggplot(OilData, aes(as.numeric(AvgHourWind), as.numeric(PM25))) +
+  geom_point(aes(color=PM25)) +
+  geom_smooth(method='lm', se=TRUE) +
+  labs (x="Wind Speed", y="Particulate Matter (PM2.5)",
+   title="Average Hourly Wind Speed vs PM25 Correlation") +
+  theme(plot.title=element_text(vjust=1, color="blue", size=14,
+                                face="bold.italic")) +
+  theme(axis.title.x=element_text(color="darkorange", size=14, vjust=0.5),
+        axis.title.y=element_text(color="darkorange", size=14, vjust=0.5))
+
+fit <- lm(as.numeric(OilData$AvgHourOil)~as.numeric(OilData$PM25), 
+          data=OilData)
+summary(fit)
+layout(matrix(c(1,2,3,4),2,2))
+plot(fit)
+
+OilDataMatrix <- cbind(as.numeric(OilData$SampleNumber),
+                       as.numeric(OilData$Date),
+                       as.numeric(OilData$Time),
+                       as.numeric(OilData$PM25),
+                       as.numeric(OilData$H25),
+                       as.numeric(OilData$NOX),
+                       as.numeric(OilData$NH3),
+                       as.numeric(OilData$CO),
+                       as.numeric(OilData$CO2),
+                       as.numeric(OilData$O3),
+                       as.numeric(OilData$AvgHourTemp),
+                       as.numeric(OilData$AvgHourDewPt),
+                       as.numeric(OilData$AvgHourHumid),
+                       as.numeric(OilData$AvgHourWind),
+                       as.numeric(OilData$AvgHourOil))
+M <- cor(OilDataMatrix)
+M <- round(M, 2)
+M
+pairs(OilData)
+levelplot(M)
+```
