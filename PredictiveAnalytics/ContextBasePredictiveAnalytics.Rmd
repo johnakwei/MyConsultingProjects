@@ -1,0 +1,159 @@
+---
+title: "ContextBase Predictive Analytics"
+author: "Authored by John Akwei, ECMp ERMp Data Scientist"
+date: "June 11, 2016"
+output: html_document
+---
+
+## This document contains examples of the Predictive Analytics capabilities of ContextBase, http://contextbase.github.io.  
+
+## Predictive Analytics Example 1: Linear Regression  
+
+Linear Regression allows for prediction of future occurrences derived from one explanatory variable, and one response variable.  
+
+```{r}
+library(knitr)
+revenue <- freeny.x
+kable(head(revenue))
+colnames(revenue) <- c("lag_quarterly_revenue", "price_index",
+                       "income_level", "market_potential")
+revenue <- data.frame(revenue)
+model <- lm(market_potential~price_index, revenue)
+
+cat("The Intercept =", model$coefficients[1])
+
+test <- data.frame(price_index=4.57592)
+result <- predict(model, test)
+
+plot(revenue$market_potential, revenue$price_index, col = "red",
+     main = "Price Index affecting Market Potential",
+     abline(lm(revenue$price_index~revenue$market_potential)),
+     cex = 1.3, pch = 16, xlab = "Market Potential",
+     ylab = "Price Index")
+```
+
+## Example 1 - Linear Regression Conclusion:  
+```{r}
+cat("For a Price Index of ", as.character(test), ", the predicted Market Potential = ", round(result, 2), ".", sep="")
+```
+
+### In conclusion to ContextBase Predictive Analytics Example 1, a direct correlation of Price Index to Market Potential was found, (see above graph). As a test of the Predictive Algorithm, a Price Index of 4.57592 was processed, and a Market Potential of 13.03 was predicted. The source R dataset shows this prediction to be accurate.  
+
+## Predictive Analytics Example 2: Logistic Regression  
+
+Logistic Regression allows for prediction of a logical, (Yes or No), occurrence based on the effects of an explanatory variable on a response variable. For example, the probability of winning a congressional election vs campaign expenditures.
+
+How does the amount of money spent on a campaign affect the probability that the candidate will win the election?  
+
+Source of Data Ranges: https://www.washingtonpost.com/news/the-fix/wp/2014/04/04/think-money-doesnt-matter-in-elections-this-chart-says-youre-wrong/  
+```{r}
+Expenditures <- c(1000000, 1100000, 1200000, 1300000, 1400000,
+                  1500000, 1600000, 1700000, 1800000, 1900000,
+                  2000000, 2100000, 2200000, 2300000, 2400000,
+                  2000000, 2100000, 2200000, 2300000, 2400000)
+ElectionResult <- c(0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,	1, 1, 1, 1, 1)
+
+CampaignCosts <- data.frame(Expenditures, ElectionResult)
+
+kable(CampaignCosts, caption = "Campaign Expenditures of Candidates vs Election Results")
+```
+
+```{r}
+library(ggplot2)
+ggplot(CampaignCosts, aes(Expenditures, ElectionResult)) +
+  geom_point(aes()) +
+  geom_smooth(method='glm',
+              method.args = list(family = "binomial"), se=FALSE) +
+  labs (x="Campaign Expenditures", y="Probability of Winning Election", title="Probability of Winning Election vs Campaign Costs")
+```
+
+The logistic regression analysis gives the following output:  
+```{r}
+model <- glm(ElectionResult ~., family=binomial(link='logit'), data=CampaignCosts)
+model$coefficients
+```
+
+The output indicates that campaign expenditures significantly affect the probability of winning the election. The output provides the coefficients for Intercept = -7.615054e+00, and Expenditures = 4.098080e-06. These coefficients are entered in the logistic regression equation to estimate the probability of winning the election:  
+
+Probability of winning election = 1/(1+exp(-(-7.615054e+00+4.098080e-06*CampaignExpenses)))  
+
+For a Candidate that has $1,600,000 in expenditures:  
+```{r}
+CampaignExpenses <- 1600000
+ProbabilityOfWinningElection <- 1/(1+exp(-(-7.615054e+00+4.098080e-06*CampaignExpenses)))
+
+cat("Probability of winning Election = 1/(1+exp(-(-7.615054e+00+4.098080e-06*",
+    CampaignExpenses, "))) = ", round(ProbabilityOfWinningElection, 2), ".", sep="")
+```
+
+For a Candidate that has $2,100,000 in expenditures:
+```{r}
+CampaignExpenses <- 2100000
+ProbabilityOfWinningElection <- 1/(1+exp(-(-7.615054e+00+4.098080e-06*CampaignExpenses)))
+
+cat("Probability of winning Election = 1/(1+exp(-(-7.615054e+00+4.098080e-06*",
+    CampaignExpenses, "))) = ", round(ProbabilityOfWinningElection, 2), ".", sep="")
+```
+
+## Example 2 - Logistic Regression Conclusion:  
+```{r}
+ElectionWinTable <- data.frame(column1=c(1100000, 1400000,
+                                         1700000, 1900000,
+                                         2300000),
+                               column2=
+      c(round(1/(1+exp(-(-7.615054e+00+4.098080e-06*1100000))), 2),
+      round(1/(1+exp(-(-7.615054e+00+4.098080e-06*1400000))), 2),
+      round(1/(1+exp(-(-7.615054e+00+4.098080e-06*1700000))), 2),
+      round(1/(1+exp(-(-7.615054e+00+4.098080e-06*1900000))), 2),
+      round(1/(1+exp(-(-7.615054e+00+4.098080e-06*2300000))), 2)))
+names(ElectionWinTable) <- c("Campaign Expenses", "Probability of Winning Election")
+kable(ElectionWinTable)
+```
+
+### In conclusion to ContextBase Predictive Analytics Example 2, a direct correlation of Campaign Expenditures to Election Performance was verified. The above table displays corresponding probablities of winning an election to campaign expenses.  
+
+## Predictive Analytics Example 3: Multiple Regression  
+
+Multiple Regression allows for the prediction of the future values of a response variable, based on values of multiple explanatory variables.  
+
+```{r}
+input <- data.frame(state.x77[,1:4])
+kable(head(input))
+colnames(input) <- c("Population", "Income", "Illiteracy", "Life_Exp")
+
+# Create the relationship model.
+model <- lm(Life_Exp~Population+Income+Illiteracy, data=input)
+
+# Show the model.
+print(model)
+
+# Multiple Regression Plot
+par(mfrow=c(1,3))
+termplot(model)
+
+a <- coef(model)[1]
+cat("The Multiple Regression Intercept = ", a, ".", sep="")
+
+XPopulation <- coef(model)[2]
+XIncome <- coef(model)[3]
+XIlliteracy <- coef(model)[4]
+
+modelCoef <- data.frame(XPopulation, XIncome, XIlliteracy)
+colnames(modelCoef) <- c("Population", "Income", "Illiteracy")
+row.names(modelCoef) <- c("Coefficients")
+kable(modelCoef)
+```
+
+## Multiple Regression Conclusion:   
+
+```{r}
+popl <- 3100
+Incm <- 5348
+Illt <- 1.1
+
+Y = a + popl * XPopulation + Incm * XIncome + Illt * XIlliteracy
+cat("For a City where Population = ", popl, ", Income = ", Incm,  ", and Illiteracy = ", Illt, ",
+the predicted Life Expectancy is: ", round(Y, 2), ".", sep="")
+```
+
+### In conclusion to ContextBase Predictive Analytics Example 3, the multiple variables of "Population", "Income", and "Illiteracy" were used to determine the predicted "Life Expectancy" of an area corresponding to a USA State. For an area with a Population of 3100, a per capita Income Rate of 5348, and an Illiteracy Rate of 1.1, a Life Expectancy of 71.2 years was predicted.  
