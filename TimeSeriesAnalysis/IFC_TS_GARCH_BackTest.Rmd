@@ -1,0 +1,205 @@
+---
+title: "Zspread GARCH (1,1) Time Series Analysis"
+date: "August 1, 2016"
+output: html_document
+---
+
+# Synopsis  
+This document uses GARCH(1,1) modeling to analyze the Z spread data for FN3.5 MBS bonds for 7/1/2011 through 7/1/2016. The Zspread data is imported, the date format is converted to R format, then a time series is created with zoo package formatting. GARCH (1,1) analysis, and forecasting, is then performed with the rugarch package.  
+
+## Working Directory and System Requirements  
+```{r, warning=F, message=F}
+setwd("C:/Users/johnakwei/Dropbox/Programming/TimeSeriesAnalysis/IFC")
+library(dplyr)
+library(ggplot2)
+library(stats)
+library(zoo)
+library(xts)
+library(forecast)
+library(tseries)
+
+# if (!require("rgl")) { install.packages("rgl"); require("rgl") }
+# if (!require("rugarch")) { install.packages("rugarch"); require("rugarch") }
+
+library(rugarch)
+
+# if (!require("betategarch")) { install.packages("betategarch"); require("betategarch") }
+
+library(betategarch)
+
+Zspread <- read.csv("Z spread.csv")
+
+Zspread$Date <- as.Date(Zspread$Date, format="%m/%d/%Y")
+
+plot(Zspread$Date, Zspread$Zspread, type="l", col="orange", main="Plot of Zspread Data")
+```
+
+## Time Series of Zspread (Zoo format)  
+```{r}
+Zspread.z = zoo(x=Zspread, order.by=Zspread$Date)
+```
+
+## Zspread.z Formatting Information  
+```{r, echo=F}
+cat("The data class of Zspread.z is ",class(Zspread.z))
+
+cat("The frequency of the Zspread.z Time Series is ", frequency(Zspread.z))
+
+cat("Zspread.z Time Series: Start = ")
+as.Date(start(Zspread.z), origin = "1970-01-01")
+
+cat("Zspread.z Time Series: End = ")
+as.Date(end(Zspread.z), origin = "1970-01-01")
+
+cat("First 6 rows of Zspread.z Time Series:")
+head(Zspread.z)
+
+cat("Structure of Zspread.z Time Series:")
+str(Zspread.z)
+```
+
+## Zspread.z Time Series Plots  
+```{r}
+plot(Zspread$Date, as.factor(Zspread.z$Zspread), type="l",
+     col="blue", xlab="Zspread$Date",
+     ylab="Zspread.z$Zspread", main="Plot of Zspread.z")
+```
+
+## GARCH Modeling  
+```{r, warning=F, message=F}
+y <- data.frame(as.numeric(Zspread.z[,2]))
+rownames(y) <- Zspread.z[,1]
+
+plot(data.frame(Zspread.z[,1], y), type='l',
+     xlab="Date", ylab="Zspread.z",
+     main="Plot of RUGARCH in-sample volatility estimates")
+
+# create a cluster object
+cluster = makePSOCKcluster(15)
+
+spec = ugarchspec()
+
+nrow(expand.grid(GARCH = 1:14, VEX = 0:1, VT = 0:1, Mean = 0:1, ARCHM = 0:2, ARFIMA = 0:1, MEX = 0:1, DISTR = 1:10))
+
+spec = ugarchspec(variance.model = list(model = 'eGARCH', garchOrder = c(1, 1)), distribution = 'std')
+
+fit = ugarchfit(spec, y[1:1000, , drop = FALSE], solver = 'hybrid')
+
+coef(fit)
+
+spec = getspec(fit); spec
+
+plot(fit, which = 1)
+plot(fit, which = 2)
+plot(fit, which = 3)
+plot(fit, which = 4)
+plot(fit, which = 7)
+plot(fit, which = 8)
+plot(fit, which = 9)
+plot(fit, which = 10)
+plot(fit, which = 12)
+```
+
+## 20 days Forecasting - GARCH(1,1) Model (Zoo Time Series Format)   
+```{r}
+forc1 = ugarchforecast(fit, n.ahead = 20)
+
+U = uncvariance(fit)^0.5; U
+
+plot(forc1, which = 1)
+plot(forc1, which = 3)
+```
+
+## Backtesting  
+```{r}
+spec = ugarchspec(variance.model = list(model = 'gjrGARCH', garchOrder = c(1, 1)), distribution = 'jsu')
+roll = ugarchroll(spec, y, forecast.length = 20, refit.every = 5, refit.window = 'moving', window.size = 1200, calculate.VaR = FALSE, keep.coef = TRUE, cluster = cluster)
+show(roll)
+```
+
+```{r, echo=F, eval=F, warning=F, message=F}
+# Function that do not run
+# setstart(spec) < - list(shape = 5)
+# setbounds(spec)
+
+# Below function not found
+# setfixed(spec) < - as.list(coef(fit))
+
+# Below "filt2" causes exiting
+# filt1 = ugarchfilter(spec, y[1:1200, ], n.old = 1000)
+# filt2 = ugarchfilter(spec, y[1001:1200, ])
+
+# Below distribution requires a lot of computer time for processing
+# gd = ugarchdistribution(fit, n.sim = 500, recursive = TRUE, recursive.length = 6000, recursive.window = 500, m.sim = 100, solver = 'hybrid', cluster = cluster)
+# show(gd)
+# plot(gd, which = 1, window = 12)
+# plot(gd, which = 2, window = 12)
+# plot(gd, which = 3, window = 12)
+# plot(gd, which = 4, window = 12)
+
+# Below forecasting methods do not run
+# forc2 = ugarchforecast(spec, n.ahead = 20, data = y[1:1000, , drop = FALSE])
+# forc3 = ugarchforecast(spec, n.ahead = 1, n.roll = 499, data = sp500ret[1:1500, , drop = FALSE], out.sample = 500)
+# f1 = as.data.frame(forc1)
+# f2 = as.data.frame(forc2)
+# f3 = t(as.data.frame(forc3, which = 'sigma', rollframe = 'all', aligned = FALSE))
+
+# A graphing function not yet operable
+# pp.timeplot <-
+# function (x, div = "year", type = "l", xlab = "", xnam = NULL, 
+#     ...) 
+# {
+#     if (is.data.frame(x)) 
+#         x <- as.matrix(x)
+#     if (is.matrix(x)) {
+#         matplot(x, axes = FALSE, type = type, xlab = xlab, ...)
+#         if (!length(xnam)) {
+#             xnam <- row.names(x)
+#         }
+#         else if (length(xnam) != nrow(x)) {
+#             stop("'xnam' is the wrong length")
+#         }
+#     }
+#     else {
+#         plot(x, axes = FALSE, type = type, xlab = xlab, ...)
+#         if (!length(xnam)) {
+#             xnam <- names(x)
+#         }
+#         else if (length(xnam) != length(x)) {
+#             stop("'xnam' is the wrong length")
+#         }
+#     }
+#     axis(2)
+#     if (!is.character(div) || length(div) != 1) {
+#         stop("'div' must be a single character string -- given has mode ", 
+#             mode(div), " and length ", length(div))
+#     }
+#     div.menu <- c("years", "decades", "months")
+#     div.num <- pmatch(div, div.menu, nomatch = 0)
+# 	if(div.num == 0) {
+# 		stop("unknown or ambiguous value given for 'div' -- possible ",
+# 			"values are: ", paste(div.menu, collapse=", "))
+# 	}
+# 	div <- div.menu[div.num]
+#     switch(div, decades = {
+#         tim <- substring(xnam, 1, 3)
+#         tlab <- paste(unique(tim), "0's", sep = "")
+#     }, years = {
+#         tim <- substring(xnam, 1, 4)
+#         tlab <- unique(tim)
+#     }, months = {
+# 		tim <- substring(xnam, 1, 7)
+# 		tlab <- substring(unique(tim), 6, 7)
+# 	})
+#     tcount <- cumsum(table(tim))
+#     tbrk <- tcount[-length(tcount)] + 0.5
+#     axis(1, at = tbrk, labels = rep("", length(tbrk)), tck = 1, 
+#         lty = 2, col = 2)
+#     axis(1, at = tbrk, labels = rep("", length(tbrk)), lty = 2, 
+#         col = 2)
+#     maxd <- max(diff(tcount))
+#     tcount[length(tcount)] <- tcount[length(tcount) - 1] + maxd
+#     axis(1, at = tcount - maxd/2, labels = tlab, tck = 0)
+#     box()
+# }
+```

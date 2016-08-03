@@ -1,0 +1,220 @@
+---
+title: "IFC Graphing Code Demonstration"
+author: "by John Akwei, ECMp ERMp Data Scientist"
+date: "August 3, 2016"
+output: html_document
+---
+
+## Synopsis  
+This is a demonstration of John Akwei's graphing code for Project #2 involving "Template Data.csv" data:  
+```{r, eval=F}
+# IFC_Graphing_Code
+
+# Working Directory, (set to your Working Directory):
+# setwd(" ")
+
+# Required Packages
+library(ggplot2)
+
+# Import New Dataset for processing
+TemplateData <- read.csv("Template data.csv")
+
+# Format Date Field
+TemplateData$Date <- as.Date(TemplateData$Date, "%d-%b-%y")
+
+## Reusable Regression and Residual Plots Code
+
+# Fill in new values, for new datasets,
+# below on right side of arrow signs:
+dt <- TemplateData
+Bond1 <- TemplateData$FN3.5
+Bond2 <- TemplateData$FN3.0
+Bond1Name <- "FN3.5"
+Bond2Name <- "FN3.0"
+
+# Code to automatically process new dataset:
+TitleText <- paste(Bond1Name, " on ", Bond2Name)
+
+Bond1xBond2.lm = lm(Bond1 ~ Bond2, data=dt) 
+Bond1xBond2.res = resid(Bond1xBond2.lm)
+
+# top plot
+ggplot(dt, aes(Bond1, Bond2 / 10000)) +
+  geom_point(colour="#ffff00") +
+  geom_point(aes(Bond1[dt$Date==max(dt$Date)],
+                 Bond2[dt$Date==max(dt$Date)] / 10000),
+             colour="black", shape=17, size=3) +
+  scale_y_continuous(labels = scales::percent) +
+  theme_bw() + labs(x=print(Bond2Name), y=print(Bond1Name),
+       title=print(TitleText))
+
+# bottom plot
+plot(dt$Date, Bond1xBond2.res, type='l',
+     ylab="Ticks", xlab="Date", main=TitleText)
+abline(0, 0)
+text(max(dt$Date) - 10, max(Bond1xBond2.res) - 0.04, labels = "Rich")
+text(max(dt$Date) - 20, min(Bond1xBond2.res) + 0.05, labels = "Cheap")
+
+cat("Z score for residual: ", Bond1xBond2.res[64])
+```
+
+## FN3.5 over FN3.0  
+```{r, echo=F}
+# Required Packages
+library(ggplot2)
+
+# Import New Dataset for processing
+TemplateData <- read.csv("Template data.csv")
+
+# Format Date Field
+TemplateData$Date <- as.Date(TemplateData$Date, "%d-%b-%y")
+
+## Reusable Regression and Residual Plots Code
+
+# Fill in new values, for new datasets,
+# below on right side of arrow signs:
+dt <- TemplateData
+Bond1 <- TemplateData$FN3.5
+Bond2 <- TemplateData$FN3.0
+Bond1Name <- "FN3.5"
+Bond2Name <- "FN3.0"
+
+# Code to automatically process new dataset:
+TitleText <- paste(Bond1Name, " on ", Bond2Name)
+
+Bond1xBond2.lm = lm(Bond1 ~ Bond2, data=dt) 
+Bond1xBond2.res = resid(Bond1xBond2.lm)
+
+# top plot
+ggplot(dt, aes(Bond1, Bond2 / 10000)) +
+  geom_point(colour="#ffff00") +
+  geom_point(aes(Bond1[dt$Date==max(dt$Date)],
+                 Bond2[dt$Date==max(dt$Date)] / 10000),
+             colour="black", shape=17, size=3) +
+  scale_y_continuous(labels = scales::percent) +
+  theme_bw() + labs(x=print(Bond2Name), y=print(Bond1Name),
+       title=print(TitleText))
+
+# bottom plot
+plot(dt$Date, Bond1xBond2.res, type='l',
+     ylab="Ticks", xlab="Date", main=TitleText)
+abline(0, 0)
+text(max(dt$Date) - 10, max(Bond1xBond2.res) - 0.05, labels = "Rich")
+text(max(dt$Date) - 20, min(Bond1xBond2.res) + 0.05, labels = "Cheap")
+
+cat("Z score for residual: ", Bond1xBond2.res[64])
+```
+
+## FN3.0 over FN4.0  
+```{r, echo=F}
+## Reusable Regression and Residual Plots Code
+
+# Fill in new values, for new datasets,
+# below on right side of arrow signs:
+dt <- TemplateData
+Bond1 <- TemplateData$FN3.0
+Bond2 <- TemplateData$FN4.0
+Bond1Name <- "FN3.0"
+Bond2Name <- "FN4.0"
+
+# Code to automatically process new dataset:
+TitleText <- paste(Bond1Name, " on ", Bond2Name)
+
+Bond1xBond2.lm = lm(Bond1 ~ Bond2, data=dt) 
+Bond1xBond2.res = resid(Bond1xBond2.lm)
+
+# top plot
+ggplot(dt, aes(Bond1, Bond2 / 10000)) +
+  geom_point(colour="#ffff00") +
+  geom_point(aes(Bond1[dt$Date==max(dt$Date)],
+                 Bond2[dt$Date==max(dt$Date)] / 10000),
+             colour="black", shape=17, size=3) +
+  scale_y_continuous(labels = scales::percent) +
+  theme_bw() + labs(x=print(Bond2Name), y=print(Bond1Name),
+       title=print(TitleText))
+
+# bottom plot
+plot(dt$Date, Bond1xBond2.res, type='l',
+     ylab="Ticks", xlab="Date", main=TitleText)
+abline(0, 0)
+text(max(dt$Date) - 10, max(Bond1xBond2.res) - 0.05, labels = "Rich")
+text(max(dt$Date) - 20, min(Bond1xBond2.res) + 0.05, labels = "Cheap")
+
+cat("Z score for residual: ", Bond1xBond2.res[64])
+```
+
+## FN4.0 over DW2.5  
+```{r, echo=F}
+## Reusable Regression and Residual Plots Code
+
+# Fill in new values, for new datasets,
+# below on right side of arrow signs:
+dt <- TemplateData
+Bond1 <- TemplateData$FN4.0
+Bond2 <- TemplateData$DW2.5
+Bond1Name <- "FN4.0"
+Bond2Name <- "DW2.5"
+
+# Code to automatically process new dataset:
+TitleText <- paste(Bond1Name, " on ", Bond2Name)
+
+Bond1xBond2.lm = lm(Bond1 ~ Bond2, data=dt) 
+Bond1xBond2.res = resid(Bond1xBond2.lm)
+
+# top plot
+ggplot(dt, aes(Bond1, Bond2 / 10000)) +
+  geom_point(colour="#ffff00") +
+  geom_point(aes(Bond1[dt$Date==max(dt$Date)],
+                 Bond2[dt$Date==max(dt$Date)] / 10000),
+             colour="black", shape=17, size=3) +
+  scale_y_continuous(labels = scales::percent) +
+  theme_bw() + labs(x=print(Bond2Name), y=print(Bond1Name),
+       title=print(TitleText))
+
+# bottom plot
+plot(dt$Date, Bond1xBond2.res, type='l',
+     ylab="Ticks", xlab="Date", main=TitleText)
+abline(0, 0)
+text(max(dt$Date) - 10, max(Bond1xBond2.res) - 0.05, labels = "Rich")
+text(max(dt$Date) - 20, min(Bond1xBond2.res) + 0.05, labels = "Cheap")
+
+cat("Z score for residual: ", Bond1xBond2.res[64])
+```
+
+## DW2.5 over DW3.0  
+```{r, echo=F}
+## Reusable Regression and Residual Plots Code
+
+# Fill in new values, for new datasets,
+# below on right side of arrow signs:
+dt <- TemplateData
+Bond1 <- TemplateData$DW2.5
+Bond2 <- TemplateData$DW3.0
+Bond1Name <- "DW2.5"
+Bond2Name <- "DW3.0"
+
+# Code to automatically process new dataset:
+TitleText <- paste(Bond1Name, " on ", Bond2Name)
+
+Bond1xBond2.lm = lm(Bond1 ~ Bond2, data=dt) 
+Bond1xBond2.res = resid(Bond1xBond2.lm)
+
+# top plot
+ggplot(dt, aes(Bond1, Bond2 / 10000)) +
+  geom_point(colour="#ffff00") +
+  geom_point(aes(Bond1[dt$Date==max(dt$Date)],
+                 Bond2[dt$Date==max(dt$Date)] / 10000),
+             colour="black", shape=17, size=3) +
+  scale_y_continuous(labels = scales::percent) +
+  theme_bw() + labs(x=print(Bond2Name), y=print(Bond1Name),
+       title=print(TitleText))
+
+# bottom plot
+plot(dt$Date, Bond1xBond2.res, type='l',
+     ylab="Ticks", xlab="Date", main=TitleText)
+abline(0, 0)
+text(max(dt$Date) - 10, max(Bond1xBond2.res) - 0.05, labels = "Rich")
+text(max(dt$Date) - 20, min(Bond1xBond2.res) + 0.05, labels = "Cheap")
+
+cat("Z score for residual: ", Bond1xBond2.res[64])
+```
