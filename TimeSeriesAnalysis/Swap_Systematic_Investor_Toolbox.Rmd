@@ -1,23 +1,11 @@
 ---
 title: "Backtesting of 5 year USA Swap Rate Trading Strategies"
-date: "August 23, 2016"
+date: "August 26, 2016"
 output: html_document
 ---
 
 ## Synopsis  
 This document uses Systematic Investor Toolbox modeling to backtest the USA Swap Rate data from 7/20/2011 through 7/20/2016.  
-
-The strategies to backtest are;  
-
-SMA (Simple Moving Average) strategy  
-Buy Rule: If price exceeds 10 day SMA, buy  
-Exit Rule: if price falls below 10 day SMA, sell.  
-
-RSI (Relative Strength Indicator)  
-Buy Rule: if 5 day RSI falls below 20, buy  
-Exit Rule: If 5 day RSI exceeds 80, sell  
-Stop loss order = 5 Take profit order = 10  
-Transaction cost: variable, starting from 0.5 bp  
 
 ```{r, echo=F}
 setwd("C:/Users/johnakwei/Dropbox/Programming/IFC")
@@ -58,7 +46,7 @@ data <- new.env()
 tickers <- spl('Swap')
 file.path <- 'Original data.csv'
 
-Swap_data <- read.csv(file.path, header=T) 
+Swap_data <- read.csv(file.path, header=T)
 swap_date <- as.Date(Swap_data$Date, format="%d-%b-%y")
 swap_date <- format(swap_date, "20%y-%m-%d")
 
@@ -66,6 +54,8 @@ swap_data_zoo <- zoo(as.numeric(paste(
   Swap_data$X10.Years.Mid.Rate.in.bps)), order.by=swap_date)
 index(swap_data_zoo) <- as.POSIXct(index(swap_data_zoo))
 swap_data_ready <- xts(coredata(swap_data_zoo), order.by = index(swap_data_zoo))
+
+swap_data_ready <- na.omit(swap_data_ready)
 
 for(n in tickers) {data[[n]] = swap_data_ready}
 
@@ -85,11 +75,11 @@ models$buy.hold <- bt.run.share(data, clean.signal = T,
                                trade.summary = F)
 
 # Calculate the indicators we need for our strategy
-CCI20 <- CCI(na.omit(prices), 20) 
-RSI3 <- RSI(na.omit(prices), 3)
-DEMA10 <- DEMA(na.omit(prices), n = 10, v = 1, wilder = FALSE)
+CCI20 <- CCI(prices, 20) 
+RSI3 <- RSI(prices, 3)
+DEMA10 <- DEMA(prices, n = 10, v = 1, wilder = FALSE)
 DEMA10c <- prices - DEMA10  
-DEMA10c <- DEMA10c/.0001  
+DEMA10c <- DEMA10c/.0001 
 
 #Set our long entry conditions found by our algorithms and optimized by us in the last post
 # buy.signal <- ifelse(RSI3 < 30 & CCI20 > -290 & CCI20 < -100 & DEMA10c > -40 & DEMA10c < -20, 1, NA)
@@ -98,7 +88,7 @@ buy.signal <- ifelse(RSI3 < 30 & CCI20 > -290 & CCI20 < -100 & DEMA10c > -40 & D
 
 #need to define capital in bt.run()
 data$weight[] = NA
-data$weight[1:length(buy.signal)] = buy.signal
+data$weight[] = buy.signal
 
 # Create our long model
 models$long <- bt.run.share(data, clean.signal = T,
@@ -110,11 +100,11 @@ models$long <- bt.run.share(data, clean.signal = T,
 sell.signal <- ifelse(DEMA10c > 5 & DEMA10c < 200 & CCI20 > 100 & CCI20 < 500 & RSI3 > 10, -1 ,NA)
 
 data$weight[] = NA
-data$weight[1:length(sell.signal)] = sell.signal
+data$weight[] = sell.signal
 
 # Create our short model
 models$short <- bt.run.share(data, clean.signal = T,
-                             trade.summary = F)  ##share strategy
+                             trade.summary = F)  #share strategy
 
 # Set the long and short conditions for our strategy
 # long.short.strategy <- iif(RSI3 < 30 & CCI20 > -290 & CCI20 < -100 & DEMA10c > -40 & DEMA10c < -20,1,iif(DEMA10c > 10 & DEMA10c < 40 & CCI20 > 185 & CCI20 < 325 & RSI3 > 50, -1 ,NA))
@@ -123,7 +113,7 @@ long.short.strategy <- iif(RSI3 < 100 & CCI20 > -400 & CCI20 < -50 & DEMA10c > -
 CCI20 > 100 & CCI20 < 1000 & RSI3 > 10, -1 ,NA))
 
 data$weight[] = NA
-data$weight[1:length(long.short.strategy)] = long.short.strategy
+data$weight[] = long.short.strategy
 
 # Create our long short strategy
 models$longshort <- bt.run.share(data, clean.signal = T,
@@ -156,7 +146,7 @@ data$weight[] = NA
 
 csf <- custom.stop.fn(coredata(long.short.strategy), coredata(prices), stop.loss,pstop = Stoploss)
 
-data$weight[1:length(csf)] = csf
+data$weight[] = csf
 
 # Our long short model with a .25% stop loss
 models$stoploss <- bt.run.share(data, clean.signal = T,
@@ -186,7 +176,7 @@ data$weight[] = NA
 
 csf_lss <- custom.stop.fn(coredata(long.short.strategy), coredata(prices), take.profit, pprofit = Takeprofit)
 
-data$weight[1:length(csf_lss)] = csf_lss
+data$weight[] = csf_lss
 
 # Our long short model with a .25% take profit
 models$takeprofit <- bt.run.share(data, clean.signal = T,
@@ -219,7 +209,7 @@ data$weight[] = NA
 
 csf_st <- custom.stop.fn(coredata(long.short.strategy), coredata(prices), stop.loss.take.profit,pstop = Stoploss, pprofit = Takeprofit)
 
-data$weight[1:length(csf_st)] = csf_st
+data$weight[] = csf_st
 
 # Our long short model with a .25% stop loss and .25% take profit
 models$stop.loss.take.profit = bt.run.share(data, clean.signal = T, trade.summary = F)
