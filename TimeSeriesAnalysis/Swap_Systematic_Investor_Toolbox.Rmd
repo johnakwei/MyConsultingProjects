@@ -1,0 +1,236 @@
+---
+title: "Backtesting of 5 year USA Swap Rate Trading Strategies"
+date: "August 23, 2016"
+output: html_document
+---
+
+## Synopsis  
+This document uses Systematic Investor Toolbox modeling to backtest the USA Swap Rate data from 7/20/2011 through 7/20/2016.  
+
+The strategies to backtest are;  
+
+SMA (Simple Moving Average) strategy  
+Buy Rule: If price exceeds 10 day SMA, buy  
+Exit Rule: if price falls below 10 day SMA, sell.  
+
+RSI (Relative Strength Indicator)  
+Buy Rule: if 5 day RSI falls below 20, buy  
+Exit Rule: If 5 day RSI exceeds 80, sell  
+Stop loss order = 5 Take profit order = 10  
+Transaction cost: variable, starting from 0.5 bp  
+
+```{r, echo=F}
+setwd("C:/Users/johnakwei/Dropbox/Programming/IFC")
+```
+
+## Working Directory, and Required Packages  
+```{r, message=F, warning=F}
+# Set Working Directory
+# setwd(" ")
+
+# Required Packages
+# if (!require("quantmod")) { install.packages("quantmod"); require("quantmod") }
+
+# if (!require("PerformanceAnalytics")) { install.packages("PerformanceAnalytics"); require("PerformanceAnalytics") }
+
+library(RCurl)
+library(zoo)
+library(xts)
+library(quantmod) # data, plotting, quant modelling
+library(PerformanceAnalytics) # performance and risk management
+library(knitr)
+```
+
+## Load Systematic Investor Toolkit  
+```{r, warning=F, message=F}
+sit <- getURLContent('https://github.com/systematicinvestor/SIT/raw/master/sit.gz', binary = TRUE, followlocation = TRUE, ssl.verifypeer = FALSE)
+con <- gzcon(rawConnection(sit, 'rb'))
+source(con)
+close(con)
+```
+
+## Systematic Investor Analysis    
+```{r, warning=F, message=F}
+# Create a new environment
+data <- new.env()
+
+# Specify the name of the asset and where the csv file is located on your computer.
+tickers <- spl('Swap')
+file.path <- 'Original data.csv'
+
+Swap_data <- read.csv(file.path, header=T) 
+swap_date <- as.Date(Swap_data$Date, format="%d-%b-%y")
+swap_date <- format(swap_date, "20%y-%m-%d")
+
+swap_data_zoo <- zoo(as.numeric(paste(
+  Swap_data$X10.Years.Mid.Rate.in.bps)), order.by=swap_date)
+index(swap_data_zoo) <- as.POSIXct(index(swap_data_zoo))
+swap_data_ready <- xts(coredata(swap_data_zoo), order.by = index(swap_data_zoo))
+
+for(n in tickers) {data[[n]] = swap_data_ready}
+
+bt.prep(data, align='remove.na')
+
+# Specify the prices and store our models
+prices <- data$Swap
+data$prices <- prices
+data$execution.price <- prices
+models <- list()
+
+# Create Buy and Hold Strategy
+data$weight[] = NA
+data$weight[] = 1
+
+models$buy.hold <- bt.run.share(data, clean.signal = T,
+                               trade.summary = F)
+
+# Calculate the indicators we need for our strategy
+CCI20 <- CCI(na.omit(prices), 20) 
+RSI3 <- RSI(na.omit(prices), 3)
+DEMA10 <- DEMA(na.omit(prices), n = 10, v = 1, wilder = FALSE)
+DEMA10c <- prices - DEMA10  
+DEMA10c <- DEMA10c/.0001  
+
+#Set our long entry conditions found by our algorithms and optimized by us in the last post
+# buy.signal <- ifelse(RSI3 < 30 & CCI20 > -290 & CCI20 < -100 & DEMA10c > -40 & DEMA10c < -20, 1, NA)
+
+buy.signal <- ifelse(RSI3 < 30 & CCI20 > -290 & CCI20 < -100 & DEMA10c > -40 & DEMA10c < 750, 1, NA)
+
+#need to define capital in bt.run()
+data$weight[] = NA
+data$weight[1:length(buy.signal)] = buy.signal
+
+# Create our long model
+models$long <- bt.run.share(data, clean.signal = T,
+                            trade.summary = F)
+
+# Set our short conditions
+# sell.signal <- ifelse(DEMA10c > 10 & DEMA10c < 40 & CCI20 > 185 & CCI20 < 325 & RSI3 > 50, -1 ,NA)
+
+sell.signal <- ifelse(DEMA10c > 5 & DEMA10c < 200 & CCI20 > 100 & CCI20 < 500 & RSI3 > 10, -1 ,NA)
+
+data$weight[] = NA
+data$weight[1:length(sell.signal)] = sell.signal
+
+# Create our short model
+models$short <- bt.run.share(data, clean.signal = T,
+                             trade.summary = F)  ##share strategy
+
+# Set the long and short conditions for our strategy
+# long.short.strategy <- iif(RSI3 < 30 & CCI20 > -290 & CCI20 < -100 & DEMA10c > -40 & DEMA10c < -20,1,iif(DEMA10c > 10 & DEMA10c < 40 & CCI20 > 185 & CCI20 < 325 & RSI3 > 50, -1 ,NA))
+
+long.short.strategy <- iif(RSI3 < 100 & CCI20 > -400 & CCI20 < -50 & DEMA10c > -100 & DEMA10c < 20,1,iif(DEMA10c > 5 & DEMA10c < 200 &
+CCI20 > 100 & CCI20 < 1000 & RSI3 > 10, -1 ,NA))
+
+data$weight[] = NA
+data$weight[1:length(long.short.strategy)] = long.short.strategy
+
+# Create our long short strategy
+models$longshort <- bt.run.share(data, clean.signal = T,
+                                 trade.summary = F)
+
+# Isolate the dates from our validation set (The data not used to train the model or create the rules, our out-of-sample test)
+dates = '2014-02-26::2014-09-22'
+# dates = '2011-07-01::2016-07-01'
+
+# View a plot of our trades
+bt.stop.strategy.plot(data, models$longshort, dates = dates, layout=T, main = 'Long Short Strategy', plotX = F)
+
+# View the equity curve and performance statistics.
+strategy.performance.snapshoot(models, T)
+
+# The stop loss function
+stop.loss <- function(weight, price, tstart, tend, pstop) {
+  index = tstart : tend
+  if(weight > 0)
+    price[ index ] < (1 - pstop) * price[ tstart ]
+  else
+    price[ index ] > (1 + pstop) * price[ tstart ]
+}
+
+# Set our maximum loss at a .25% move in price against our trade
+Stoploss = .25/100
+# Stoploss = 5
+
+data$weight[] = NA
+
+csf <- custom.stop.fn(coredata(long.short.strategy), coredata(prices), stop.loss,pstop = Stoploss)
+
+data$weight[1:length(csf)] = csf
+
+# Our long short model with a .25% stop loss
+models$stoploss <- bt.run.share(data, clean.signal = T,
+                                trade.summary = F)
+
+# The plot of our trades
+bt.stop.strategy.plot(data, models$stoploss, dates = dates,
+                      layout = T, main = 'Stop Loss', plotX = F)
+
+# And how it compares to the original model
+strategy.performance.snapshoot(models[c(1,4:5)], T) 
+
+# The take profit function
+take.profit <- function(weight, price, tstart, tend, pprofit) {
+  index = tstart : tend
+  if(weight > 0)
+    price[ index ] > (1 + pprofit) * price[ tstart ]
+  else
+    price[ index ] < (1 - pprofit) * price[ tstart ]
+}
+
+# Maintain at 1:1 risk/reward ratio and set our take profit at a .25% change in price
+Takeprofit = .25/100
+# Takeprofit = 10
+
+data$weight[] = NA
+
+csf_lss <- custom.stop.fn(coredata(long.short.strategy), coredata(prices), take.profit, pprofit = Takeprofit)
+
+data$weight[1:length(csf_lss)] = csf_lss
+
+# Our long short model with a .25% take profit
+models$takeprofit <- bt.run.share(data, clean.signal = T,
+                                  trade.summary = F)
+
+# The plot of our trades
+bt.stop.strategy.plot(data, models$takeprofit, dates = dates, layout=T, main = 'Take Profit', plotX = F)
+
+# Compare it to our other models
+strategy.performance.snapshoot(models[c(1,4:6)], T) 
+
+# The stop loss and take profit function
+stop.loss.take.profit<-function(weight, price, tstart, tend, pstop, pprofit) {
+  index = tstart : tend
+  if(weight > 0) {
+    temp = price[ index ] < (1 - pstop) * price[ tstart ]
+    
+    # profit target
+    temp = temp | price[ index ] > (1 + pprofit) * price[ tstart ]
+  } else {
+    temp = price[ index ] > (1 + pstop) * price[ tstart ]
+    
+    # profit target
+    temp = temp | price[ index ] < (1 - pprofit) * price[ tstart ]
+  }
+  return( temp )
+}
+
+data$weight[] = NA
+
+csf_st <- custom.stop.fn(coredata(long.short.strategy), coredata(prices), stop.loss.take.profit,pstop = Stoploss, pprofit = Takeprofit)
+
+data$weight[1:length(csf_st)] = csf_st
+
+# Our long short model with a .25% stop loss and .25% take profit
+models$stop.loss.take.profit = bt.run.share(data, clean.signal = T, trade.summary = F)
+
+# The plot of our trades
+layout(1:4)
+bt.stop.strategy.plot(data, models$longshort, dates = dates, layout=T, main = 'Long Short', plotX = F)
+bt.stop.strategy.plot(data, models$stoploss, dates = dates, layout=T, main = 'Long Short .25% SL', plotX = F)
+bt.stop.strategy.plot(data, models$takeprofit, dates = dates, layout=T, main = 'Long Short .25% TP', plotX = F)
+bt.stop.strategy.plot(data, models$stop.loss.take.profit, dates = dates, layout=T, main = 'Long Short .25% SL, .25% TP', plotX = F)
+
+# Finally comparing all the models we created
+strategy.performance.snapshoot(models[c(1,4:7)], T)
+```
