@@ -1,0 +1,89 @@
+---
+title: "Zspread HoltWinters Zoo Analysis"
+date: "August 22, 2016"
+output: html_document
+---
+
+# Synopsis  
+This document uses HoltWinters filtering of Zoo format time series data, with backtesting applied 20 days into future.  The original data is found in the variable, "Zspread". Time Series data is found in the variable, "Zspread.z". Forecasted data is found in the variables, "fit" and "ZspreadForecast".  
+
+The HoltWinters() function uses as.ts() on all data. Therefore,
+zoo format compatibility was accomplished with ts(x, freq=250) for daily business data.  
+ 
+## Working Directory and System Requirements  
+```{r, warning=F, message=F}
+setwd("C:/Users/johnakwei/Dropbox/Programming/IFC")
+library(dplyr)
+library(ggplot2)
+library(stats)
+library(zoo)
+library(xts)
+library(forecast)
+library(tseries)
+
+Zspread <- read.csv("Z spread.csv")
+
+Zspread$Date <- as.Date(Zspread$Date, format="%m/%d/%Y")
+
+plot(Zspread$Date, Zspread$Zspread, type="l", col="orange", main="Plot of Zspread Data")
+```
+
+## Time Series of Zspread  
+```{r}
+Zspread.z <- zoo(as.numeric(paste(Zspread$Zspread)), order.by = Zspread$Date, frequency = 250)
+```
+
+```{r, echo=F}
+cat("The data class of Zspread.z is",class(Zspread.z))
+
+cat("The frequency of the Zspread.z Time Series is", frequency(Zspread.z))
+
+cat("Zspread.z Time Series: Start =",start(Zspread.z)," End =", end(Zspread.z))
+```
+
+## Zspread Time Series Plots  
+```{r}
+plot.zoo(Zspread.z, col="blue", main="Time Series of Zspread.z")
+
+# Seasonal decomposition
+# fit <- stl(Zspread.z[,2], s.window="period", na.action = NULL)
+fit <- stl(ts(Zspread.z[,2],freq=250), t.window=15, s.window="per", robust=TRUE)
+plot(fit, main="Seasonal Decomposition of Zspread.z")
+
+# other plots
+monthplot(Zspread.z[,2], col="green", main="Month Plot of Zspread, Seasonal Adjustment")
+
+seasonplot(ts(Zspread.z[,2],freq=250), main="Season Plot of Zspread, Seasonal Adjustment")
+```
+
+## Exponential Model with 20 days Forecasting  
+```{r}
+# simple exponential - models level
+fit <- HoltWinters(ts(Zspread.z[,2], freq=250), beta=FALSE, gamma=FALSE)
+plot(fit, main="Holt-Winters Filtering, Models Level")
+
+# double exponential - models level and trend
+fit <- HoltWinters(ts(Zspread.z[,2], freq=250), gamma=FALSE)
+plot(fit, main="Holt-Winters Filtering, Models Level + Trend")
+
+# triple exponential - models level, trend, and seasonal components
+fit <- HoltWinters(ts(Zspread.z[,2], freq=250))
+plot(fit, main="Holt-Winters Filtering, Models Level + Trend + Seasonal Components")
+
+# predict next three future values
+ZspreadForecast <- forecast(fit, 20)
+plot(ZspreadForecast, main="Forecast (20 Days) from Holt-Winters Filtering")
+
+# predictive accuracy
+accuracy(ZspreadForecast)
+```
+
+## Automated Forecasting  
+```{r, warning=F, message=F}
+# Automated forecasting using an exponential model
+# fit <- ets(Zspread.z[,2])
+# plot(fit)
+
+fit <- stlf(ts(Zspread.z[,2], freq=250))
+plot(fit)
+```
