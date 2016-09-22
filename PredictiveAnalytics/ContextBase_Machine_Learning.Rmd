@@ -1,0 +1,195 @@
+---
+title: "ContextBase Machine Learning"
+subtitle: "contextbase.github.io"
+author: "by John Akwei, ECMp ERMp Data Scientist"
+date: "September 7, 2016"
+output: html_document
+---
+
+<img src="ContextBase_Logo.jpg" alt="ContextBase Logo"  width="600" height="325">
+
+## Synopsis  
+This document includes examples of the Machine Learning capabilities of ContextBase. All the R language programming involved is by John Akwei, ECMp ERMp Data Scientist. "Machine Learning" requires the construction of algorithms that can learn from historical trends in datasets, make predictions, uncover hidden insights, and produce repeatable decisions.  
+
+```{r, echo=F, warning=F, message=F}
+# Working Directory, and Required Packages:
+setwd("C:/Users/johnakwei/Dropbox/Programming/CorrelationAnalysis/MachineLearning")
+if (!require("ggplot2")) { install.packages("ggplot2"); require("ggplot2") }
+if (!require("GGally")) { install.packages("GGally"); require("GGally") }
+if (!require("ggvis")) { install.packages("ggvis"); require("ggvis") }
+if (!require("plot3D")) { install.packages("plot3D"); require("plot3D") }
+if (!require("lattice")) {install.packages("lattice"); require("lattice")}
+if (!require("xlsx")) {install.packages("xlsx"); require("xlsx")}
+if (!require("magrittr")) { install.packages("magrittr"); require("magrittr") }
+if (!require("knitr")) { install.packages("knitr"); require("knitr") }
+if (!require("plyr")) { install.packages("plyr"); require("plyr") }
+if (!require("dplyr")) { install.packages("dplyr"); require("dplyr") }
+if (!require("caret")) { install.packages("caret"); require("caret") }
+if (!require("gmodels")) { install.packages("gmodels"); require("gmodels") }
+if (!require("rpart")) { install.packages("rpart"); require("rpart") }
+if (!require("randomForest")) { install.packages("randomForest"); require("randomForest") }
+if (!require("e1071")) { install.packages("e1071"); require("e1071") }
+if (!require("kknn")) { install.packages("kknn"); require("kknn") }
+if (!require("class")) { install.packages("class"); require("class") }
+if (!require("tree")) { install.packages("tree"); require("tree") }
+if (!require("party")) { install.packages("party"); require("party") }
+if (!require("Formula")) { install.packages("Formula"); require("Formula") }
+if (!require("cluster")) { install.packages("cluster"); require("cluster") }
+if (!require("evtree")) { install.packages("evtree"); require("evtree") }
+if (!require("spam")) { install.packages("spam"); require("spam") }
+if (!require("kernlab")) { install.packages("kernlab"); require("kernlab") }
+if (!require("mlbench")) { install.packages("mlbench"); require("mlbench") }
+if (!require("pgmm")) { install.packages("pgmm"); require("pgmm") }
+if (!require("ElemStatLearn")) { install.packages("ElemStatLearn"); require("ElemStatLearn") }
+if (!require("AppliedPredictiveModeling")) { install.packages("AppliedPredictiveModeling"); require("AppliedPredictiveModeling") }
+if (!require("RWeka")) { install.packages("RWeka"); require("RWeka") }
+```
+
+<br />
+
+# ContextBase Machine Learning Case Study  
+```{r, warning=F, message=F}
+OilData <- read.xlsx("Q0873kE5qu230258.xlsx", 1)
+
+# Data Cleaning:
+names(OilData) <- c("SampleNumber", "Date", "Time", "PM25", "H25","NOX", "NH3", "CO", "CO2", "O3", "AvgHourTemp", "AvgHourDewPt", "AvgHourHumid", "AvgHourWind", "AvgHourOil")
+OilData <- OilData[4:235,5:15]
+OilData <- na.exclude(OilData)
+
+OilData$H25 <- as.numeric(OilData$H25)
+OilData$NOX <- as.numeric(OilData$NOX)
+OilData$NH3 <- as.numeric(OilData$NH3)
+OilData$CO <- as.numeric(OilData$CO)
+OilData$CO2 <- as.numeric(OilData$CO2)
+OilData$O3 <- as.numeric(OilData$O3)
+OilData$AvgHourTemp <- as.numeric(OilData$AvgHourTemp)
+OilData$AvgHourDewPt <- as.numeric(OilData$AvgHourDewPt)
+OilData$AvgHourHumid <- as.numeric(OilData$AvgHourHumid)
+OilData$AvgHourWind <- as.numeric(OilData$AvgHourWind)
+OilData$AvgHourOil <- as.numeric(OilData$AvgHourOil)
+
+# Data Normalization
+normalize <- function(x) {
+num <- x - min(x)
+denom <- max(x) - min(x)
+return (num/denom)
+}
+
+# Example
+iris_norm <- as.data.frame(lapply(iris[1:4], normalize))
+```
+
+<br />
+
+## Exploratory Data Analysis of Oil Production Data  
+```{r, warning=F, message=F}
+# xtabs(~AvgHourOil + H25, data=OilData)
+# xtabs(~AvgHourTemp + NOX, data=OilData)
+# ftable(OilData$AvgHourOil, row.vars = 1)
+
+# Summary of Oil Production
+summary(OilData$AvgHourOil)
+
+# Summary of Temperature
+summary(OilData$AvgHourTemp)
+
+# Summary of Wind Speed
+summary(OilData$AvgHourWind)
+```
+
+<br />
+
+## Graphs of Oil Production Trends  
+```{r, echo=F, warning=F, message=F}
+ggplot(OilData, aes(AvgHourOil, H25)) +
+  geom_point(aes(color=H25)) +
+  geom_smooth(method='lm', se=TRUE) +
+  labs (x="Oil Production", y="Hydrogen Sulfide (H25)", title="Hydrogen Sulfide (H25) from Oil Production") +
+  theme(plot.title=element_text(vjust=1, color="blue", size=14,
+                                face="bold.italic")) +
+  theme(axis.title.x=element_text(color="darkorange", size=14,
+                                  vjust=0.5),
+        axis.title.y=element_text(color="darkorange", size=14,
+                                  vjust=0.5))
+
+OilDataMatrix <- cbind(OilData$H25, OilData$NOX,
+                       OilData$NH3, OilData$CO,
+                       OilData$CO2, OilData$O3,
+                       OilData$AvgHourTemp, OilData$AvgHourDewPt,
+                       OilData$AvgHourHumid, OilData$AvgHourWind,
+                       OilData$AvgHourOil)
+
+M <- cor(OilDataMatrix)
+M <- round(M, 2)
+levelplot(M)
+```
+
+<br />
+
+## Exploratory Data Correlations Within Oil Production Data  
+```{r, warning=F, message=F}
+Oil1Result <- cor.test(OilData$H25, OilData$AvgHourTemp)
+Oil1Table <- data.frame(c(Oil1Result$method, Oil1Result$statistic, Oil1Result$parameter, Oil1Result$p.value, Oil1Result$estimate, Oil1Result$alternative, Oil1Result$conf.int))
+colnames(Oil1Table) <- "Correlation_of_H25_and_Temperature"
+rownames(Oil1Table) <- c("Method", "Statistic", "Parameter", "P.Value", "Estimate", "Alternative", "High Confidence Interval", "Low Confidence Interval")
+kable(Oil1Table)
+```
+
+<br />
+
+## Machine Learning of H25 Levels via Support Vector Machines  
+```{r, warning=F, message=F}
+# Fit Correlation Model
+fit <- rpart(H25~., data=OilData, control=rpart.control(minsplit=5))
+kable(data.frame(fit$variable.importance))
+
+# Predict PM25 Levels
+Predicted_H25 <- predict(fit, OilData[,2:11])
+
+# Compare Accuracy of Predictions
+kable(data.frame(OilData$AvgHourOil[1:10], OilData$AvgHourDewPt[1:10], OilData$CO2[1:10], Predicted_H25[1:10], OilData$H25[1:10]))
+```
+
+<br />
+
+## Machine Learning of H25 Levels via Random Forest  
+```{r, warning=F, message=F}
+# Fit Correlation Model
+fit <- randomForest(H25~., data=OilData)
+kable(data.frame(fit$importance))
+
+# Predict PM25 Levels
+predictionsRF_H25 <- predict(fit, OilData[,2:11])
+
+# Compare Accuracy of Predictions
+kable(data.frame(OilData$AvgHourOil[1:10], OilData$AvgHourDewPt[1:10], OilData$CO2[1:10], predictionsRF_H25[1:10], OilData$H25[1:10]))
+```
+
+<br />
+
+## Cross-Validation of Oil Production Data  
+```{r}
+# The Data is divided into Training, and Test, Data
+TrainingData <- OilData[1:160,]
+NewData <- OilData[161:232,]
+```
+
+<br />
+
+## Machine Learning of H25 Levels with Cross-Validation    
+```{r, warning=F, message=F}
+# Fit Correlation Model
+fit <- rpart(H25~., data=TrainingData, control=rpart.control(minsplit=5))
+kable(data.frame(fit$variable.importance))
+
+# Predict PM25 Levels
+Predicted_H25 <- predict(fit, NewData[,2:11])
+
+# Compare Accuracy of Predictions
+kable(data.frame(NewData$AvgHourOil[1:10], NewData$AvgHourDewPt[1:10], NewData$CO2[1:10], Predicted_H25[1:10], NewData$H25[1:10]))
+```
+
+<br />
+
+## Conclusions  
+Machine Learning of the Environmental Effects of Oil Production, displayed accuracy of predictive capabilities with the use of the "rpart" and "Random Forest" Support Vector Machines (SVM) algorithms. When applying Cross-Validation to access predictive capabilities with new data, the "rpart" (Recursive Partitioning and Regression Trees) algorithm failed to provide accurate estimates of the values of H25, (Hydrogen Sulfide). Possibly, because of limited amount of samples.  

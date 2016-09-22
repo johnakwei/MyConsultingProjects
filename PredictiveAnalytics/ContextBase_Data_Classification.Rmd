@@ -1,0 +1,149 @@
+---
+title: "<center>ContextBase Data Classification</center>"
+subtitle: "<center>http://contextbase.github.io</center>"
+author: "<center>All programming by John Akwei, ECMp ERMp Data Scientist</center>"
+date: "<center>September 21, 2016</center>"
+output: html_document
+---
+
+<center><img src="ContextBase_Logo.jpg" alt="ContextBase Logo"  width="500" height="291"></center>
+
+## Synopsis
+This document includes examples of the Data Classification capabilities of ContextBase. "Data Classification" is the use of Machine Learning techniques to organize datasets into related sub-populations, not previous specified in the dataset. This can uncover hidden characteristics within data, and identify hidden categories that new data belongs within.
+
+```{r, echo=F, warning=F, message=F}
+# Working Directory, and Required Packages:
+setwd("C:/Users/johnakwei/Dropbox/Programming/CorrelationAnalysis/MachineLearning")
+if (!require("ggplot2")) { install.packages("ggplot2"); require("ggplot2") }
+if (!require("plyr")) { install.packages("plyr"); require("plyr") }
+if (!require("dplyr")) { install.packages("dplyr"); require("dplyr") }
+if (!require("caret")) { install.packages("caret"); require("caret") }
+if (!require("gmodels")) { install.packages("gmodels"); require("gmodels") }
+if (!require("fpc")) { install.packages("fpc"); require("fpc") }
+if (!require("cluster")) { install.packages("cluster");
+                           require("cluster") }
+if (!require("kknn")) { install.packages("kknn"); require("kknn") }
+if (!require("class")) { install.packages("class"); require("class") }
+if (!require("tree")) { install.packages("tree"); require("tree") }
+if (!require("party")) { install.packages("party"); require("party") }
+if (!require("Formula")) { install.packages("Formula"); require("Formula") }
+library(knitr)
+library(rpart)
+library(rattle)
+library(rpart.plot)
+library(RColorBrewer)
+library(party)
+library(partykit)
+```
+
+<br />
+
+## ContextBase Classification Case Study 1  
+This Case Study demonstrates the use of Kmeans Clustering, for the Classification of the cars within the Motor Trend Cars 1974 dataset. The Kmeans function in the R programming language was used to divide the dataset into 3 clusters. The centers of the clusters were determined by Miles Per Gallon, Horsepower, and Displacement of the engine cylinders.  
+```{r, warning=F, message=F}
+# Data Import
+data(mtcars)
+
+# Dataset Observations
+kable(head(mtcars[,1:3]), caption = "Sample of Records processed for Classification")
+
+# Selecting observations to determine cluster parameters
+mtcarsnum <- mtcars[,1:3]
+
+# Kmeans clustering to create 3 clusters
+mtcars_k3 <- kmeans(mtcarsnum, centers=3)
+```
+
+```{r, echo=F}
+# Prints the partition size of the 3 clusters
+cat("The amount of cars in Cluster 1 =", mtcars_k3$size[1])
+cat("The amount of cars in Cluster 2 =", mtcars_k3$size[2])
+cat("The amount of cars in Cluster 3 =", mtcars_k3$size[3])
+```
+
+```{r, warning=F, message=F}
+# Result of Kmeans processing
+kable(mtcars_k3$centers, caption = "Centers of the 3 clusters")
+
+# Ward Hierarchical Clustering to determine Kmeans cluster distance
+d <- dist(mtcarsnum, method = "euclidean")
+fit <- hclust(d, method="ward.D") 
+
+# Dendrogram plot
+plot(fit)
+groups <- cutree(fit, k=3)
+rect.hclust(fit, k=3, border="red")
+
+# Cluster plot
+clusplot(mtcarsnum, mtcars_k3$cluster, color=TRUE, shade=TRUE, 
+  	labels=2, lines=0)
+```
+
+```{r, warning=F, message=F}
+# Classification Tree
+form <- as.formula(mpg ~ .)
+tree.2 <- rpart(form,mtcars[,1:3])
+# prp(tree.2) # fast plot
+fancyRpartPlot(tree.2)
+``` 
+
+<br />
+<br />
+
+## ContextBase Classification Case Study 2   
+This Case Study demonstrates the use of Kmeans Clustering, for the Classification of Internet of Things data. The Kmeans function in the R programming language was used to divide the dataset into 3 clusters. The centers of the clusters were determined by RBA ID, NDT IN KMH, and DISTANCE IN METERS.  
+```{r}
+# Data Import
+IOTdata <- read.csv("trafficMetaData.csv")
+IOTdata2 <- data.frame(as.character(IOTdata[,1]), IOTdata[,8], IOTdata[,23], IOTdata[,25])
+names(IOTdata2) <- c("POINT_1_STREET", "NDT_IN_KMH", "DISTANCE_IN_METERS", "RBA_ID")
+IOTdata2 <- IOTdata2[1:32,]
+IOTdata2$POINT_1_STREET <- make.names(IOTdata2$POINT_1_STREET,
+                                      unique=T)
+
+# Dataset Observations
+kable(head(IOTdata2, caption = "Sample of Records processed for Classification"))
+
+# Selecting observations to determine cluster parameters
+IOTdataNum <- IOTdata2[,2:4]
+
+# Kmeans clustering to create 3 clusters
+IOTdataNum_k3 <- kmeans(IOTdataNum, centers=3)
+```
+
+```{r, echo=F}
+# Prints the partition size of the 3 clusters
+cat("The amount of Point 1 Street Names in Cluster 1 =", IOTdataNum_k3$size[1])
+cat("The amount of Point 1 Street Names in Cluster 2 =", IOTdataNum_k3$size[2])
+cat("The amount of Point 1 Street Names in Cluster 3 =", IOTdataNum_k3$size[3])
+```
+
+```{r, warning=F, message=F}
+# Result of Kmeans processing
+kable(IOTdataNum_k3$centers, caption = "Centers of the 3 clusters")
+
+# Create cluster_id column
+IOTdata2$cluster_id <- IOTdataNum_k3$cluster
+rownames(IOTdataNum) <- IOTdata2[,1]
+
+# Ward Hierarchical Clustering
+d <- dist(IOTdataNum, method = "euclidean")
+fit <- hclust(d, method="ward.D") 
+
+# Dendrogram plot
+plot(fit)
+groups <- cutree(fit, k=3)
+rect.hclust(fit, k=3, border="red")
+
+# Cluster Plot
+clusplot(IOTdataNum, IOTdataNum_k3$cluster, color=TRUE, shade=TRUE, 
+  	labels=2, lines=0)
+```
+
+```{r, warning=F, message=F}
+# Classification Tree
+form <- as.formula(NDT_IN_KMH ~ .)
+tree.2 <- rpart(form, IOTdata2[,2:4])
+# prp(tree.2) # fast plot
+fancyRpartPlot(tree.2)
+```
