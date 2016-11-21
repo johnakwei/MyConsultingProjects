@@ -1,0 +1,445 @@
+---
+title: "Extreme Value Theory for Risk Factors in R"
+subtitle: "ContextBase, http://contextbase.github.io"
+author: "Programming by John Akwei, ECMp ERMp Data Scientist"
+date: "November 20, 2016"
+output: html_document
+---
+
+<br />
+
+# Synopsis  
+This document is an examination of Extreme Value Theory (EVT) for Risk Factors - (Value at Risk and CvaR) in R programming. Via simulating data with extreme value distributions, (Frechet, Gumbel and Weibull), testing them on robustness with an Anderson Darling Test, and utilizing Block Maxima and Peak-Over-Threshold methods of EVT, this document will determine the influence on model results of different methods for calculating Risk Factors, and different estimation windows.  
+
+Extreme Value Theory, (initially developed by Fisher, Tippett, and Gnedenko), demonstrates that the distribution of the block-maxima of a sample of independent identically distributed, (iid), variables converges to one of the three Extreme Value distributions.  
+
+Renewed interest by Statisticians to modeling Extreme Values has recently occurred. Extreme Value Thoery has proven useful in a variety of Risk Factor cases. After Financial Market instabilities from 1999 - 2008, Extreme Value Analysis gained in effectiveness vs previous Value-at-Risk analysis. Extreme Values represent extreme fluctuations of a system. EVT offers the ability to model the relationships of probability of extreme events, magnitude, damage, and cost of protection.  
+
+<br />
+
+## References  
+https://arxiv.org/pdf/1310.3222.pdf  
+https://www.ma.utexas.edu/mp_arc/c/11/11-33.pdf
+http://evt2013.weebly.com/uploads/1/2/6/9/12699923/penalva.pdf  
+http://pubs.sciepub.com/ijefm/2/5/4/  
+
+http://www4.stat.ncsu.edu/~mannshardt/st810EVA/Lectures/Lec3GEV.pdf  
+http://www.sfu.ca/~rjones/econ811/readings/McNeil%201999.pdf  
+http://www.bankofcanada.ca/wp-content/uploads/2010/01/wp00-20.pdf  
+
+https://github.com/mbjoseph/demo_evt  
+https://github.com/C2SM/gevXgpd/tree/b306e066fe6f14c920254cab560ed6f9d7a2f53f/R 
+https://cran.r-project.org/web/packages/evir/evir.pdf  
+
+<br />
+
+```{r, echo=F, eval=F}
+setwd("C:/Users/johnakwei/Dropbox/Programming/StockTrading")
+```
+
+```{r, message=F, warning=F}
+# Set Working Directory
+# setwd(" ")
+
+# Required Packages
+# if (!require("dplyr")) { install.packages("dplyr"); require("dplyr") }
+# if (!require("magrittr")) { install.packages("magrittr"); require("magrittr")}
+# if (!require("ggplot2")) { install.packages("ggplot2"); require("ggplot2") }
+# if (!require("tseries")) { install.packages("tseries"); require("tseries") }
+# if (!require("vars")) { install.packages("vars"); require("vars") }
+# if (!require("evd")) { install.packages("evd"); require("evd") }
+# if (!require("evir")) { install.packages("evir"); require("evir") }
+# if (!require("POT")) { install.packages("POT"); require("POT") }
+# if (!require("fBasics")) { install.packages("fBasics"); require("fBasics") }
+# if (!require("fExtremes")) { install.packages("fExtremes"); require("fExtremes") }
+# if (!require("quantmod")) { install.packages("quantmod"); require("quantmod") }
+# if (!require("PerformanceAnalytics")) { install.packages("PerformanceAnalytics"); require("PerformanceAnalytics") }
+# if (!require("rugarch")) { install.packages("rugarch"); require("rugarch") }
+# if (!require("nortest")) { install.packages("nortest"); require("nortest") }
+# if (!require("fGarch")) { install.packages("fGarch"); require("fGarch") }
+
+library(dplyr)
+library(magrittr)
+library(ggplot2)
+library(tseries)
+library(vars)
+library(evd)
+library(evir)
+library(POT)
+library(fBasics)
+library(fExtremes)
+library(quantmod)
+library(PerformanceAnalytics)
+library(rugarch)
+library(nortest)
+```
+
+<br />
+
+# Extreme Value Distributions  
+Extreme Value Theorists have developed the Generalized Extreme Value distribution. The GEV contains a family of continuous probability distributions, the Gumbel, Frechet and Weibull distributions, (also known as Type I, II and III Extreme Value Distributions).  
+
+```{r, message=F, warning=F}
+x <- seq(-10, 10, by=0.1)
+Gumbel_density <- exp(-x-exp(-x))
+Frechet_density <- dgev(x, xi=0.8, mu=0)
+Weibull_density <- dgev(x, xi=-0.3, mu=0)
+
+plot(c(x,x,x), c(Gumbel_density,Frechet_density, Weibull_density),
+     type='n', xlab="x", ylab=" ",las=1)
+lines(x, Gumbel_density, type='l', lty=1, col='green')
+lines(x, Weibull_density, type='l', lty=2, col='blue')
+lines(x, Frechet_density, type='l', lty=3, col='red')
+legend('topright', legend=c('Gumbel','Frechet','Weibull'), lty=c(1,2,3), col=c('green','blue','red'))
+```
+
+<br />
+
+## Simulating Gumbel Extreme Value Distribution    
+A Gumbel Extreme Value Distribution dataframe is created from the above Gumbel density. The beginning six distribution values are displayed, and a plot is drawn of the Gumbel Distribution.   
+```{r, message=F, warning=F}
+GumbelDistribution <- data.frame(x, Gumbel_density)
+names(GumbelDistribution) <- c("Time", "Observations")
+head(GumbelDistribution)
+plot(GumbelDistribution, col="green", pch=19, cex=0.8,
+     main="Plot of Extreme Value Distribution - Gumbel")
+```
+
+<br />
+
+## Simulating Frechet Extreme Value Distribution  
+A Frechet Extreme Value Distribution dataframe is created from the above Frechet density. The beginning six distribution values are displayed, and a plot is drawn of the Frechet Distribution.   
+```{r, message=F, warning=F}
+FrechetDistribution <- data.frame(x, Frechet_density)
+names(FrechetDistribution) <- c("Time", "Observations")
+head(FrechetDistribution)
+plot(FrechetDistribution, col="blue", pch=19, cex=0.8,
+     main="Plot of Extreme Value Distribution - Frechet")
+```
+
+<br />
+
+## Simulating The Weibull Extreme Value Distribution    
+A Weibull Extreme Value Distribution dataframe is created from the above Weibull density. The beginning six distribution values are displayed, and a plot is drawn of the Weibull Distribution.   
+```{r, message=F, warning=F}
+WeibullDistribution <- data.frame(x, Weibull_density)
+names(WeibullDistribution) <- c("Time", "Observations")
+head(WeibullDistribution)
+plot(WeibullDistribution, col="red", pch=19, cex=0.8,
+     main="Plot of Extreme Value Distribution - Weibull")
+```
+
+<br />
+<br />
+
+# Value-at-Risk, VaR, Estimation of Extreme Value Distributions
+Before examining Extreme Value Theory estimations of Extreme Distributions, a pre-EVT Value-at-Risk estimation is performed. The objective is to compare VaR estimation results with EVT estimation results. All three Extreme Distributions are examined.  
+
+## VaR Estimation of Gumbel Extreme Value Distribution  
+An attempt at VaR estimation is made for the Gumbel extreme value distribution. The Gumbel distribution is converted to a time series, then processed through VaR estimation. The following diagnostic tests are made: An arch test, a normality test, and the Gumbel values are fitted for correlation. A resulting prediction of the next 8 days of values demonstrates that traditional VaR estimation is inadequate for analysis of Gumbel Extreme Value Distributions.  
+```{r, message=F, warning=F}
+gumbel_var_ts <- ts(GumbelDistribution)
+var.2c <- VAR(gumbel_var_ts, p = 2, type = "const")
+
+# Diagnostic Testing
+# Arch Test
+arch.test(var.2c)
+
+# Normality Test
+normality.test(var.2c)
+
+#  fitted values
+head(fitted(var.2c))
+
+# Predict the values for the next 8 days
+var.2c.prd <- predict(var.2c, n.ahead = 8, ci = 0.9)
+plot(var.2c.prd)
+```
+
+<br />
+
+## VaR Estimation of Frechet Extreme Value Distribution  
+Next, an attempt at VaR estimation is made for the Frechet extreme value distribution. The Frechet distribution is converted to a time series, then processed through VaR estimation. The following diagnostic tests are made: An arch test, a normality test, and the Frechet values are fitted for correlation. A resulting prediction of the next 8 days of values demonstrates that traditional VaR estimation is also inadequate for analysis of Frechet Extreme Value Distributions.  
+```{r, message=F, warning=F}
+frechet_var_ts <- ts(FrechetDistribution)
+var.2c <- VAR(frechet_var_ts, p = 2, type = "const")
+
+# Diagnostic Testing
+# Arch Test
+arch.test(var.2c)
+
+# Normality Test
+normality.test(var.2c)
+
+#  fitted values
+head(fitted(var.2c))
+
+# Predict the values for the next 8 days
+var.2c.prd <- predict(var.2c, n.ahead = 8, ci = 0.9)
+plot(var.2c.prd)
+```
+
+<br />
+
+## VaR Estimation of Weibull Extreme Value Distribution  
+Finally, an attempt at VaR estimation is made for the Weibull extreme value distribution. The Weibull distribution is converted to a time series, then processed through VaR estimation. The following diagnostic tests are made: An arch test, a normality test, and the Frechet values are fitted for correlation. A resulting prediction of the next 8 days of values demonstrates that traditional VaR estimation is also inadequate for analysis of all three types of extreme value distributions, including the Weibull Extreme Value Distribution.  
+```{r, message=F, warning=F}
+weibull_var_ts <- ts(WeibullDistribution)
+var.2c <- VAR(weibull_var_ts, p = 2, type = "const")
+
+# Diagnostic Testing
+# Arch Test
+arch.test(var.2c)
+
+# Normality Test
+normality.test(var.2c)
+
+#  fitted values
+head(fitted(var.2c))
+
+# Predict the values for the next 8 days
+var.2c.prd <- predict(var.2c, n.ahead = 8, ci = 0.9)
+plot(var.2c.prd)
+```
+
+<br />
+<br />
+
+# Conditional Value at Risk, CvaR, Estimation of Extreme Value Distributions  
+Traditional VaR estimation of the 3 extreme value distributions has proven unreliable. Therefore, Conditional VaR, (or CvaR), is next reveiwed for analytical capabilities involving Extreme Value Distributions. When VaR fails, CVaR is often useful. CVaR is the average of the extreme losses in the "tail" of the distribution. The objective is to compare VaR estimation results with EVT estimation results. Once again, all three Extreme Distributions are examined.  
+
+## CvaR Estimation of Gumbel Extreme Value Distribution  
+An attempt at CvaR estimation is made for the Gumbel extreme value distribution. The Gumbel distribution time series, is processed through CvaR estimation. A Conditional Drawdown Test, (finds the mean of the worst 0.95% drawdowns), and a Expected Shortfall, (also known as CvaR), Test are made for diagnotics. The result for the Gumbell extreme distribution is that CvaR is capable of determined a Value at Risk point in the data.  
+```{r, message=F, warning=F}
+
+# The conditional drawdown is the the mean of the worst 0.95% drawdowns
+CDD(gumbel_var_ts, weights = NULL, geometric = TRUE, invert = TRUE, p = 0.95)
+
+# Calculates Expected Shortfall (also known as) Conditional Value at Risk
+# Using modified Cornish Fisher calc for non-normal distribution
+ES(ts(GumbelDistribution[1:201, 2, drop = FALSE]), p=.95, method="modified")
+```
+
+<br />
+
+## CvaR Estimation of Frechet Extreme Value Distribution  
+An attempt at CvaR estimation is made for the Frechet extreme value distribution. The Frechet distribution time series, is processed through CvaR estimation. A Conditional Drawdown Test, (finds the mean of the worst 0.95% drawdowns), and a Expected Shortfall, (also known as CvaR), Test are made for diagnotics. The result for the Frechet extreme distribution is that CvaR is capable of determined a Value at Risk point in the data.  
+```{r, message=F, warning=F}
+
+# The conditional drawdown is the the mean of the worst 0.95% drawdowns
+CDD(frechet_var_ts, weights = NULL, geometric = TRUE, invert = TRUE, p = 0.95)
+
+# Calculates Expected Shortfall (also known as) Conditional Value at Risk
+# Using modified Cornish Fisher calc for non-normal distribution
+ES(ts(FrechetDistribution[1:201, 2, drop = FALSE]), p=.95, method="modified")
+```
+
+<br />
+
+## CvaR Estimation of Weibull Extreme Value Distribution  
+An attempt at CvaR estimation is made for the Weibull extreme value distribution. The Weibull distribution time series, is processed through CvaR estimation. A Conditional Drawdown Test, (finds the mean of the worst 0.95% drawdowns), and a Expected Shortfall, (also known as CvaR), Test are made for diagnotics. The result for the Weibull extreme distribution is that CvaR is capable of determined a Value at Risk point in the data.  
+```{r, message=F, warning=F}
+
+# The conditional drawdown is the the mean of the worst 0.95% drawdowns
+CDD(weibull_var_ts, weights = NULL, geometric = TRUE, invert = TRUE, p = 0.95)
+
+# Calculates Expected Shortfall (also known as) Conditional Value at Risk
+# Using modified Cornish Fisher calc for non-normal distribution
+ES(ts(WeibullDistribution[1:201, 2, drop = FALSE]), p=.95, method="modified")
+```
+
+<br />
+<br />
+
+# Block Maxima Estimation of Extreme Value Distributions  
+The Block Maxima approach in Extreme value Theory is the most basic method of EVT, and consists of dividing the observation period into non-overlapping periods of equal size, and restricts attention to the maximum observation in each period. The observations created follow domain of attraction conditions, approximately an Extreme Value Distribution, G?? for some real ??. Parametric statistical methods for the Extreme Value Distributions are then applied to those observations.  
+
+## EVT Block Maxima Estimation of Gumbel Extreme Distribution  
+Before creating a Block Maxima estimation of the Gumbel Extreme Value data, a histogram of the distribution's observations is presented, and an Anderson-Darling Test of robustness of the data is made. Then, the Block Maxima estimation is made via fitting the Gumbel data to Block Maxima data, the results are displayed, with a plot of the Gumbel data density. Extreme data is deduced, then plotted. The resulting Extremes are presented in a final Histogram.  
+```{r, message=F, warning=F}
+hist(GumbelDistribution$Observations)
+
+cat("Anderson - Darling Test of Gumbel Extreme Value Distribution")
+ad.test(GumbelDistribution$Observations)
+
+cat("Fitting the EV distribution to the block maxima data")
+GumbelGEV <- gev(as.numeric(GumbelDistribution$Observations[1:200]))
+fgev(GumbelGEV$data, std.err = FALSE)
+
+plot(density(GumbelDistribution$Observations), xlab="", main="Maxima of Gumbel Distribution", lwd=2)
+
+extremes <- GumbelDistribution %>%
+  group_by(Observations) %>%
+  summarize(max_x=max(Time), min_x=min(Time), n=n())
+
+extremes %>%
+  ggplot(aes(x=max_x, y=Observations)) +
+  geom_point() +
+  xlab('Observations') +
+  ylab('Time)') +
+  ggtitle("Gumbel Distribution Extremes")
+
+extremes$max_x %>%
+  hist(main="Histogram of Gumbel Distribution Extremes")
+```
+
+<br />
+
+## EVT Block Maxima Estimation of Frechet Extreme Distribution  
+Before creating a Block Maxima estimation of the Frechet Extreme Value data, a histogram of the distribution's observations is presented, and an Anderson-Darling Test of robustness of the data is made. Then, the Block Maxima estimation is made via fitting the Frechet data to Block Maxima data, the results are displayed, with a plot of the Frechet data density. Extreme data is deduced, then plotted. The resulting Extremes are presented in a final Histogram.  
+```{r, message=F, warning=F}
+hist(FrechetDistribution$Observations)
+
+cat("Anderson - Darling Test of Frechet Extreme Value Distribution")
+ad.test(FrechetDistribution$Observations)
+
+cat("Fitting the EV distribution to the block maxima data")
+FrechetGEV <- gev(as.numeric(FrechetDistribution$Observations[1:200]))
+fgev(FrechetGEV$data, std.err = FALSE)
+
+plot(density(FrechetDistribution$Observations), xlab="", main="Maxima of Frechet Distribution", lwd=2)
+
+extremes <- FrechetDistribution %>%
+  group_by(Observations) %>%
+  summarize(max_x=max(Time), min_x=min(Time), n=n())
+
+extremes %>%
+  ggplot(aes(x=max_x, y=Observations)) +
+  geom_point() +
+  xlab('Observations') +
+  ylab('Time)') +
+  ggtitle("Frechet Distribution Extremes")
+
+extremes$max_x %>%
+  hist(main="Histogram of Frechet Distribution Extremes")
+```
+
+<br />
+
+## EVT Block Maxima Estimation of Weibull Extreme Distribution  
+Before creating a Block Maxima estimation of the Weibull Extreme Value data, a histogram of the distribution's observations is presented, and an Anderson-Darling Test of robustness of the data is made. Then, the Block Maxima estimation is made via fitting the Weibull data to Block Maxima data, the results are displayed, with a plot of the Weibull data density. Extreme data is deduced, then plotted. The resulting Extremes are presented in a final Histogram.  
+```{r, message=F, warning=F}
+hist(WeibullDistribution$Observations)
+
+cat("Anderson - Darling Test of Weibull Extreme Value Distribution")
+ad.test(WeibullDistribution$Observations)
+
+cat("Fitting the EV distribution to the block maxima data")
+WeibullGEV <- gev(as.numeric(WeibullDistribution$Observations[1:200]))
+fgev(WeibullGEV$data)
+
+plot(density(WeibullDistribution$Observations), xlab="", main="Maxima of Weibull Distribution", lwd=2)
+
+extremes <- WeibullDistribution %>%
+  group_by(Observations) %>%
+  summarize(max_x=max(Time), min_x=min(Time), n=n())
+
+extremes %>%
+  ggplot(aes(x=max_x, y=Observations)) +
+  geom_point() +
+  xlab('Observations') +
+  ylab('Time)') +
+  ggtitle("Weibull Distribution Extremes")
+
+extremes$max_x %>%
+  hist(main="Histogram of Weibull Distribution Extremes")
+```
+
+<br />
+<br />
+
+# Peaks-Over-Threshold Estimations of Extreme Value Distributions  
+In the peaks-over-threshold approach in EVT, the initial observations that exceed a certain high threshold are selected. The probability distribution of those selected observations is approximately a generalized Pareto distribution.  
+
+## EVT Peaks-Over-Threshold Estimation of Gumbel Extreme Distribution  
+In order to create a Peaks-Over-Threshold estimation of the Gumbel distribution, a threshold is determined using the POT package in R. Then a maximum likelihood estimation (mle) is created by fitting a Generalized Pareto Distribution. A 95% Confidence Interval is determined from the MLE data. The resulting estimation is then graphically diagnosed via MLE plotting. Finally, predictions based on the data are made using the Generalized Auto-Regressive Conditional Heteroskadacity method.  
+```{r, message=F, warning=F}
+# Determine threshold
+par(mfrow=c(1,2))
+tcplot(GumbelDistribution$Observations, u.range = c(0.3, 0.35))
+
+# Fit the Generalizaed Pareto Distribution
+mle <- fitgpd(GumbelDistribution$Observations, thresh = .35, shape = 0, est = "mle")
+
+# Confidence Intervals
+gpd.fiscale(mle, conf = 0.95)
+
+# graphic diagnostics for the fitted model
+par(mfrow=c(1,2))
+plot(mle, npy = 1, which=1)
+plot(mle, npy = 1, which=4)
+
+# Fit models with Generalized Auto-Regressive Conditional Heteroskadacity
+gumbel.fitted.model <- garchFit(formula=~ arma(1, 0) + garch(1, 1),
+                                 data=GumbelDistribution$Observations,
+                                 cond.dist="norm", trace=FALSE)
+    
+# Produce forecasts
+model.forecast <- fGarch::predict(object=gumbel.fitted.model, n.ahead=1)
+
+cat("Forecasts for Gumbel Distribution observations")
+model.forecast
+```
+
+<br />
+
+## EVT Peaks-Over-Threshold Estimation of Frechet Extreme Distribution  
+A Peaks-Over-Threshold estimation of the Frechet distribution, is determined via creation of a maximum likelihood estimation (mle) by fitting a Generalized Pareto Distribution. A 95% Confidence Interval is determined from the MLE data. The resulting estimation is then graphically diagnosed via MLE plotting. Finally, predictions based on the data are made using the Generalized Auto-Regressive Conditional Heteroskadacity method.  
+```{r, message=F, warning=F}
+# Determine threshold
+par(mfrow=c(1,2))
+tcplot(FrechetDistribution$Observations, u.range = c(0.4, 0.45))
+
+# Fit the Generalizaed Pareto Distribution
+mle <- fitgpd(FrechetDistribution$Observations, thresh = .35, shape = 0, est = "mle")
+
+# Confidence Intervals
+gpd.fiscale(mle, conf = 0.95)
+
+# graphic diagnostics for the fitted model
+par(mfrow=c(1,2))
+plot(mle, npy = 1, which=1)
+plot(mle, npy = 1, which=4)
+
+# Fit models with Generalized Auto-Regressive Conditional Heteroskadacity
+frechet.fitted.model <- garchFit(formula=~ arma(1, 0) + garch(1, 1),
+                                 data=FrechetDistribution$Observations,
+                                 cond.dist="norm", trace=FALSE)
+    
+model.forecast <- fGarch::predict(object=frechet.fitted.model, n.ahead=1)
+
+cat("Forecasts for Frechet Distribution observations")
+model.forecast
+```
+
+<br />
+
+## EVT Peaks-Over-Threshold Estimation of Weibull Extreme Distribution  
+In order to create a Peaks-Over-Threshold estimation of the Weibull distribution, a threshold is determined using the POT package in R. Then a maximum likelihood estimation (mle) is created by fitting a Generalized Pareto Distribution. A 95% Confidence Interval is determined from the MLE data. The resulting estimation is then graphically diagnosed via MLE plotting. Finally, predictions based on the data are made using the Generalized Auto-Regressive Conditional Heteroskadacity method.  
+```{r, message=F, warning=F}
+# Determine threshold
+par(mfrow=c(1,2))
+tcplot(WeibullDistribution$Observations, u.range = c(0.3, 0.35))
+
+# Fit the Generalizaed Pareto Distribution
+mle <- fitgpd(WeibullDistribution$Observations, thresh = .35, shape = 0, est = "mle")
+
+# Confidence Intervals
+gpd.fiscale(mle, conf = 0.95)
+
+# graphic diagnostics for the fitted model
+par(mfrow=c(1,2))
+plot(mle, npy = 1, which=1)
+plot(mle, npy = 1, which=4)
+
+# Fit models with Generalized Auto-Regressive Conditional Heteroskadacity
+weibull.fitted.model <- garchFit(formula=~ arma(1, 0) + garch(1, 1),
+                                 data=WeibullDistribution$Observations,
+                                 cond.dist="norm", trace=FALSE)
+    
+# Produce forecasts
+model.forecast <- fGarch::predict(object=weibull.fitted.model, n.ahead=1)
+
+cat("Forecasts for Weibull Distribution observations")
+model.forecast
+```
