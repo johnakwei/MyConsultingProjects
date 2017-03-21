@@ -1,0 +1,233 @@
+---
+title: "Automated Trading - Train, Test, Forecast"
+subtitle: "ContextBase, contextbase.github.io"
+author: "Programming by John Akwei, ECMp ERMp Data Scientist"
+date: "March 20, 2017"
+output: html_document
+---
+
+<img src="ContextBase_Logo.jpg" alt="ContextBase Logo"  width="550" height="300">
+
+## Synopsis  
+The objective of this document is to apply training and testing datasets, (from Machine Learning techniques), to stock trading analysis in the R programming language. This document utilizes the "QuantMod" and "PerformanceAnalytics" R packages for Backtesting of Automated Trading Stategies. Holt-Winters and GARCH Filtering are used for Price Prediction.    
+
+<br />
+
+## Working Directory, and Required Packages  
+```{r, message=F, warning=F}
+# Set Working Directory
+setwd("C:/Users/johnakwei/Dropbox/Programming/StockTrading/YahooFinanceGainersLosers")
+
+# Required Packages
+# if (!require("quantmod")) { install.packages("quantmod"); require("quantmod") }
+# if (!require("PerformanceAnalytics")) { install.packages("PerformanceAnalytics"); require("PerformanceAnalytics") }
+# if (!require("rgl")) { install.packages("rgl"); require("rgl") }
+# if (!require("rugarch")) { install.packages("rugarch"); require("rugarch") }
+
+library(ggplot2)
+library(xts)
+library(zoo)
+library(tseries)
+library(forecast)
+library(quantmod)
+library(PerformanceAnalytics)
+library(caret)
+library(rugarch)
+```
+
+<br />
+
+## Downloading Stock Ticker Data from Yahoo Finances    
+```{r, warning=F, message=F}
+# Import Original data
+ticker_lookup <- getSymbols("GOOG", auto.assign=F,
+                            from="2014-01-01", to="2017-01-01")
+
+# write.csv(ticker_lookup, "ticker_lookup.csv")
+
+ticker_lookup2 <- as.data.frame(cbind(ticker_lookup[,1], ticker_lookup[,2], ticker_lookup[,3], ticker_lookup[,4], ticker_lookup[,5], ticker_lookup[,6]))
+
+TCKR <-  as.data.frame(cbind(date = rownames(ticker_lookup2), ticker_lookup2))
+colnames(TCKR) <- c("date","open","high ","low ","close ","volume ","adjusted")
+rownames(TCKR) <- NULL
+
+rm(ticker_lookup, ticker_lookup2)
+```
+
+<br />
+
+# Create Training and Testing data sets  
+```{r, warning=F, message=F}
+# Create Training and Test Data
+TCKRTrain <- TCKR[1:567,]
+TCKRTest <- TCKR[568:756,]
+```
+
+<br />
+
+# Create Time Series data  
+```{r, warning=F, message=F}
+# Time Series Processing
+TCKRTrainTS <- ts(TCKRTrain$close, start=c(2014, 1, 1),
+                         end=c(2016, 4, 5), frequency=250)
+
+TCKRTestTS <- ts(TCKRTest$close, start=c(2016, 4, 4),
+                        end=c(2017, 1, 1), frequency=250)
+```
+
+<br />
+
+# Forecasting Model #1 - Holt Winters Filtering  
+```{r, warning=F, message=F}
+# Fit Exponential Smoothing
+fit_ES <- HoltWinters(TCKRTrainTS)
+
+# Forecast 20 Days
+TCKRForecast <- forecast(fit_ES, h=20)
+
+# Accuracy of Exponential Smoothing Predictive Model
+accuracy(TCKRForecast, TCKRTestTS)
+
+# Realized Data Plot
+plot(TCKR$date, TCKR$close, col="orange", xlab="Date",
+     ylab="Prices", main="Plot of Ticker Data")
+
+# Exponential Smoothing Plot
+plot(TCKRForecast, xlab="Time", ylab="Prices",
+     main="Holt-Winters Forecast - 20 Days")
+
+# Output Exponential Smoothing Data to Excel
+TCKRFrcstSeries <- c(TCKRTrain$close[1:567], TCKRForecast$mean[1:20])
+
+# .csv of original data and all 3 forecasted values
+TCKRMerge <- c(TCKRTrain$close[1:567], rep(NA, 20))
+
+dateColumn <- c(as.Date(TCKRTrain$date[1:567]),
+                as.Date(TCKRTest$date[1:20]))
+
+TCKRMergeTest <- c(rep(NA, 567), as.numeric(TCKRTest$close[1:20]))
+
+allData <- data.frame(TCKRMerge, TCKRFrcstSeries)
+
+Comparison <- data.frame(dateColumn, TCKRMerge,
+                         TCKRMergeTest, TCKRFrcstSeries)
+names(Comparison) <- c("Date", "Train_Data", "Test_Data", "HW_Forecast")
+
+tail(Comparison, 30)
+
+plot(Comparison$HW_Forecast[1:587], type="l", col="blue",
+     main="Forecast Comparison Plot", xlab="Time", ylab="Values")
+lines(Comparison$Test_Data[1:587], col="green")
+lines(Comparison$Train_Datat[1:587], col="red")
+
+# write.csv(allData, "allTickerData.csv")
+
+# write.csv(Comparison, "TickerDataComparison.csv")
+```
+
+<br />
+
+# Forecasting Model #2 - Holt Winters Exponential Smoothing  
+```{r, warning=F, message=F}
+tickerData.xts <- xts(as.numeric(Cl(TCKRTrain)),
+                      order.by=as.Date(TCKRTrain$date))
+tickerData.z = zoo(x=Cl(TCKRTrain),
+                   order.by=as.Date(TCKRTrain$date))
+
+# Specify the prices and store our models
+prices <- tickerData.xts[,1]
+
+# Create indicator
+sma <- SMA(tickerData.xts, n=1)
+
+# Calculate the indicators we need for our strategy
+CCI20 <- CCI(prices, 20)
+RSI3 <- RSI(prices, 3)
+DEMA10 <- DEMA(prices, n = 10, v = 1, wilder = FALSE)
+DEMA10c <- prices - DEMA10  
+DEMA10c <- DEMA10c/.0001
+
+buy.signal <- ifelse(RSI3 < 30 & CCI20 > -290 & CCI20 < -100 & DEMA10c > -40 & DEMA10c < 750, 1, NA)
+
+# Construct trading rule
+sig <- Lag(ifelse(sma$SMA < buy.signal, 1, -1))
+
+# The trading rules/equity curve
+retSMA <- ROC(tickerData.xts) * sig
+
+chartSeries(tickerData.xts, theme = chartTheme('white'),
+            TA=c(addVo(),addBBands(), addMACD()))
+
+TCKRTS <- ts(TCKRTrain$close, start=c(2014, 1, 1),
+                    end=c(2016, 1, 1), frequency=250)
+
+# Seasonal decomposition
+fit <- stl(TCKRTS, s.window="period")
+monthplot(TCKRTS, col="green", main="Month Plot of TWTR, Seasonal Adjustment")
+
+# triple exponential - models level, trend, and seasonal components
+fit <- HoltWinters(TCKRTS)
+
+# predict next three future values
+TWTRForecast <- forecast(fit, 20)
+plot(TWTRForecast, main="TWTR Price Forecast (20 Days) from Holt-Winters Filtering")
+
+# New Forecast Data
+TWTRFrcstSeries <- c(TCKRTrain$close[1:567], TWTRForecast$mean[1:20])
+
+Comparison$NewForecast <- TWTRFrcstSeries
+names(Comparison) <- c("Date", "Train_Data","Test_Data",
+                       "HW_Forecast", "New_Forecast")
+
+tail(Comparison, 30)
+
+plot(Comparison$HW_Forecast[1:587], type="l", col="blue",
+     main="Forecast Comparison Plot", xlab="Time", ylab="Values")
+lines(Comparison$New_Forecast[1:587], col="black")
+lines(Comparison$Test_Data[1:587], col="green")
+lines(Comparison$Train_Datat[1:587], col="red")
+```
+
+<br />
+
+# Forecasting Model #3 - GARCH (Generalized AutoRegression of Conditional Heteroskadacity) Forecasting  
+```{r, warning=F, message=F}
+spec <- ugarchspec()
+nrow(expand.grid(GARCH=1:14, VEX=0:1, VT=0:1, Mean=0:1, ARCHM=0:2,
+                 ARFIMA=0:1, MEX=0:1, DISTR=1:10))
+spec <- ugarchspec(variance.model=list(model='eGARCH', garchOrder=c(1, 1)),
+                   distribution='std')
+
+# Fit models with Generalized Auto-Regressive Conditional Heteroskadacity
+all.fitted.model <- ugarchfit(spec, TCKRTrainTS, solver='hybrid')
+
+coefBMtable <- data.frame(coef(all.fitted.model))
+names(coefBMtable) <- "GARCH Parameters"
+coefBMtable
+
+par(mfrow = c(1,2))
+plot(all.fitted.model, which=8)
+plot(all.fitted.model, which=9)
+par(mfrow = c(1,1))
+
+forc1 = ugarchforecast(all.fitted.model, n.ahead=20)
+
+plot(forc1, which = 3)
+
+# GARCH Forecast Data
+GARCHFrcstSeries <- c(TCKRTrain$close[1:567],
+                      forc1@forecast$seriesFor[1:20])
+
+Comparison$GARCHForecast <- GARCHFrcstSeries
+names(Comparison) <- c("Date", "Train_Data", "Test_Data", "HW_Forecast",
+                       "New_Forecast", "GARCH_Forecast")
+
+tail(data.frame(Comparison[1], Comparison[3:6]), 30)
+
+plot(Comparison$HW_Forecast[1:587], type="l", col="blue",
+     main="Forecast Comparison Plot", xlab="Time", ylab="Values")
+lines(Comparison$GARCH_Forecast[1:587], col="orange")
+lines(Comparison$New_Forecast[1:587], col="black")
+lines(Comparison$Test_Data[1:587], col="green")
+lines(Comparison$Train_Datat[1:587], col="red")
+```
