@@ -1,24 +1,24 @@
 ---
-title: "Systematic Vs. Swing Trading ETF Strategies"
+title: "Dollar Cost Averaging Vs. Technical Indicators ETF Strategies"
+subtitle: "ContextBase, http://contextbase.github.io"
+author: "Programming by John Akwei, ECMp ERMp Data Scientist"
 date: "May 30, 2017"
 output: html_document
 ---
 
 <br />
 
+<img src="ContextBase_Logo.jpg" alt="ContextBase Logo"  width="440" height="240">
+
+<br />
+
 ## Synopsis  
-This document utilizes the QuantMod and PerformanceAnalytics R packages for backtesting of Systematic ETF strategies versus a Swing Trading ETF strategy. The objective is to determine which trading strategy, (in regards to Exchange Traded Funds), has the best Return Rate.  
+An ETF, (Exchange Traded Fund), is an investment fund of stocks, commodities, or bonds that are traded on stock exchanges. Many ETFs track a stock index, or bond index. ETFs have low costs, are tax efficient, and resemble company stock investment. ETFs have increased in popularity in recent years.  
 
-Backtesting 5 years for 2 Systematic and 1 Swing Trading strategies:  
-Backtest the 3 investing strategies, and compare the yearly ROI %.  
-Conclusion about the time invested vs passive investment method.  
+This document utilizes the QuantMod and PerformanceAnalytics R packages for backtesting of two Systematic "Dollar Cost Averaging" ETF strategies versus a Technical Indicators Swing Trading ETF strategy. The objective is to determine which trading strategy has the best Return Rate, via comparison of yearly ROI %.  
 
-References:  
+Reference:  
 http://news.morningstar.com/articlenet/article.aspx?id=777726  
-https://quantstrattrader.wordpress.com/2015/05/13/advertising-a-few-systematic-etfs-strictly-of-my-own-volition/  
-https://github.com/jironghuang/DCA-and-VA-comparison/blob/master/Stock%20simulations.R  
-https://github.com/DavidMSoto/blog/blob/1b98ed0e0543fb0c17749523bf89f460cbb2f570/finances/easysignal_and_BT.R  
-https://github.com/bryangoodrich/bryangoodrich.github.io/blob/6e246c23d84460f3ed03d466f2ed4bf7c2cf83a8/_posts/2017-01-01-Daily-Challenges.md  
 
 <br />
 
@@ -50,19 +50,21 @@ library(ggplot2)
 
 ## Strategy 1A:  
 ### Systematic Trading - Dollar Cost Averaging, (DCA) 
+Dollar-cost averaging (DCA) is an investment technique of buying a fixed dollar
+amount of a particular investment on a regular schedule, regardless of the
+share price. The investor purchases more shares when prices are low and fewer
+shares when prices are high. The premise is that DCA lowers the average share
+cost over time, increasing the opportunity to profit. The DCA technique does
+not guarantee that an investor won't lose money on investments. Rather, it is
+meant to allow investment over time instead of investment as a lump sum.  
+
+For this document, 5 ETFs are selected, with Diversified Portfolio Category/Country, and Morningstar ratings of 4-5 stars.  
+
+The DCA Entry Strategy is to buy every month into a preselected ETF for $100.  
+
+The Exit Strategy specifies each time an ETF/Fund reaches between +15% - 20% sell, then
+re-screen for the next fund meeting criteria above, and continue Dollar Cost Averaging every month. When the ETF price is above 15%, apply stop loss at 15%. When the ETF price is above 20%, apply stop loss at 20%. Then, continue stop loss incrementation every 5% above 15%.  
 ```{r warning=F, message=F}
-# Dollar-cost averaging (DCA) is an investment technique of buying a fixed dollar
-# amount of a particular investment on a regular schedule, regardless of the
-# share price. The investor purchases more shares when prices are low and fewer
-# shares when prices are high. The premise is that DCA lowers the average share
-# cost over time, increasing the opportunity to profit. The DCA technique does
-# not guarantee that an investor won't lose money on investments. Rather, it is
-# meant to allow investment over time instead of investment as a lump sum.
-
-# Investing a fixed amount of dollars in a specific security at regular set intervals over a period of time. Dollar cost averaging results in a lower average cost per share, compared with purchasing a constant number of shares at set intervals. The investor buys more shares when the price is low and buys fewer shares when the price is high.
-
-# Select 5 ETFs with Diversified Portfolio Category/Country, and Morningstar rating 4-5 stars:
-
 # Get symbols
 symbols <- c("IJH","SCHB","SCHX","VGK","VXF")
 getSymbols(symbols, from="2012-01-01")
@@ -83,13 +85,11 @@ charts.PerformanceSummary(returns, main = "ETF Returns Chart")
 
 # Print Statistics
 stats <- rbind(table.AnnualizedReturns(returns),
-               maxDrawdown(returns),
-               CalmarRatio(returns),
+               maxDrawdown(returns), CalmarRatio(returns),
                SortinoRatio(returns) * sqrt(252))
 print(round(stats, 3))
 
-# ENTRY STRATEGY:  
-# Buy every month into a preselected ETF for $100
+# Entry Strategy
 
 # Percent change between start to end
 q <- function(start, end) (end-start) / start
@@ -102,7 +102,7 @@ x <- x[-n]
 
 purchased <- ceiling(100 / x)  # monthly shares purchased
 invested <- purchased * x  # monthly expense
-sum(invested - 100)  # Total amount extra spent above $1,000 each month
+sum(invested - 100)  # Total amount extra spent above $100 each month
 
 sum(invested)  # Total invested (without changes)
 
@@ -115,13 +115,7 @@ result <- c(
 
 result / sum(invested) * 100  # proportion gained
 
-# EXIT STRATEGY:  
-# Each time an ETF/Fund reaches between +15% - 20%
-# sell and re-screen for the next best fund
-# once it gets above the 15% don't let it get under it, with stop loss
-# but if it keeps going up put next stop loss on 20%,
-# and keep going every 5%
-# Fund/ETF meeting criteria above and start reInvesting every month:
+# Exit Strategy:
 
 IJHsell <- returns$IJH*1000 > 15 & returns$IJH*1000 < 20
 SCHBsell <- returns$SCHB*1000 > 15 & returns$SCHB*1000 < 20
@@ -137,15 +131,18 @@ lines(as.numeric(SCHBsell), col="red")
 lines(as.numeric(SCHXsell), col="blue")
 lines(as.numeric(VGKsell), col="green")
 lines(as.numeric(VXFsell), col="yellow")
-
 ```
 
 <br />
 
 ## Strategy 1B:  
 ### Systematic Trading - Dollar Cost Averaging, (DCA)  
-```{r warning=F, message=F}
 
+The DCA Entry Strategy is to buy every month into a preselected ETF for $100.  
+
+The Exit Strategy specifies selecting the ETF with the most upward potential through the 52 Week high/low. When a new ETF exceeds the 52 week high/low of the current ETF, sell the current ETF, buy the new ETF, and continuing re-investing every month.  
+```{r warning=F, message=F}
+# Entry Strategy:
 # Determine the ETF with the greatest range of 52W high/low:
 diffIJH <- diff(range(min(returns$IJH), max(returns$IJH)))
 diffSCHB <- diff(range(min(returns$SCHB), max(returns$SCHB)))
@@ -163,20 +160,13 @@ FundTrends[5,] <- diffVXF
 
 FundTrends <- FundTrends[order(FundTrends, decreasing = T),]
 
-# ENTRY STRATEGY:
-# Buy every month into a preselected ETF/Fund for $100
-
 print("52 week high/low of ETFs")
 FundTrends
 
 UpwardFund <- FundTrends[1]
 paste("The Fund with the greatest 52 week high/low is", names(UpwardFund))
 
-# EXIT STRATEGY:
-# Select the funds/ETFs with the most upward potential through the 52W low/high
-# sell and re-screen for the next best fund
-# and start reInvesting every month
-
+# Exit Strategy:
 # Percent change between start to end
 q <- function(start, end) (end-start) / start
 
@@ -186,20 +176,28 @@ n <- length(x)
 final_price <- x[n]
 x <- x[-n]
 
-purchased <- ceiling(100 / x)  # monthly shares purchased
-invested <- purchased * x  # monthly expense
-sum(invested - 100)  # Total amount extra spent above $1,000 each month
+# monthly shares purchased
+purchased <- ceiling(100 / x)
 
-sum(invested)  # Total invested (without changes)
+# monthly expense
+invested <- purchased * x
 
-sum(purchased)  # Total shares after period
+# Total amount extra spent above $100 each month
+sum(invested - 100)
+
+# Total invested (without changes)
+sum(invested)
+
+# Total shares after period
+sum(purchased)
 
 result <- c(
     'dca_result' = sum(q(x, final_price) * invested),
     'lump_result' = sum(invested) * q(x[1], final_price),
     'avg_result' = mean(q(x, final_price)) * sum(invested))
 
-result / sum(invested) * 100  # proportion gained
+# proportion gained
+result / sum(invested) * 100
 ```
 
 <br />
@@ -210,39 +208,23 @@ In the tests of DCA with ETF above, the first strategy, (1A), of buying into eve
 The average yearly return of Strategy 1A was 36.8, and the average yearly return of Strategy 1B was 7.0  
 
 <br />
+<br />
 
 ## Strategy 2:  
-### Swing Trading with Technical Indicators  
+### Swing Trading with Active Technical Indicators using inverted ETFs  
+
+The Entry Strategy involves Signal Line Crossing of the EMA7 with EMA14, upwards crossing with an uptrend, downward crossing with a downtrend. The "Relative Strength Indictor" jumps until > 70 or goes down to < 30, and should always be moving upward. Slow  Stochastic (50,2), raises through 20-line or start, above the 20-line, an upward motion. The MACD(12,26,9) > 0. Gets close to the crossing point of the signal line, horizontal high above the zero line, or facing upward. MACD(12,26,9) should be convergent with graph : same trend as ETF graph. M50 position from the graph of the ETF, above M50 and going upward). Select ETFs with an average Volume above > 200k.  
+
+The Exit Strategy involves the signal line crossing the  EMA7 with EMA14, crossing downtrend. The RSI(5) crosses downtrend. The slow stochastic(50,2) crosses downtrend. Descending MACD(12,26,9) goes towards a crossing of the Signal line, starting downward convergence between graph and MACD(12,26,9). The upward long trend MACD(12,26,9) > 0, and graph above M50. The RSI(5) > 70, and Slow  Stochastic (50,2) goes uptrend at the 20-line. The Downward trends, (Inverse-Short), are; MACD(12,26,9) < 0, and graph under M50, RSI(5) < 30, Slow  Stochastic (50,2) goes crosses downward at the 80-line.  
 ```{r warning=F, message=F}
-# Technical indicators (Active), try to catch upward and downward motions by using the invert ETFs:
-# Slow Entry / Fast Exit ($VIX Volatility Trackers)
-# Time Allocation : -10% in VXX -80% in XIV (inverse) â-10% no action and wait
-
-# $VIX:
-# >30 Shorting Downward Trend
-# 22 < x < 30 Shorting Downward Trend
-# 18 < x < 22 Waiting for long position
-# x < 15 and/or x < 18 going Long
-
-# ENTRY STRATEGY:
-# Signal line: Crossing of the EMA7 with EMA14, upwards crossing (uptrend), downward (downtrend)
-# RSI(5)jumps till > 70 or goes down to < 30 (should always be moving upward)  
-# Slow  Stochastic (50,2) : raises through 20-line or start(above the 20-line)
-# an upward motion (never pointing down!)
-# The MACD(12,26,9)>0: gets close to the Crossing point of the signal line, horizontal high above the zero line or facing upward
-# MACD(12,26,9) should be convergent with graph : same trend as ETF graph
-# M50 position from the graph of the ETF (above M50 and going upward)
-# 
-# Select Funds and/or ETF with following criteria:
-# Average Volume above >200k
-
-# Our signal is a simple adjusted price over 200 day SMA
+# Entry Strategy:
+# Our signal is a simple adjusted price over 200 day SMA.
 signal <- prices > xts(apply(na.omit(prices), 2, SMA, n = 200),
                        order.by=index(na.omit(prices)))
  
 # equal weight all assets with price above SMA200
 weights <- signal/(rowSums(signal)+1e-16)
- 
+
 # With Return.portfolio, need all weights to sum to 1
 weights$zeroes <- 1 - rowSums(weights)
 returns$zeroes <- 0
@@ -251,23 +233,7 @@ monthlyWeights <- na.omit(weights[endpoints(weights, on = 'months'),])
 weights <- na.omit(weights)
 returns <- na.omit(returns)
 
-# EXIT STRATEGY:  
-# Signal line: Crossing of the  EMA7 with EMA14, downward crossing (downtrend), downward (downtrend):  
-# 1. RSI(5) goes/points down  
-# 2. De Slow Stochastic(50,2) starts to point down (if goes under 80-line go check the inverse tracker for entry point!)  
-# 3. Descending MACD(12,26,9) goes towards a crossing of the Signal line  
-# 4. Starting downward convergence between graph and MACD(12,26,9)  
-
-# Upward trends(Upward-Long)
-# MACD(12,26,9)>0 and graph above M50
-# RSI(5)>70,
-# Slow  Stochastic (50,2) goes up crossing 20-line,  
- 
-# Downward trends(Inverse-Short):
-# MACD(12,26,9)<0 and graph under M50,
-# RSI(5)<30,
-# Slow  Stochastic (50,2) goes downward crossing 80-line  
-
+# Exit Strategy:
 macd <- MACD(na.omit(prices$IJH), nFast=12, nSlow=26,
             nSig=9,maType=SMA,percent = FALSE)
 signal <- Lag(ifelse(macd$macd < macd$signal, -1, 1))
@@ -277,7 +243,7 @@ plot(portfolioReturns, main="Portfolio Returns")
 
 table.Drawdowns(portfolioReturns, top=10)
 
-charts.PerformanceSummary(portfolioReturns)
+charts.PerformanceSummary(portfolioReturns, main="Technical Indicators Performance")
 
 # Print Statistics
 portfolioStats <- rbind(table.AnnualizedReturns(portfolioReturns),
@@ -291,3 +257,5 @@ print(round(portfolioStats, 3))
 
 ## Conclusion (Strategy 2)  
 The average yearly return % of Strategy 2, during the 5 years, was -0.043. Therefore, the backtests of the 3 strategies seems to determine that DCA is as an effective strategy as use of Technical Indicators for trading ETFs.  
+
+<br />
