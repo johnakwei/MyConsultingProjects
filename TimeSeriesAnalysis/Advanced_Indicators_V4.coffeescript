@@ -1,0 +1,1206 @@
+{\rtf1\ansi\ansicpg1252\deff0\nouicompat{\fonttbl{\f0\fnil\fcharset0 Calibri;}}
+{\colortbl ;\red0\green0\blue255;}
+{\*\generator Riched20 10.0.16299}\viewkind4\uc1 
+\pard\sl240\slmult1\f0\fs22\lang9 ###\par
+ADVANCED_INDICATORS_v4\par
+An Automated Trading Bot, programmed by John Akwei, Data Scientist, (contextbase.github.io), using the client's CryptoTrader.org account. The trading strategy specification includes an effective strategy on scalping buy & sell with support & resistance level with advanced indicators, (EMA, MACD, RSI), Ichimoku Cloud, and Fibonacci retracement in 5, 10, 15, 30 minute life cycle as per good result.\par
+\par
+Disclaimer: All trading involves risk. The client agrees to take responsibility for the\par
+client's implementation of this script in financial markets. The author of this script is\par
+not responsible for the financial results of the implimentation of this script.\par
+\par
+The script engine is based on CoffeeScript ({{\field{\*\fldinst{HYPERLINK http://coffeescript.org }}{\fldrslt{http://coffeescript.org\ul0\cf0}}}}\f0\fs22 ) \par
+The Cryptotrader API documentation is available at {{\field{\*\fldinst{HYPERLINK https://cryptotrader.org/api }}{\fldrslt{https://cryptotrader.org/api\ul0\cf0}}}}\f0\fs22\par
+###\par
+\par
+\par
+talib = require "talib"\par
+trading = require "trading"\par
+params = require 'params'\par
+\par
+# Strategy definition. If entered, all other options are ignored. Used for fast parameter\par
+# reuse and sharing.\par
+# STRATEGY = params.add 'Strategy definition', ''\par
+\par
+# Price input data can be modified:\par
+# Close - no modification\par
+# Typical - set Typical price as close price\par
+# Weighted - set Weighted price as close price\par
+# Heikin-Ashi - modify all prices according to Heikin-Ashi algorithm\par
+DATA_INPUT = params.addOptions 'Data input', ['Close', 'Typical', 'Weighted', 'Heikin-Ashi'], 'Close'\par
+\par
+# The following MAs can be used:\par
+# SMA  - Simple Moving Average\par
+# EMA - Exponential Moving Average\par
+# WMA - Weighted Moving Average\par
+# DEMA - Double Exponential Moving Average\par
+# TEMA - Triple Exponential Moving Average\par
+# TRIMA - Triangular Moving Average\par
+# KAMA - Kaufman Adaptive Moving Average\par
+# MAMA - MESA Adaptive Moving Average (parameters: fast limit (0..1, Ehlers used 0.5), slow limit (0..1, Ehlers used 0.05))\par
+# FAMA - Following Adaptive Moving Average (parameters: fast limit (0..1, Ehlers used 0.5), slow limit (0..1, Ehlers used 0.05))\par
+# T3 - Triple Exponential Moving Average (parameters: period, vFactor (0..1, default 0.7)\par
+# HMA - Hull Moving Average\par
+# EHMA - Exponential Hull Moving Average (same as HMA, but with EMA instead of WMA)\par
+# ZLEMA - Zero-lag EMA (simple variant)\par
+# HT - Hilbert Transform - Instantaneous Trendline\par
+# Laguerre - Four Element Laguerre Filter (parameter: gamma (0..1, Ehlers used 0.8))\par
+# FRAMA - Fractal Adaptive Moving Average (parameters: length, slow period)\par
+# ALMA - Arnaud Legoux Moving Average (parameters: period, offset (0..1, default 0.85)\par
+# WRainbow - Weighted Rainbow Moving Average (similar to regular Rainbow MA (not implemented), but with WMA as its base)\par
+# VWMA - Volume Weighted Moving Average\par
+# EVWMA - Exponential Volume Weighted Moving Average (same as VWMA, but with EMA instead of SMA)\par
+# ElVWMA - Elastic Volume Weighted Moving Average\par
+\par
+# Short MA. If you choose NONE, trading on crossings will be disabled\par
+SHORT_MA_T = params.addOptions 'Short MA type', ['NONE', 'SMA', 'EMA', 'WMA', 'DEMA', 'TEMA', 'TRIMA', 'KAMA', 'MAMA', 'FAMA', 'T3', 'HMA', 'EHMA', 'ZLEMA', 'HT', 'Laguerre', 'FRAMA', 'ALMA', 'WRainbow', 'VWMA', 'EVWMA', 'ElVWMA'], 'EMA'\par
+SHORT_MA_P = params.add 'Short MA period or parameters', '12'\par
+\par
+# Long MA\par
+LONG_MA_T = params.addOptions 'Long MA type', ['SMA', 'EMA', 'WMA', 'DEMA', 'TEMA', 'TRIMA', 'KAMA', 'MAMA', 'FAMA', 'T3', 'HMA', 'EHMA', 'ZLEMA', 'HT', 'Laguerre', 'FRAMA', 'ALMA', 'WRainbow', 'VWMA', 'EVWMA', 'ElVWMA'], 'EMA'\par
+LONG_MA_P = params.add 'Long MA period or parameters', '26'\par
+\par
+# Feedback can be applied on the price data or MA used by MA calculations\par
+# Feedback works like that:\par
+# - calculate Feedback line using the given MA\par
+# - calculate Short-Feedback delta\par
+# - optionally: modify the delta using normalized volume information\par
+# - add the resulting delta to the price data to be used by Short and/or Long MA later, or to the MA results\par
+# The feedback can be modified (reduced) before being added\par
+FEED_APPLY = params.addOptions 'Apply feedback to', ['Short MA price', 'Long MA price', 'Both prices', 'Short MA', 'Long MA', 'Both MA'], 'Long MA'\par
+FEED_DELTA_T = params.addOptions 'Feedback reduction type (NONE disables this feedback)', ['NONE', 'Division', 'Root', 'Logarithm'], 'NONE'\par
+FEED_DELTA_P = params.add 'Feedback reduction value', 1\par
+FEED_MA_T = params.addOptions 'Feedback MA type', ['SMA', 'EMA', 'WMA', 'DEMA', 'TEMA', 'TRIMA', 'KAMA', 'MAMA', 'FAMA', 'T3', 'HMA', 'EHMA', 'ZLEMA', 'HT', 'Laguerre', 'FRAMA', 'ALMA', 'WRainbow', 'VWMA', 'EVWMA', 'ElVWMA'], 'SMA'\par
+FEED_MA_P = params.add 'Feedback MA period or parameters', '10'\par
+\par
+# Volume normalization: Stochastic or Laguerre\par
+# Volume is then normalized to (1-weight)..1 and serve as a multiplicator for the delta\par
+FEED_VOLUME_T = params.addOptions 'Volume feedback normalization', ['NONE', 'Stochastic', 'Laguerre'], 'NONE'\par
+FEED_VOLUME_P = params.add 'Volume feedback period (gamma (0..1) for Laguerre)', '14'\par
+FEED_VOLUME_W = params.add 'Volume feedback weight (0..1)', 0.2\par
+\par
+# MACD will calculate MA from the resulting ShortLongDelta (the result is MACD Signal line)\par
+# MACD will act on the ShortLongDelta crossing MACD Signal line, instead of Zero line\par
+MACD_MA_T = params.addOptions 'MACD MA type', ['NONE', 'SMA', 'EMA', 'WMA', 'DEMA', 'TEMA', 'TRIMA', 'KAMA', 'MAMA', 'FAMA', 'T3', 'HMA', 'EHMA', 'ZLEMA', 'HT', 'Laguerre', 'FRAMA', 'ALMA', 'WRainbow', 'VWMA', 'EVWMA', 'ElVWMA'], 'EMA'\par
+MACD_MA_P = params.add 'MACD MA period or parameters', '9'\par
+\par
+# High and low thresholds in percentage of the closing price\par
+HI_THRESHOLD = params.add 'High threshold', 0.075\par
+LO_THRESHOLD = params.add 'Low threshold', -0.05\par
+\par
+# We can use crossings and/or oscillator to detect opportunities.\par
+# Draw only - no oscillator trading - just draw it in the chart\par
+# Regular - trade with oscillator signals\par
+# Thresholds - same as Regular, but disables oscillator trade signals if MA delta is within its thresholds\par
+# Zones - disallows buys if oscillator is high, and disallows sells if oscillator is low\par
+# Reverse thresholds - if oscillator is outside its thresholds, allow buys or sells early - within the crossing thresholds\par
+# Both - only buy if crossing happened while in the respective oscillator position\par
+# Wait for both - trade once both crossing and oscillator are in a position\par
+OSC_MODE = params.addOptions 'Oscillator mode', ['NONE', 'Draw only', 'Regular', 'Thresholds', 'Zones', 'Reverse thresholds', 'Both', 'Wait for both'], 'NONE'\par
+\par
+# We may want to smooth the data before making an oscillator\par
+OSC_MAP_T = params.addOptions 'Oscillator preprocessing MA type', ['NONE', 'SMA', 'EMA', 'WMA', 'DEMA', 'TEMA', 'TRIMA', 'KAMA', 'MAMA', 'FAMA', 'T3', 'HMA', 'EHMA', 'ZLEMA', 'HT', 'Laguerre', 'FRAMA', 'ALMA', 'WRainbow', 'VWMA', 'EVWMA', 'ElVWMA'], 'NONE'\par
+OSC_MAP_P = params.add 'Oscillator preprocessing MA period or parameters', '0'\par
+\par
+# The following oscillators can be used:\par
+# Stochastic - Stochastic oscillator\par
+# RSI - Relative Strength Index\par
+# MFI - Money Flow Index (same as RSI, but including volume data, so more responsive to large trades)\par
+# LRSI - Laguerre Relative Strength Index (RSI with Four Element Laguerre Filter) (parameter: gamma (0..1, Ehlers used 0.5))\par
+# LMFI - Laguerre Money Flow Index (MFI with Four Element Laguerre Filter) (parameter: gamma (0..1, Ehlers used 0.5))\par
+# FT - Fisher Transform, compressed with Inverse Fisher Transformation (parameters: period, gamma (0..1, Ehlers used 0.33))\par
+OSC_TYPE = params.addOptions 'Oscillator type', ['Stochastic', 'RSI', 'MFI', 'LRSI', 'LMFI', 'FT'], 'MFI'\par
+OSC_THRESHOLD = params.add 'Oscillator cutoff', 20\par
+OSC_PERIOD = params.add 'Oscillator period (gamma (0..1) for Laguerre)', '14'\par
+\par
+# We may want to smooth the oscillator results a bit\par
+OSC_MA_T = params.addOptions 'Oscillator MA type', ['NONE', 'SMA', 'EMA', 'WMA', 'DEMA', 'TEMA', 'TRIMA', 'KAMA', 'MAMA', 'FAMA', 'T3', 'HMA', 'EHMA', 'ZLEMA', 'HT', 'Laguerre', 'FRAMA', 'ALMA', 'WRainbow', 'VWMA', 'EVWMA', 'ElVWMA'], 'NONE'\par
+OSC_MA_P = params.add 'Oscillator MA period or parameters', '0'\par
+\par
+# Oscillator normalization: Stochastic or Inverse Fisher Transformation\par
+OSC_NORM = params.addOptions 'Oscillator normalization', ['NONE', 'Stochastic', 'IFT'], 'NONE'\par
+\par
+# What trigger to use for oscillator\par
+# Early: trigger once threshold is crossed\par
+# Extreme: trigger once change direction (provisional top/bottom) after crossing the threshold\par
+# Late: trigger when back within the bounds after crossing the threshold\par
+# NB: this has effect only if oscillator mode is "Regular" or "Thresholds" and oscillator MA crossing is not enabled\par
+OSC_TRIGGER = params.addOptions 'Oscillator trigger', ['Early', 'Extreme', 'Late', 'Buy early, sell late', 'Buy late, sell early'], 'Late'\par
+\par
+# Another possibility is to use MA crossing for oscillator instead of threshold crossing (especially suggested for FT)\par
+OSC_MAC_T = params.addOptions 'Oscillator crossing MA type', ['NONE', 'SMA', 'EMA', 'WMA', 'DEMA', 'TEMA', 'TRIMA', 'KAMA', 'MAMA', 'FAMA', 'T3', 'HMA', 'EHMA', 'ZLEMA', 'HT', 'Laguerre', 'FRAMA', 'ALMA', 'WRainbow', 'VWMA', 'EVWMA', 'ElVWMA'], 'NONE'\par
+OSC_MAC_P = params.add 'Oscillator crossing MA period or parameters', '14'\par
+\par
+# Stop loss is losses are higher than this percentage\par
+STOP_LOSS = params.add 'Stop loss % (0 for none)', 0\par
+\par
+# Which type of orders to use for trading\par
+ORDER_TYPE = params.addOptions 'Order type', ['market', 'limit', 'iceberg'], 'limit'\par
+\par
+# For limit orders, we will not get the ticker price, so we try to increase/decrease the price\par
+ORDER_PRICE = params.add 'Trade at [Market Price x]', 1.003\par
+\par
+# TODO: Check if Coppock curve (extremes only - not crossings; thresholds could be needed) is useful\par
+\par
+REDUCE_BY = 1\par
+\par
+LINIT = [0,0,0,0]\par
+LGAMMA = 0\par
+FRAMA_LEN = 0\par
+FRAMA_SLOW = 0\par
+FRAMA_PREV = 0\par
+STOCH_LEN = 0\par
+FT_LEN = 0\par
+FT_GAMMA = 1\par
+FT_PREV = 0\par
+FT_V1 = 0\par
+EV_LEN = 0\par
+EV_PREV = 0\par
+ALMA_LEN = 0\par
+ALMA_OFFSET = 0\par
+CURR_HI_THRESHOLD = 0\par
+CURR_LO_THRESHOLD = 0\par
+\par
+feedbackSign = (n) ->\par
+\tab return Math.sign(n)\par
+\par
+feedbackAdd = (n) ->\par
+\tab return n + REDUCE_BY\par
+\par
+feedbackDivide = (n) ->\par
+\tab return n/REDUCE_BY\par
+\par
+feedbackMultiply = (n) ->\par
+\tab return n*REDUCE_BY\par
+\par
+feedbackRoot = (n) ->\par
+\tab return Math.sign(n) * Math.pow(Math.abs(n), 1/REDUCE_BY)\par
+\par
+feedbackLog = (n) ->\par
+\tab return Math.sign(n) * Math.log(Math.abs(n)) / Math.log(REDUCE_BY)\par
+\par
+fixLength = (first, second) ->\par
+\tab if first.length > second.length\par
+\tab\tab first = _.drop(first, first.length - second.length)\par
+\tab if second.length > first.length\par
+\tab\tab second = _.drop(second, second.length - first.length)\par
+\tab return [first, second]\par
+\par
+EVWMA = (n, i, instrument) ->\par
+\tab if i is 0\par
+\tab\tab EV_PREV = 0\par
+\tab cumv = 0\par
+\tab price = n.close\par
+\tab if i < (EV_LEN - 1)\par
+\tab\tab flen = i + 1\par
+\tab else\par
+\tab\tab flen = EV_LEN\par
+\tab for x in [(i - flen + 1)..i]\par
+\tab\tab cumv = cumv + instrument[x].volume\par
+\tab if cumv is 0\par
+\tab\tab cumv = 1\par
+\tab evwma = (EV_PREV*(cumv-n.volume) + price*n.volume)/cumv\par
+\tab EV_PREV = evwma\par
+\tab return evwma\par
+\par
+LaguerreMA = (n, i) ->\par
+\tab if i is 0 then LINIT = [0,0,0,0]\par
+\tab L0 = (1 - LGAMMA) * n + LGAMMA * LINIT[0]\par
+\tab L1 = -LGAMMA * L0 + LINIT[0] + LGAMMA * LINIT[1]\par
+\tab L2 = -LGAMMA * L1 + LINIT[1] + LGAMMA * LINIT[2]\par
+\tab L3 = -LGAMMA * L2 + LINIT[2] + LGAMMA * LINIT[3]\par
+\tab LINIT = [L0, L1, L2, L3]\par
+\tab return (L0 + 2*L1 + 2*L2 + L3) / 6\par
+\par
+LaguerreRSI = (n, i) ->\par
+\tab if i is 0 then LINIT = [0,0,0,0]\par
+\tab L0 = (1 - LGAMMA) * n + LGAMMA * LINIT[0]\par
+\tab L1 = -LGAMMA * L0 + LINIT[0] + LGAMMA * LINIT[1]\par
+\tab L2 = -LGAMMA * L1 + LINIT[1] + LGAMMA * LINIT[2]\par
+\tab L3 = -LGAMMA * L2 + LINIT[2] + LGAMMA * LINIT[3]\par
+\tab LINIT = [L0, L1, L2, L3]\par
+\tab cu = 0\par
+\tab cd = 0\par
+\tab if L0 >= L1\par
+\tab\tab cu = L0 - L1\par
+\tab else\par
+\tab\tab cd = L1 - L0\par
+\tab if L1 >= L2\par
+\tab\tab cu = cu + L1 - L2\par
+\tab else\par
+\tab\tab cd = cd + L2 - L1\par
+\tab if L2 >= L3\par
+\tab\tab cu = cu + L2 - L3\par
+\tab else\par
+\tab\tab cd = cd + L3 - L2\par
+\tab if cu + cd is 0\par
+\tab\tab lrsi = 0\par
+\tab else\par
+\tab\tab lrsi = 100 * cu / (cu + cd)\par
+\tab return lrsi\par
+\par
+Stochastic = (n, i, instrument) ->\par
+\tab price = n.close\par
+\tab if i < (STOCH_LEN - 1)\par
+\tab\tab slen = i + 1\par
+\tab else\par
+\tab\tab slen = STOCH_LEN\par
+\tab for x in [(i - slen + 1)..i]\par
+\tab\tab if not fh? or instrument[x].high > fh then fh = instrument[x].high\par
+\tab\tab if not fl? or instrument[x].low < fl then fl = instrument[x].low\par
+\tab if not fh? or not fl? or (fh - fl) is 0\par
+\tab\tab sto = 0\par
+\tab else\par
+\tab\tab sto = 100 * (price - fl) / (fh - fl)\par
+\tab return sto\par
+\par
+SimpleStochastic = (n, i, instrument) ->\par
+\tab if i < (STOCH_LEN - 1)\par
+\tab\tab slen = i + 1\par
+\tab else\par
+\tab\tab slen = STOCH_LEN\par
+\tab for x in [(i - slen + 1)..i]\par
+\tab\tab if not fh? or instrument[x] > fh then fh = instrument[x]\par
+\tab\tab if not fl? or instrument[x] < fl then fl = instrument[x]\par
+\tab if not fh? or not fl? or (fh - fl) is 0\par
+\tab\tab sto = 0\par
+\tab else\par
+\tab\tab sto = 100 * (n - fl) / (fh - fl)\par
+\tab return sto\par
+\par
+IFT = (n) ->\par
+\tab n = (n - 50) / 10\par
+\tab ift = (Math.exp(2*n) - 1) / (Math.exp(2*n) + 1)\par
+\tab ift = (ift + 1) * 50\par
+\tab return ift\par
+\par
+FT = (n, i, instrument) ->\par
+\tab if i is 0\par
+\tab\tab FT_PREV = 0\par
+\tab\tab FT_V1 = 0\par
+\tab price = n.close\par
+\tab if i < (FT_LEN - 1)\par
+\tab\tab flen = i + 1\par
+\tab else\par
+\tab\tab flen = FT_LEN\par
+\tab for x in [(i - flen + 1)..i]\par
+\tab\tab if not fh? or instrument[x].high > fh then fh = instrument[x].high\par
+\tab\tab if not fl? or instrument[x].low < fl then fl = instrument[x].low\par
+\tab if not fh? or not fl? or (fh - fl) is 0\par
+\tab\tab sto = 0\par
+\tab else\par
+\tab\tab sto = (price - fl) / (fh - fl)\par
+\tab value1 = FT_GAMMA * 2 * (sto - 0.5) + (1 - FT_GAMMA) * FT_V1\par
+\tab if value1 > 0.99 then value1 = 0.999\par
+\tab if value1 < -0.99 then value1 = -0.999\par
+\tab FT_V1 = value1\par
+\tab fish = 0.5 * Math.log((1 + value1) / (1 - value1)) + 0.5 * FT_PREV\par
+\tab FT_PREV = fish\par
+\tab fish = (Math.exp(2*fish) - 1) / (Math.exp(2*fish) + 1)\par
+\tab fish = (fish + 1) * 50\par
+\tab return fish\par
+\par
+ALMA = (n, i, instrument) ->\par
+\tab if i < (ALMA_LEN - 1)\par
+\tab\tab alen = i + 1\par
+\tab else\par
+\tab\tab alen = ALMA_LEN\par
+\tab m = Math.floor(ALMA_OFFSET*(ALMA_LEN-1))\par
+\tab s = ALMA_LEN/6.0\par
+\tab dss = 2 * s * s\par
+\tab alma = 0\par
+\tab wSum = 0\par
+\tab for x in [(i - alen + 1)..i]\par
+\tab\tab k = i - x\par
+\tab\tab ki = (i - alen + 1) + k\par
+\tab\tab dim = (k-m) * (k-m)\par
+\tab\tab w = Math.exp(-dim/dss)\par
+\tab\tab alma = alma + w * instrument[ki]\par
+\tab\tab wSum = wSum + w\par
+\tab return alma / wSum\par
+\par
+FRAMA = (n, i, instrument) ->\par
+\tab price = n.close\par
+\tab if i < (FRAMA_LEN - 1)\par
+\tab\tab FRAMA_PREV = price\par
+\tab\tab return price\par
+\tab for x in [(i - FRAMA_LEN + 1)..i]\par
+\tab\tab if not fh? or instrument[x].high > fh then fh = instrument[x].high\par
+\tab\tab if not fl? or instrument[x].low < fl then fl = instrument[x].low\par
+\tab n3 = (fh - fl) / FRAMA_LEN\par
+\tab for x in [(i - FRAMA_LEN + 1)..(i - FRAMA_LEN / 2)]\par
+\tab\tab if not lh? or instrument[x].high > lh then lh = instrument[x].high\par
+\tab\tab if not ll? or instrument[x].low < ll then ll = instrument[x].low\par
+\tab n1 = (lh - ll) / (FRAMA_LEN / 2)\par
+\tab for x in [(i - FRAMA_LEN / 2 + 1)..i]\par
+\tab\tab if not hh? or instrument[x].high > hh then hh = instrument[x].high\par
+\tab\tab if not hl? or instrument[x].low < hl then hl = instrument[x].low\par
+\tab n2 = (hh - hl) / (FRAMA_LEN / 2)\par
+\tab if n1 > 0 and n2 > 0 and n3 > 0 then dimen=(Math.log(n1 + n2) - Math.log(n3)) / Math.log(2)\par
+\tab w = Math.log(2/(FRAMA_SLOW + 1))\par
+\tab alpha = Math.exp(w * (dimen - 1))\par
+\tab if alpha < (2 / (FRAMA_SLOW + 1)) then alpha = 2 / (FRAMA_SLOW + 1)\par
+\tab if alpha > 1 then alpha = 1\par
+\tab filt = alpha * price + (1-alpha) * FRAMA_PREV\par
+\tab FRAMA_PREV = filt\par
+\tab return filt\par
+\par
+sigRound = (n, sig) ->\par
+\tab mult = Math.pow(10, sig - Math.floor(Math.log(n) / Math.LN10) - 1)\par
+\tab Math.round(n * mult) / mult\par
+\par
+makeInstrument = (instrument) ->\par
+\tab switch DATA_INPUT\par
+\tab\tab when 'Typical'\par
+\tab\tab\tab instrument.close = talib.TYPPRICE\par
+\tab\tab\tab\tab high: instrument.high\par
+\tab\tab\tab\tab low: instrument.low\par
+\tab\tab\tab\tab close: instrument.close\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: instrument.close.length-1\par
+\tab\tab when 'Weighted'\par
+\tab\tab\tab instrument.close = talib.WCLPRICE\par
+\tab\tab\tab\tab high: instrument.high\par
+\tab\tab\tab\tab low: instrument.low\par
+\tab\tab\tab\tab close: instrument.close\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: instrument.close.length-1\par
+\tab\tab when 'Heikin-Ashi'\par
+\tab\tab\tab close = talib.AVGPRICE\par
+\tab\tab\tab\tab open: instrument.open\par
+\tab\tab\tab\tab high: instrument.high\par
+\tab\tab\tab\tab low: instrument.low\par
+\tab\tab\tab\tab close: instrument.close\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: instrument.close.length-1\par
+\tab\tab\tab open = []\par
+\tab\tab\tab prev = (instrument.close[0] + instrument.open[0]) / 2\par
+\tab\tab\tab for x in [0..instrument.close.length-2]\par
+\tab\tab\tab\tab open[x] = (close[x] + prev) / 2\par
+\tab\tab\tab\tab prev = open[x]\par
+\tab\tab\tab close = _.drop(close, 1)\par
+\tab\tab\tab high = []\par
+\tab\tab\tab low = []\par
+\tab\tab\tab for x in [1..instrument.close.length-1]\par
+\tab\tab\tab\tab high[x-1] = Math.max(instrument.high[x], open[x-1], close[x-1])\par
+\tab\tab\tab\tab low[x-1] = Math.min(instrument.low[x], open[x-1], close[x-1])\par
+\tab\tab\tab instrument.close = close\par
+\tab\tab\tab instrument.open = open\par
+\tab\tab\tab instrument.high = high\par
+\tab\tab\tab instrument.low = low\par
+\tab\tab\tab instrument.volumes = _.drop(instrument.volumes, 1)\par
+\tab return instrument\par
+\par
+processMA = (selector, period, instrument, secondary = false) ->\par
+\tab if secondary\par
+\tab\tab sInstrument = ['low', 'high', 'close', 'volumes']\par
+\tab\tab sInstrument.low = instrument\par
+\tab\tab sInstrument.high = instrument\par
+\tab\tab sInstrument.close = instrument\par
+\tab\tab sInstrument.volumes = @data.instruments[0].volumes\par
+\tab\tab sInstrument.volumes = _.drop(sInstrument.volumes, sInstrument.volumes.length - sInstrument.high.length)\par
+\tab else\par
+\tab\tab sInstrument = instrument\par
+\tab\par
+\tab sInput = sInstrument.close\par
+\tab\par
+\tab switch selector\par
+\tab\tab when 'NONE'\par
+\tab\tab\tab sInput\par
+\tab\tab when 'SMA'\par
+\tab\tab\tab talib.SMA\par
+\tab\tab\tab\tab inReal: sInput\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: sInput.length-1\par
+\tab\tab\tab\tab optInTimePeriod: period\par
+\tab\tab when 'EMA'\par
+\tab\tab\tab talib.EMA\par
+\tab\tab\tab\tab inReal: sInput\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: sInput.length-1\par
+\tab\tab\tab\tab optInTimePeriod: period\par
+\tab\tab when 'WMA'\par
+\tab\tab\tab talib.WMA\par
+\tab\tab\tab\tab inReal: sInput\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: sInput.length-1\par
+\tab\tab\tab\tab optInTimePeriod: period\par
+\tab\tab when 'DEMA'\par
+\tab\tab\tab talib.DEMA\par
+\tab\tab\tab\tab inReal: sInput\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: sInput.length-1\par
+\tab\tab\tab\tab optInTimePeriod: period\par
+\tab\tab when 'TEMA'\par
+\tab\tab\tab talib.TEMA\par
+\tab\tab\tab\tab inReal: sInput\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: sInput.length-1\par
+\tab\tab\tab\tab optInTimePeriod: period\par
+\tab\tab when 'TRIMA'\par
+\tab\tab\tab talib.TRIMA\par
+\tab\tab\tab\tab inReal: sInput\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: sInput.length-1\par
+\tab\tab\tab\tab optInTimePeriod: period\par
+\tab\tab when 'KAMA'\par
+\tab\tab\tab talib.KAMA\par
+\tab\tab\tab\tab inReal: sInput\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: sInput.length-1\par
+\tab\tab\tab\tab optInTimePeriod: period\par
+\tab\tab when 'MAMA'\par
+\tab\tab\tab # MAMA Fast (0.5) and Slow (0.05) limits\par
+\tab\tab\tab limits = "#\{period\}".split " "\par
+\tab\tab\tab if limits[0]? and limits[0] < 1\par
+\tab\tab\tab\tab MAMA_FAST = limits[0]\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab MAMA_FAST = 0.5\par
+\tab\tab\tab if limits[1]? and limits[1] < 1\par
+\tab\tab\tab\tab MAMA_SLOW = limits[1]\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab MAMA_SLOW = 0.05\par
+\tab\tab\tab mama = talib.MAMA\par
+\tab\tab\tab\tab inReal: sInput\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: sInput.length-1\par
+\tab\tab\tab\tab optInFastLimit: MAMA_FAST\par
+\tab\tab\tab\tab optInSlowLimit: MAMA_SLOW\par
+\tab\tab\tab mama.outMAMA\par
+\tab\tab when 'FAMA'\par
+\tab\tab\tab # MAMA Fast (0.5) and Slow (0.05) limits\par
+\tab\tab\tab limits = "#\{period\}".split " "\par
+\tab\tab\tab if limits[0]? and limits[0] < 1\par
+\tab\tab\tab\tab MAMA_FAST = limits[0]\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab MAMA_FAST = 0.5\par
+\tab\tab\tab if limits[1]? and limits[1] < 1\par
+\tab\tab\tab\tab MAMA_SLOW = limits[1]\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab MAMA_SLOW = 0.05\par
+\tab\tab\tab mama = talib.MAMA\par
+\tab\tab\tab\tab inReal: sInput\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: sInput.length-1\par
+\tab\tab\tab\tab optInFastLimit: MAMA_FAST\par
+\tab\tab\tab\tab optInSlowLimit: MAMA_SLOW\par
+\tab\tab\tab mama.outFAMA\par
+\tab\tab when 'T3'\par
+\tab\tab\tab # Triple Exponential Moving Average period and vFactor\par
+\tab\tab\tab limits = "#\{period\}".split " "\par
+\tab\tab\tab if limits[0]?\par
+\tab\tab\tab\tab T3_LEN = limits[0]\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab T3_LEN = 16\par
+\tab\tab\tab if limits[1]? and limits[1] < 1\par
+\tab\tab\tab\tab T3_V = limits[1]\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab T3_V = 0.7\par
+\tab\tab\tab talib.T3\par
+\tab\tab\tab\tab inReal: sInput\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: sInput.length-1\par
+\tab\tab\tab\tab optInTimePeriod: T3_LEN\par
+\tab\tab\tab\tab optInVFactor: T3_V\par
+\tab\tab when 'HMA'\par
+\tab\tab\tab halfWMA = talib.WMA\par
+\tab\tab\tab\tab inReal: sInput\par
+\tab\tab\tab\tab startIdx: period\par
+\tab\tab\tab\tab endIdx: sInput.length-1\par
+\tab\tab\tab\tab optInTimePeriod: Math.round(period/2)\par
+\tab\tab\tab fullWMA = talib.WMA\par
+\tab\tab\tab\tab inReal: sInput\par
+\tab\tab\tab\tab startIdx: period\par
+\tab\tab\tab\tab endIdx: sInput.length-1\par
+\tab\tab\tab\tab optInTimePeriod: period\par
+\tab\tab\tab twiceWMA = talib.ADD\par
+\tab\tab\tab\tab inReal0: halfWMA\par
+\tab\tab\tab\tab inReal1: halfWMA\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: halfWMA.length-1\par
+\tab\tab\tab avgWMA = talib.SUB\par
+\tab\tab\tab\tab inReal0: twiceWMA\par
+\tab\tab\tab\tab inReal1: fullWMA\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: twiceWMA.length-1\par
+\tab\tab\tab talib.WMA\par
+\tab\tab\tab\tab inReal: avgWMA\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: avgWMA.length-1\par
+\tab\tab\tab\tab optInTimePeriod: Math.round(Math.sqrt(period))\par
+\tab\tab when 'EHMA'\par
+\tab\tab\tab halfEMA = talib.EMA\par
+\tab\tab\tab\tab inReal: sInput\par
+\tab\tab\tab\tab startIdx: period\par
+\tab\tab\tab\tab endIdx: sInput.length-1\par
+\tab\tab\tab\tab optInTimePeriod: Math.round(period/2)\par
+\tab\tab\tab fullEMA = talib.EMA\par
+\tab\tab\tab\tab inReal: sInput\par
+\tab\tab\tab\tab startIdx: period\par
+\tab\tab\tab\tab endIdx: sInput.length-1\par
+\tab\tab\tab\tab optInTimePeriod: period\par
+\tab\tab\tab twiceEMA = talib.ADD\par
+\tab\tab\tab\tab inReal0: halfEMA\par
+\tab\tab\tab\tab inReal1: halfEMA\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: halfEMA.length-1\par
+\tab\tab\tab avgEMA = talib.SUB\par
+\tab\tab\tab\tab inReal0: twiceEMA\par
+\tab\tab\tab\tab inReal1: fullEMA\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: twiceEMA.length-1\par
+\tab\tab\tab talib.EMA\par
+\tab\tab\tab\tab inReal: avgEMA\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: avgEMA.length-1\par
+\tab\tab\tab\tab optInTimePeriod: Math.round(Math.sqrt(period))\par
+\tab\tab when 'HT'\par
+\tab\tab\tab talib.HT_TRENDLINE\par
+\tab\tab\tab\tab inReal: sInput\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: sInput.length-1\par
+\tab\tab when 'Laguerre'\par
+\tab\tab\tab # Laguerre gamma (0.8)\par
+\tab\tab\tab if period < 1\par
+\tab\tab\tab\tab LGAMMA = period\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab LGAMMA = 0.8\par
+\tab\tab\tab _.map(sInput, LaguerreMA)\par
+\tab\tab when 'FRAMA'\par
+\tab\tab\tab # FRAMA length and slow period\par
+\tab\tab\tab limits = "#\{period\}".split " "\par
+\tab\tab\tab if limits[0]?\par
+\tab\tab\tab\tab FRAMA_LEN = 1*limits[0]\par
+\tab\tab\tab\tab if FRAMA_LEN % 2 isnt 0 then FRAMA_LEN = FRAMA_LEN + 1\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab FRAMA_LEN = 16\par
+\tab\tab\tab if limits[1]?\par
+\tab\tab\tab\tab FRAMA_SLOW = 1*limits[1]\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab FRAMA_SLOW = 200\par
+\tab\tab\tab fInstrument = []\par
+\tab\tab\tab for x in [0..sInstrument.high.length-1]\par
+\tab\tab\tab\tab fInstrument[x] = \{close: sInstrument.close[x], low: sInstrument.low[x], high: sInstrument.high[x]\}\par
+\tab\tab\tab _.map(fInstrument, FRAMA)\par
+\tab\tab when 'ALMA'\par
+\tab\tab\tab # ALMA period and offset\par
+\tab\tab\tab limits = "#\{period\}".split " "\par
+\tab\tab\tab if limits[0]?\par
+\tab\tab\tab\tab ALMA_LEN = 1*limits[0]\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab ALMA_LEN = 16\par
+\tab\tab\tab if limits[1]?\par
+\tab\tab\tab\tab ALMA_OFFSET = 1*limits[1]\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab ALMA_OFFSET = 0.85\par
+\tab\tab\tab _.map(sInput, ALMA)\par
+\tab\tab when 'ZLEMA'\par
+\tab\tab\tab ema1 = talib.EMA\par
+\tab\tab\tab\tab inReal: sInput\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: sInput.length-1\par
+\tab\tab\tab\tab optInTimePeriod: period\par
+\tab\tab\tab ema2 = talib.EMA\par
+\tab\tab\tab\tab inReal: ema1\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: ema1.length-1\par
+\tab\tab\tab\tab optInTimePeriod: period\par
+\tab\tab\tab if ema1.length > ema2.length\par
+\tab\tab\tab\tab ema1 = _.drop(ema1, ema1.length - ema2.length)\par
+\tab\tab\tab if ema2.length > ema1.length\par
+\tab\tab\tab\tab ema2 = _.drop(ema2, ema2.length - ema1.length)\par
+\tab\tab\tab emad = talib.SUB\par
+\tab\tab\tab\tab inReal0: ema1\par
+\tab\tab\tab\tab inReal1: ema2\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: ema1.length-1\par
+\tab\tab\tab talib.ADD\par
+\tab\tab\tab\tab inReal0: ema1\par
+\tab\tab\tab\tab inReal1: emad\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: ema1.length-1\par
+\tab\tab when 'WRainbow'\par
+\tab\tab\tab wma = sInput\par
+\tab\tab\tab i = 0\par
+\tab\tab\tab for x in [0..period-1]\par
+\tab\tab\tab\tab wma = talib.WMA\par
+\tab\tab\tab\tab\tab inReal: wma\par
+\tab\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab\tab endIdx: wma.length-1\par
+\tab\tab\tab\tab\tab optInTimePeriod: 2\par
+\tab\tab\tab\tab if x < period/2\par
+\tab\tab\tab\tab\tab REDUCE_BY = period/2 - x\par
+\tab\tab\tab\tab\tab i = i + period/2 - x\par
+\tab\tab\tab\tab\tab mwma = _.map(wma, feedbackMultiply)\par
+\tab\tab\tab\tab else\par
+\tab\tab\tab\tab\tab i = i + 1\par
+\tab\tab\tab\tab\tab mwma = wma\par
+\tab\tab\tab\tab if wr?\par
+\tab\tab\tab\tab\tab wr = _.drop(wr, wr.length - mwma.length)\par
+\tab\tab\tab\tab\tab wr = talib.ADD\par
+\tab\tab\tab\tab\tab\tab inReal0: wr\par
+\tab\tab\tab\tab\tab\tab inReal1: mwma\par
+\tab\tab\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab\tab\tab endIdx: wr.length-1\par
+\tab\tab\tab\tab else\par
+\tab\tab\tab\tab\tab wr = mwma\par
+\tab\tab\tab REDUCE_BY = i\par
+\tab\tab\tab _.map(wr, feedbackDivide)\par
+\tab\tab when 'VWMA'\par
+\tab\tab\tab vp = talib.MULT\par
+\tab\tab\tab\tab inReal0: sInput\par
+\tab\tab\tab\tab inReal1: sInstrument.volumes\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: sInput.length-1\par
+\tab\tab\tab svp = talib.SMA\par
+\tab\tab\tab\tab inReal: vp\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: vp.length-1\par
+\tab\tab\tab\tab optInTimePeriod: period\par
+\tab\tab\tab sv = talib.SMA\par
+\tab\tab\tab\tab inReal: sInstrument.volumes\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: sInstrument.volumes.length-1\par
+\tab\tab\tab\tab optInTimePeriod: period\par
+\tab\tab\tab talib.DIV\par
+\tab\tab\tab\tab inReal0: svp\par
+\tab\tab\tab\tab inReal1: sv\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: sv.length-1\par
+\tab\tab when 'EVWMA'\par
+\tab\tab\tab vp = talib.MULT\par
+\tab\tab\tab\tab inReal0: sInput\par
+\tab\tab\tab\tab inReal1: sInstrument.volumes\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: sInput.length-1\par
+\tab\tab\tab svp = talib.EMA\par
+\tab\tab\tab\tab inReal: vp\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: vp.length-1\par
+\tab\tab\tab\tab optInTimePeriod: period\par
+\tab\tab\tab sv = talib.EMA\par
+\tab\tab\tab\tab inReal: sInstrument.volumes\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: sInstrument.volumes.length-1\par
+\tab\tab\tab\tab optInTimePeriod: period\par
+\tab\tab\tab talib.DIV\par
+\tab\tab\tab\tab inReal0: svp\par
+\tab\tab\tab\tab inReal1: sv\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: sv.length-1\par
+\tab\tab when 'ElVWMA'\par
+\tab\tab\tab EV_LEN = period\par
+\tab\tab\tab eInstrument = []\par
+\tab\tab\tab for x in [0..sInstrument.high.length-1]\par
+\tab\tab\tab\tab eInstrument[x] = \{close: sInstrument.close[x], low: sInstrument.low[x], high: sInstrument.high[x], volume: sInstrument.volumes[x]\}\par
+\tab\tab\tab _.map(eInstrument, EVWMA)\par
+\par
+processOSC = (selector, period, instrument, secondary = false) ->\par
+\tab if secondary\par
+\tab\tab sInstrument = ['low', 'high', 'close']\par
+\tab\tab sInstrument.low = instrument\par
+\tab\tab sInstrument.high = instrument\par
+\tab\tab sInstrument.close = instrument\par
+\tab else\par
+\tab\tab sInstrument = instrument\par
+\tab\par
+\tab switch selector\par
+\tab\tab when 'NONE'\par
+\tab\tab\tab instrument\par
+\tab\tab when 'Stochastic'\par
+\tab\tab\tab STOCH_LEN = period\par
+\tab\tab\tab fInstrument = []\par
+\tab\tab\tab for x in [0..sInstrument.high.length-1]\par
+\tab\tab\tab\tab fInstrument[x] = \{close: sInstrument.close[x], low: sInstrument.low[x], high: sInstrument.high[x]\}\par
+\tab\tab\tab _.map(fInstrument, Stochastic)\par
+\tab\tab when 'FT'\par
+\tab\tab\tab # Fisher Transform length and gamma\par
+\tab\tab\tab limits = "#\{period\}".split " "\par
+\tab\tab\tab if limits[0]?\par
+\tab\tab\tab\tab FT_LEN = limits[0]\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab FT_LEN = 10\par
+\tab\tab\tab if limits[1]? and limits[1] < 1\par
+\tab\tab\tab\tab FT_GAMMA = limits[1]\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab FT_GAMMA = 0.33\par
+\tab\tab\tab fInstrument = []\par
+\tab\tab\tab for x in [0..sInstrument.high.length-1]\par
+\tab\tab\tab\tab fInstrument[x] = \{close: sInstrument.close[x], low: sInstrument.low[x], high: sInstrument.high[x]\}\par
+\tab\tab\tab _.map(fInstrument, FT)\par
+\tab\tab when 'IFT'\par
+\tab\tab\tab _.map(sInstrument.close, IFT)\par
+\tab\tab when 'MFI'\par
+\tab\tab\tab talib.MFI\par
+\tab\tab\tab\tab high: sInstrument.high\par
+\tab\tab\tab\tab low: sInstrument.low\par
+\tab\tab\tab\tab close: sInstrument.close\par
+\tab\tab\tab\tab volume: sInstrument.volumes\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: sInstrument.close.length-1\par
+\tab\tab\tab\tab optInTimePeriod: period\par
+\tab\tab when 'RSI'\par
+\tab\tab\tab talib.RSI\par
+\tab\tab\tab\tab inReal: processMA('NONE', 0, sInstrument)\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: sInstrument.close.length-1\par
+\tab\tab\tab\tab optInTimePeriod: period\par
+\tab\tab when 'LRSI'\par
+\tab\tab\tab LGAMMA = period\par
+\tab\tab\tab price = processMA('NONE', 0, sInstrument)\par
+\tab\tab\tab _.map(price, LaguerreRSI)\tab\tab\par
+\tab\tab when 'LMFI'\par
+\tab\tab\tab LGAMMA = period\par
+\tab\tab\tab price = talib.MULT\par
+\tab\tab\tab\tab inReal0: processMA('NONE', 0, sInstrument)\par
+\tab\tab\tab\tab inReal1: sInstrument.volumes\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: sInstrument.volumes.length-1\par
+\tab\tab\tab _.map(price, LaguerreRSI)\par
+\par
+makeDelta = (instrument) ->\par
+\tab delta = []\par
+\tab short = processMA(SHORT_MA_T, SHORT_MA_P, instrument)\par
+\tab if FEED_DELTA_T isnt 'NONE'\par
+\tab\tab feedback = processMA(FEED_MA_T, FEED_MA_P, instrument)\par
+\tab\tab [feedback, short] = fixLength(feedback, short)\par
+\tab\tab shortFeedbackDelta = talib.SUB\par
+\tab\tab\tab inReal0: short\par
+\tab\tab\tab inReal1: feedback\par
+\tab\tab\tab startIdx: 0\par
+\tab\tab\tab endIdx: feedback.length-1\par
+\tab\tab\par
+\tab\tab if FEED_VOLUME_T isnt 'NONE'\par
+\tab\tab\tab switch FEED_VOLUME_T\par
+\tab\tab\tab\tab when 'Stochastic'\par
+\tab\tab\tab\tab\tab STOCH_LEN = FEED_VOLUME_P\par
+\tab\tab\tab\tab\tab volume = _.map(instrument.volumes, SimpleStochastic)\par
+\tab\tab\tab\tab when 'Laguerre'\par
+\tab\tab\tab\tab\tab LGAMMA = FEED_VOLUME_P\par
+\tab\tab\tab\tab\tab volume = _.map(instrument.volumes, LaguerreRSI)\par
+\tab\tab\tab [shortFeedbackDelta, volume] = fixLength(shortFeedbackDelta, volume)\par
+\tab\tab\tab REDUCE_BY = 100/FEED_VOLUME_W\par
+\tab\tab\tab volume = _.map(volume, feedbackDivide)\par
+\tab\tab\tab REDUCE_BY = 1-FEED_VOLUME_W\par
+\tab\tab\tab volume = _.map(volume, feedbackAdd)\par
+\tab\tab\tab shortFeedbackDelta = talib.MULT\par
+\tab\tab\tab\tab inReal0: shortFeedbackDelta\par
+\tab\tab\tab\tab inReal1: volume\par
+\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab endIdx: volume.length-1\par
+\tab\tab\par
+\tab\tab REDUCE_BY = FEED_DELTA_P\par
+\tab\tab switch FEED_DELTA_T\par
+\tab\tab\tab when 'Division'\par
+\tab\tab\tab\tab feedDelta = _.map(shortFeedbackDelta, feedbackDivide)\par
+\tab\tab\tab when 'Root'\par
+\tab\tab\tab\tab feedDelta = _.map(shortFeedbackDelta, feedbackRoot)\par
+\tab\tab\tab when 'Logarithm'\par
+\tab\tab\tab\tab feedDelta = _.map(shortFeedbackDelta, feedbackLog)\par
+\tab\tab\par
+\tab\tab switch FEED_APPLY\par
+\tab\tab\tab when 'Short MA price'\par
+\tab\tab\tab\tab lInput = processMA('NONE', 0, instrument)\par
+\tab\tab\tab\tab [lInput, feedDelta] = fixLength(lInput, feedDelta)\par
+\tab\tab\tab\tab lInput = talib.ADD\par
+\tab\tab\tab\tab\tab inReal0: lInput\par
+\tab\tab\tab\tab\tab inReal1: feedDelta\par
+\tab\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab\tab endIdx: feedDelta.length-1\par
+\tab\tab\tab\tab short = processMA(SHORT_MA_T, SHORT_MA_P, lInput, true)\par
+\tab\tab\tab\tab long = processMA(LONG_MA_T, LONG_MA_P, instrument)\par
+\tab\tab\tab\tab delta['correctedPrice'] = _.last(lInput)\par
+\tab\tab\tab when 'Long MA price'\par
+\tab\tab\tab\tab lInput = processMA('NONE', 0, instrument)\par
+\tab\tab\tab\tab [lInput, feedDelta] = fixLength(lInput, feedDelta)\par
+\tab\tab\tab\tab lInput = talib.ADD\par
+\tab\tab\tab\tab\tab inReal0: lInput\par
+\tab\tab\tab\tab\tab inReal1: feedDelta\par
+\tab\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab\tab endIdx: feedDelta.length-1\par
+\tab\tab\tab\tab long = processMA(LONG_MA_T, LONG_MA_P, lInput, true)\par
+\tab\tab\tab\tab delta['correctedPrice'] = _.last(lInput)\par
+\tab\tab\tab when 'Both MA prices'\par
+\tab\tab\tab\tab lInput = processMA('NONE', 0, instrument)\par
+\tab\tab\tab\tab [lInput, feedDelta] = fixLength(lInput, feedDelta)\par
+\tab\tab\tab\tab lInput = talib.ADD\par
+\tab\tab\tab\tab\tab inReal0: lInput\par
+\tab\tab\tab\tab\tab inReal1: feedDelta\par
+\tab\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab\tab endIdx: feedDelta.length-1\par
+\tab\tab\tab\tab short = processMA(SHORT_MA_T, SHORT_MA_P, lInput, true)\par
+\tab\tab\tab\tab long = processMA(LONG_MA_T, LONG_MA_P, lInput, true)\par
+\tab\tab\tab\tab delta['correctedPrice'] = _.last(lInput)\par
+\tab\tab\tab when 'Short MA'\par
+\tab\tab\tab\tab [short, feedDelta] = fixLength(short, feedDelta)\par
+\tab\tab\tab\tab short = talib.ADD\par
+\tab\tab\tab\tab\tab inReal0: short\par
+\tab\tab\tab\tab\tab inReal1: feedDelta\par
+\tab\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab\tab endIdx: feedDelta.length-1\par
+\tab\tab\tab\tab long = processMA(LONG_MA_T, LONG_MA_P, instrument)\par
+\tab\tab\tab when 'Long MA'\par
+\tab\tab\tab\tab long = processMA(LONG_MA_T, LONG_MA_P, instrument)\par
+\tab\tab\tab\tab [long, feedDelta] = fixLength(long, feedDelta)\par
+\tab\tab\tab\tab long = talib.ADD\par
+\tab\tab\tab\tab\tab inReal0: long\par
+\tab\tab\tab\tab\tab inReal1: feedDelta\par
+\tab\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab\tab endIdx: feedDelta.length-1\par
+\tab\tab\tab when 'Both MA'\par
+\tab\tab\tab\tab [short, feedDelta] = fixLength(short, feedDelta)\par
+\tab\tab\tab\tab short = talib.ADD\par
+\tab\tab\tab\tab\tab inReal0: short\par
+\tab\tab\tab\tab\tab inReal1: feedDelta\par
+\tab\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab\tab endIdx: feedDelta.length-1\par
+\tab\tab\tab\tab long = processMA(LONG_MA_T, LONG_MA_P, instrument)\par
+\tab\tab\tab\tab [long, feedDelta] = fixLength(long, feedDelta)\par
+\tab\tab\tab\tab long = talib.ADD\par
+\tab\tab\tab\tab\tab inReal0: long\par
+\tab\tab\tab\tab\tab inReal1: feedDelta\par
+\tab\tab\tab\tab\tab startIdx: 0\par
+\tab\tab\tab\tab\tab endIdx: feedDelta.length-1\par
+\tab else\par
+\tab\tab long = processMA(LONG_MA_T, LONG_MA_P, instrument)\par
+\tab\par
+\tab [long, short] = fixLength(long, short)\par
+\tab shortLongDelta = talib.SUB\par
+\tab\tab inReal0: short\par
+\tab\tab inReal1: long\par
+\tab\tab startIdx: 0\par
+\tab\tab endIdx: long.length-1\par
+\tab delta['short'] = _.last(short)\par
+\tab delta['long'] = _.last(long)\par
+\tab delta['shortLongDelta'] = _.last(shortLongDelta)\par
+\tab deltaResult = _.last(shortLongDelta)\par
+\tab\par
+\tab if FEED_DELTA_T isnt 'NONE'\par
+\tab\tab delta['feedback'] = _.last(feedback)\par
+\tab\tab delta['shortFeedbackDelta'] = _.last(shortFeedbackDelta)\tab\par
+\tab\par
+\tab if MACD_MA_T isnt 'NONE'\par
+\tab\tab macd = processMA(MACD_MA_T, MACD_MA_P, shortLongDelta, true)\par
+\tab\tab [macd, shortLongDelta] = fixLength(macd, shortLongDelta)\par
+\tab\tab macdDelta = talib.SUB\par
+\tab\tab\tab inReal0: shortLongDelta\par
+\tab\tab\tab inReal1: macd\par
+\tab\tab\tab startIdx: 0\par
+\tab\tab\tab endIdx: macd.length-1\par
+\tab\tab delta['macdSignal'] = _.last(macd)\par
+\tab\tab delta['macdDelta'] = _.last(macdDelta)\par
+\tab\tab deltaResult = _.last(macdDelta)\par
+\tab\par
+\tab storage.lastDeltaPos = storage.DeltaPos\par
+\tab delta['deltaResult'] = deltaResult\par
+\tab if deltaResult > CURR_HI_THRESHOLD and deltaResult > CURR_LO_THRESHOLD\par
+\tab\tab storage.DeltaPos = 1\par
+\tab else if deltaResult < CURR_HI_THRESHOLD and deltaResult < CURR_LO_THRESHOLD\par
+\tab\tab storage.DeltaPos = -1\par
+\tab else\par
+\tab\tab storage.DeltaPos = 0\par
+\tab return delta\par
+\par
+makeOsc = (instrument) ->\par
+\tab if OSC_MAP_T isnt 'NONE'\par
+\tab\tab osc = processMA(OSC_MAP_T, OSC_MAP_P, instrument)\par
+\tab\tab sInstrument = ['low', 'high', 'close', 'volumes']\par
+\tab\tab sInstrument.low = osc\par
+\tab\tab sInstrument.high = osc\par
+\tab\tab sInstrument.close = osc\par
+\tab\tab sInstrument.volumes = instrument.volumes\par
+\tab\tab sInstrument.volumes = _.drop(sInstrument.volumes, sInstrument.volumes.length - osc.length)\par
+\tab else\par
+\tab\tab sInstrument = instrument\par
+\tab osc = processOSC(OSC_TYPE, OSC_PERIOD, sInstrument)\par
+\tab osc = processMA(OSC_MA_T, OSC_MA_P, osc, true)\par
+\tab osc = processOSC(OSC_NORM, OSC_PERIOD, osc, true)\par
+\tab oscma = processMA(OSC_MAC_T, OSC_MAC_P, osc, true)\par
+\tab oscResult = _.last(osc)\par
+\tab oscmaResult = _.last(oscma)\par
+\tab\par
+\tab storage.lastOscPos = storage.OscPos\par
+\tab if OSC_MAC_T is 'NONE'\par
+\tab\tab if oscResult < OSC_THRESHOLD\par
+\tab\tab\tab storage.OscPos = 1\par
+\tab\tab else if oscResult > (100 - OSC_THRESHOLD)\par
+\tab\tab\tab storage.OscPos = -1\par
+\tab\tab else\par
+\tab\tab\tab storage.OscPos = 0\par
+\tab else\par
+\tab\tab if oscResult < oscmaResult\par
+\tab\tab\tab storage.OscPos = 1\par
+\tab\tab else if oscResult > oscmaResult\par
+\tab\tab\tab storage.OscPos = -1\par
+\tab\tab else\par
+\tab\tab\tab storage.OscPos = 0\par
+\tab\par
+\tab return [oscResult, oscmaResult]\par
+\par
+getAction = (delta, osc) ->\par
+\tab dscore = 0\par
+\tab oscore = 0\par
+\tab if OSC_MODE is 'NONE' or OSC_MODE is 'Draw only' or OSC_MODE is 'Regular' or OSC_MODE is 'Thresholds'\par
+\tab\tab if storage.lastDeltaPos <= 0 and storage.DeltaPos is 1\par
+\tab\tab\tab dscore = 1\par
+\tab\tab else if storage.lastDeltaPos >= 0 and storage.DeltaPos is -1\par
+\tab\tab\tab dscore = -1\par
+\tab\tab else\par
+\tab\tab\tab dscore = 0\par
+\tab else if OSC_MODE is 'Zones'\par
+\tab\tab if storage.lastDeltaPos <= 0 and storage.DeltaPos is 1 and storage.OscPos isnt -1\par
+\tab\tab\tab dscore = 1\par
+\tab\tab else if storage.lastDeltaPos >= 0 and storage.DeltaPos is -1 and storage.OscPos isnt 1\par
+\tab\tab\tab dscore = -1\par
+\tab\tab else\par
+\tab\tab\tab dscore = 0\par
+\tab else if OSC_MODE is 'Reverse thresholds'\par
+\tab\tab if storage.lastDeltaPos <= 0 and storage.DeltaPos is 1 and storage.OscPos isnt 1\par
+\tab\tab\tab dscore = 1\par
+\tab\tab else if storage.lastDeltaPos <= 0 and storage.DeltaPos isnt -1 and storage.OscPos is 1\par
+\tab\tab\tab dscore = 1\par
+\tab\tab else if storage.lastDeltaPos >= 0 and storage.DeltaPos is -1 and storage.OscPos isnt -1\par
+\tab\tab\tab dscore = -1\par
+\tab\tab else if storage.lastDeltaPos >= 0 and storage.DeltaPos isnt 1 and storage.OscPos is -1\par
+\tab\tab\tab dscore = -1\par
+\tab\tab else\par
+\tab\tab\tab dscore = 0\par
+\tab else if OSC_MODE is 'Both'\par
+\tab\tab if storage.lastDeltaPos <= 0 and storage.DeltaPos is 1 and storage.OscPos is 1\par
+\tab\tab\tab dscore = 1\par
+\tab\tab else if storage.lastDeltaPos >= 0 and storage.DeltaPos is -1 and storage.OscPos is -1\par
+\tab\tab\tab dscore = -1\par
+\tab\tab else\par
+\tab\tab\tab dscore = 0\par
+\tab else if OSC_MODE is 'Wait for both'\par
+\tab\tab if storage.lastAction isnt 1 and storage.DeltaPos is 1 and storage.OscPos is 1\par
+\tab\tab\tab dscore = 1\par
+\tab\tab else if storage.lastAction isnt -1 and storage.DeltaPos is -1 and storage.OscPos is -1\par
+\tab\tab\tab dscore = -1\par
+\tab\tab else\par
+\tab\tab\tab dscore = 0\par
+\tab\par
+\tab if OSC_MODE is 'Regular' or OSC_MODE is 'Thresholds'\par
+\tab\tab if OSC_MAC_T is 'NONE'\par
+\tab\tab\tab switch OSC_TRIGGER\par
+\tab\tab\tab\tab when 'Early'\par
+\tab\tab\tab\tab\tab if storage.OscPos is 1 and storage.lastOscPos isnt 1\par
+\tab\tab\tab\tab\tab\tab oscore = 1\par
+\tab\tab\tab\tab\tab else if storage.OscPos is -1 and storage.lastOscPos isnt -1\par
+\tab\tab\tab\tab\tab\tab oscore = -1\par
+\tab\tab\tab\tab\tab else\par
+\tab\tab\tab\tab\tab\tab oscore = 0\par
+\tab\tab\tab\tab when 'Extreme'\par
+\tab\tab\tab\tab\tab if storage.OscPos is 1 and storage.lastOsc <= osc\par
+\tab\tab\tab\tab\tab\tab oscore = 1\par
+\tab\tab\tab\tab\tab else if storage.OscPos is -1 and storage.lastOsc >= osc\par
+\tab\tab\tab\tab\tab\tab oscore = -1\par
+\tab\tab\tab\tab\tab else\par
+\tab\tab\tab\tab\tab\tab oscore = 0\par
+\tab\tab\tab\tab when 'Late'\par
+\tab\tab\tab\tab\tab if storage.OscPos isnt 1 and storage.lastOscPos is 1\par
+\tab\tab\tab\tab\tab\tab oscore = 1\par
+\tab\tab\tab\tab\tab else if storage.OscPos isnt -1 and storage.lastOscPos is -1\par
+\tab\tab\tab\tab\tab\tab oscore = -1\par
+\tab\tab\tab\tab\tab else\par
+\tab\tab\tab\tab\tab\tab oscore = 0\par
+\tab\tab\tab\tab when 'Buy early, sell late'\par
+\tab\tab\tab\tab\tab if storage.OscPos is 1 and storage.lastOscPos isnt 1\par
+\tab\tab\tab\tab\tab\tab oscore = 1\par
+\tab\tab\tab\tab\tab else if storage.OscPos isnt -1 and storage.lastOscPos is -1\par
+\tab\tab\tab\tab\tab\tab oscore = -1\par
+\tab\tab\tab\tab\tab else\par
+\tab\tab\tab\tab\tab\tab oscore = 0\par
+\tab\tab\tab\tab when 'Buy late, sell early'\par
+\tab\tab\tab\tab\tab if storage.OscPos isnt 1 and storage.lastOscPos is 1\par
+\tab\tab\tab\tab\tab\tab oscore = 1\par
+\tab\tab\tab\tab\tab else if storage.OscPos is -1 and storage.lastOscPos isnt -1\par
+\tab\tab\tab\tab\tab\tab oscore = -1\par
+\tab\tab\tab\tab\tab else\par
+\tab\tab\tab\tab\tab\tab oscore = 0\par
+\tab\tab else\par
+\tab\tab\tab if storage.OscPos isnt 1 and storage.lastOscPos is 1\par
+\tab\tab\tab\tab oscore = 1\par
+\tab\tab\tab else if storage.OscPos isnt -1 and storage.lastOscPos is -1\par
+\tab\tab\tab\tab oscore = -1\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab oscore = 0\par
+\tab\par
+\tab if OSC_MODE is 'Thresholds' and SHORT_MA_T isnt 'NONE' and storage.DeltaPos is 0\par
+\tab\tab oscore = 0\par
+\tab\par
+\tab return dscore + oscore\par
+\par
+init: ->\par
+\tab # All the plotlines\par
+\tab setPlotOptions\par
+\tab\tab # Short MA on data\par
+\tab\tab Short:\par
+\tab\tab\tab color: 'darkblue'\par
+\tab\tab # Feedback MA on data\par
+\tab\tab Feedback:\par
+\tab\tab\tab color: 'lightred'\par
+\tab\tab # Short-Feedback delta\tab\tab\par
+\tab\tab ShortFeedbackDelta:\par
+\tab\tab\tab color: 'lightgreen'\par
+\tab\tab\tab secondary: true\par
+\tab\tab # Delta added to price\par
+\tab\tab CorrectedPrice:\par
+\tab\tab\tab color: 'lightpink'\par
+\tab\tab # Long MA on corrected data\par
+\tab\tab Long:\par
+\tab\tab\tab color: 'darkred'\par
+\tab\tab # Short-Long delta\par
+\tab\tab ShortLongDelta:\par
+\tab\tab\tab color: 'darkgreen'\par
+\tab\tab\tab secondary: true\par
+\tab\tab # MACD MA on Short-Long delta\par
+\tab\tab MACDSignal:\par
+\tab\tab\tab color: 'magenta'\par
+\tab\tab\tab secondary: true\par
+\tab\tab # MACD MA and Short-Long delta delta\par
+\tab\tab MACD:\par
+\tab\tab\tab color: 'pink'\par
+\tab\tab\tab secondary: true\par
+\tab\tab Zero:\par
+\tab\tab\tab color: 'darkgrey'\par
+\tab\tab\tab secondary: true\par
+\tab\tab HighThreshold:\par
+\tab\tab\tab color: 'darkseagreen'\par
+\tab\tab\tab secondary: true\par
+\tab\tab LowThreshold:\par
+\tab\tab\tab color: 'lightpink'\par
+\tab\tab\tab secondary: true\par
+\tab\tab HighOsc:\par
+\tab\tab\tab color: 'orange'\par
+\tab\tab LowOsc:\par
+\tab\tab\tab color: 'orange'\par
+\tab\tab Oscillator:\par
+\tab\tab\tab color: 'orange'\par
+\tab\tab OscillatorMA:\par
+\tab\tab\tab color: 'red'\par
+\tab\tab Score:\par
+\tab\tab\tab color: 'red'\par
+\tab\tab\tab secondary: true\par
+\tab\tab StopLoss:\par
+\tab\tab\tab color: 'black'\par
+\par
+handle: ->\par
+\tab instrument = @data.instruments[0]\par
+\tab close = instrument.close[instrument.close.length-1]\par
+\tab CURR_HI_THRESHOLD = close * HI_THRESHOLD / 100\par
+\tab CURR_LO_THRESHOLD = close * LO_THRESHOLD / 100\par
+\par
+\tab # Starting state\par
+\tab storage.botStartedAt ?= data.at\par
+\tab storage.lastBuyPrice ?= 0\par
+\tab storage.lastSellPrice ?= 0\par
+\tab storage.lastDelta ?= 0\par
+\tab storage.lastOsc ?= 0\par
+\tab storage.lastAction ?= 0\par
+\tab storage.lastDeltaPos ?= 0\par
+\tab storage.lastOscPos ?= 0\par
+\tab storage.DeltaPos ?= 0\par
+\tab storage.OscPos ?= 0\par
+\tab storage.wonTrades ?= 0\par
+\tab storage.lostTrades ?= 0\par
+\tab storage.startBase ?= @portfolios[instrument.market].positions[instrument.base()].amount\par
+\tab storage.startAsset ?= @portfolios[instrument.market].positions[instrument.asset()].amount\par
+\tab storage.startPrice ?= close\par
+\tab # Current state\par
+\tab baseName = instrument.base().toUpperCase()\par
+\tab assetName = instrument.asset().toUpperCase()\par
+\tab curBase = @portfolios[instrument.market].positions[instrument.base()].amount\par
+\tab curAsset = @portfolios[instrument.market].positions[instrument.asset()].amount\par
+\tab startBaseEquiv = storage.startBase + storage.startAsset * storage.startPrice\par
+\tab startAssetEquiv = storage.startAsset + storage.startBase / storage.startPrice\par
+\tab curBaseEquiv = curBase + curAsset * close\par
+\tab curAssetEquiv = curAsset + curBase / close\par
+\tab gainBH = 100 * (close / storage.startPrice - 1)\par
+\tab gainBot = 100 * (curBaseEquiv / startBaseEquiv - 1)\par
+\tab\par
+\tab # Printing state\par
+\tab info "========== Backtest Results =========="\par
+\tab debug "Starting " + baseName + ": " + _.round(storage.startBase, 2) + " | Starting " + assetName + ": " + _.round(storage.startAsset, 2) + " | Starting " + baseName + " equivalent: " + _.round(startBaseEquiv, 2)\par
+\tab debug "Current " + baseName + ": " + _.round(curBase, 2) + " | Current " + assetName + ": " + _.round(curAsset, 2) + " | Current " + baseName + " equivalent: " + _.round(curBaseEquiv, 2)\par
+\tab debug "Starting price: " + sigRound(storage.startPrice, 5) + " | Current price: " + sigRound(close, 5)\par
+\tab debug "Trades: " + (storage.wonTrades + storage.lostTrades) + " | Won: " + storage.wonTrades + " | Lost: " + storage.lostTrades + " | W/L: " + _.round(100 * storage.wonTrades / (storage.wonTrades + storage.lostTrades), 2) + "%"\par
+\tab debug "Buy and Hold efficiency: " + _.round(gainBH, 2) + "% | Bot efficiency: " + _.round(gainBot, 2) + "%"\par
+\tab # Set oscillator scale and position\par
+\tab storage.oscHigh ?= close * 0.75\par
+\tab storage.oscLow ?= close * 0.65\par
+\tab\par
+\tab plot\par
+\tab\tab Zero: 0\par
+\tab\par
+\tab instrument = makeInstrument(instrument)\par
+\tab delta = []\par
+\tab delta['deltaResult'] = 0\par
+\tab osc = 0\par
+\tab\par
+\tab if SHORT_MA_T isnt 'NONE'\par
+\tab\tab delta = makeDelta(instrument)\par
+\tab\tab plot\par
+\tab\tab\tab HighThreshold: CURR_HI_THRESHOLD\par
+\tab\tab\tab LowThreshold: CURR_LO_THRESHOLD\par
+\tab\tab\tab Short: delta.short\par
+\tab\tab\tab Long: delta.long\par
+\tab\tab\tab ShortLongDelta: delta.shortLongDelta\par
+\tab\tab if FEED_DELTA_T isnt 'NONE'\par
+\tab\tab\tab plot\par
+\tab\tab\tab\tab Feedback: delta.feedback\par
+\tab\tab\tab\tab ShortFeedbackDelta: delta.shortFeedbackDelta\par
+\tab\tab if delta.correctedPrice\par
+\tab\tab\tab plot\par
+\tab\tab\tab\tab CorrectedPrice: delta.correctedPrice\par
+\tab\tab if MACD_MA_T isnt 'NONE'\par
+\tab\tab\tab plot\par
+\tab\tab\tab\tab MACDSignal: delta.macdSignal\par
+\tab\tab\tab\tab MACD: delta.macdDelta\par
+\tab\par
+\tab if OSC_MODE isnt 'NONE'\par
+\tab\tab [osc, oscma] = makeOsc(instrument)\par
+\tab\tab plot\par
+\tab\tab\tab HighOsc: storage.oscHigh - OSC_THRESHOLD * (storage.oscHigh - storage.oscLow) / 100\par
+\tab\tab\tab LowOsc: storage.oscLow + OSC_THRESHOLD * (storage.oscHigh - storage.oscLow) / 100\par
+\tab\tab\tab Oscillator: storage.oscLow + osc * (storage.oscHigh - storage.oscLow) / 100\par
+\tab if OSC_MAC_T isnt 'NONE'\par
+\tab\tab plot\par
+\tab\tab\tab OscillatorMA: storage.oscLow + oscma * (storage.oscHigh - storage.oscLow) / 100\par
+\tab action = getAction(delta.deltaResult, osc)\par
+\tab storage.lastDelta = delta.deltaResult\par
+\tab storage.lastOsc = osc\par
+\tab\par
+\tab if storage.lastAction is 1 and STOP_LOSS > 0 and close < storage.lastBuyPrice * (100-STOP_LOSS)/100\par
+\tab\tab action = -1\par
+\tab\tab plotMark\par
+\tab\tab\tab StopLoss: close\par
+\tab\par
+#\tab plot\par
+#\tab\tab Score: action\par
+\tab if action > 0 and storage.lastAction isnt 1\par
+\tab\tab storage.lastAction = 1\par
+\tab\tab if curBase isnt 0\par
+\tab\tab\tab ticker = trading.getTicker instrument\par
+\tab\tab\tab price = ticker.sell*ORDER_PRICE\par
+\tab\tab\tab amount = curBase/price\par
+\tab\tab\tab trading.buy instrument, ORDER_TYPE, amount, price, 60 * @config.interval\par
+\tab\tab\tab storage.lastBuyPrice = price\par
+\tab\tab\tab if price <= storage.lastSellPrice\par
+\tab\tab\tab\tab storage.wonTrades = storage.wonTrades + 1\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab storage.lostTrades = storage.lostTrades + 1\par
+\tab if action < 0 and storage.lastAction isnt -1\par
+\tab\tab storage.lastAction = -1\par
+\tab\tab if curAsset isnt 0\par
+\tab\tab\tab ticker = trading.getTicker instrument\par
+\tab\tab\tab price = ticker.buy/ORDER_PRICE\par
+\tab\tab\tab amount = curAsset\par
+\tab\tab\tab trading.sell instrument, ORDER_TYPE, amount, price, 60 * @config.interval\par
+\tab\tab\tab storage.lastSellPrice = price\par
+\tab\tab\tab if price >= storage.lastBuyPrice\par
+\tab\tab\tab\tab storage.wonTrades = storage.wonTrades + 1\par
+\tab\tab\tab else\par
+\tab\tab\tab\tab storage.lostTrades = storage.lostTrades + 1\par
+}
+ 
