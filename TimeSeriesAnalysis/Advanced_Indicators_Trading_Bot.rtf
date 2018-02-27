@@ -1,0 +1,252 @@
+{\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang1033{\fonttbl{\f0\fnil\fcharset0 Calibri;}}
+{\colortbl ;\red0\green0\blue255;}
+{\*\generator Riched20 10.0.16299}\viewkind4\uc1 
+\pard\sl240\slmult1\f0\fs22\lang9 ###\par
+ADVANCED_INDICATORS_v5\par
+###\par
+\par
+###\par
+ADVANCED_INDICATORS_v5 is an Automated Trading Bot programmed by John Akwei, Data Scientist, ({{\field{\*\fldinst{HYPERLINK http://contextbase.github.io }}{\fldrslt{http://contextbase.github.io\ul0\cf0}}}}\f0\fs22 ), using the client's CryptoTrader.org account. ADVANCED_INDICATORS_v5's automated trading strategy involves effective buy & sell using support & resistance level analysis with advanced indicators, (RSI, EMA, MACD, Bollinger Bands, Ichimoku Cloud, and Fibonacci Retracement), in 5, 10, 15, 30 minute life cycle as per good result.\par
+\par
+Disclaimer: All trading involves risk. The client agrees to take responsibility for the\par
+client's implementation of this script in financial markets. The author of this script is\par
+not responsible for the financial results of the implimentation of this script.\par
+\par
+{{\field{\*\fldinst{HYPERLINK https://cryptotrader.org/backtests/wgLfAzHcoWK4swWyg }}{\fldrslt{https://cryptotrader.org/backtests/wgLfAzHcoWK4swWyg\ul0\cf0}}}}\f0\fs22\par
+{{\field{\*\fldinst{HYPERLINK https://cryptotrader.org/backtests/eEYGuewzLm3zy3HdL }}{\fldrslt{https://cryptotrader.org/backtests/eEYGuewzLm3zy3HdL\ul0\cf0}}}}\f0\fs22\par
+{{\field{\*\fldinst{HYPERLINK https://cryptotrader.org/backtests/5ypF4HhaJTAutA5og }}{\fldrslt{https://cryptotrader.org/backtests/5ypF4HhaJTAutA5og\ul0\cf0}}}}\f0\fs22\par
+{{\field{\*\fldinst{HYPERLINK https://cryptotrader.org/backtests/ragE9LAJ5hhbyDnEL }}{\fldrslt{https://cryptotrader.org/backtests/ragE9LAJ5hhbyDnEL\ul0\cf0}}}}\f0\fs22\par
+###\par
+\par
+talib   = require 'talib'\par
+trading = require 'trading'\par
+params = require 'params'\par
+\par
+_rsi = params.add "RSI", true\par
+_ema = params.add "EMA", true\par
+_macd = params.add "MACD", true\par
+_aroon = params.add "Aroon", true\par
+_bollingerbands = params.add "Bollinger Bands", true\par
+_fibonacci = params.add "Fibonacci", true\par
+_ichimoku = params.add "Ichimoku", true\par
+\par
+class Functions\par
+    @macd: (data, lag, FastPeriod,SlowPeriod,SignalPeriod) ->\par
+        results = talib.MACD\par
+         inReal: data\par
+         startIdx: 0\par
+         endIdx: data.length - lag - 1\par
+         optInFastPeriod: FastPeriod\par
+         optInSlowPeriod: SlowPeriod\par
+         optInSignalPeriod: SignalPeriod\par
+        result =\par
+         macd: _.last(results.outMACD)\par
+         signal: _.last(results.outMACDSignal)\par
+         histogram: _.last(results.outMACDHist)\par
+        result\par
+\par
+class Ichimoku\par
+    constructor: (@tenkan_n = 8,@kijun_n = 11)->\par
+        @tenkan = Array(@tenkan_n)\par
+        @kijun = Array(@kijun_n)\par
+        @senkou_a = Array(@kijun_n)\par
+        @senkou_b = Array(@kijun_n * 2)\par
+        @chikou = []\par
+    put: (ins) ->\par
+        @tenkan.push(this.calc(ins,@tenkan_n))\par
+        @kijun.push(this.calc(ins,@kijun_n))\par
+        @senkou_a.push((@tenkan[@tenkan.length-1] + @kijun[@kijun.length-1])/2)\par
+        @senkou_b.push(this.calc(ins,@kijun_n * 2))\par
+        @chikou.push(ins.close[ins.close.length - 1])\par
+    current: ->\par
+        c = \par
+            tenkan: @tenkan[@tenkan.length-1]\par
+            kijun: @kijun[@kijun.length-1]\par
+            chikou: @chikou[@chikou.length-1]\par
+            lag_chikou: @chikou[@chikou.length-@kijun_n]\par
+            senkou_a: @senkou_a[@senkou_a.length-@kijun_n]\par
+            senkou_b: @senkou_b[@senkou_b.length-@kijun_n]\par
+        return c\par
+    calc: (ins,n) ->\par
+        hh = _.max(ins.high[-n..])\par
+        ll = _.min(ins.low[-n..])\par
+        return (hh + ll) / 2\par
+\par
+init: ->\par
+    @context.period_fast        = 17    # EMA period fast\par
+    @context.period_slow        = 72    # EMA period slow\par
+    @context.period_rsi         = 14    # RSI period\par
+    @context.threshold_rsi_low  = 30    # RSI threshold low\par
+    @context.threshold_rsi_high = 70    # RSI threshold high\par
+    @context.ema_period_short = 2\par
+    @context.ema_period_long = 9\par
+    @context.BBANDS_period = 20\par
+    @context.aroon_period = 240\par
+    @context.aroon_diff = 35\par
+    @context.lag         = 1\par
+    @context.lagb        = 5\par
+    @context.period      = 12\par
+    @context.close \tab\tab = 1\par
+    @context.FastPeriod  = 12       \par
+    @context.SlowPeriod  = 26\par
+    @context.SignalPeriod= 9\par
+    @context.fibonacci_min = 770\par
+    @context.fibonacci_max = 1090\par
+    @context.ichi = new Ichimoku()\par
+    @context.init = true\par
+    @context.open = 0.10\par
+    @context.close = 2.18\par
+    @context.pos = false\par
+    @context.SARacceleration = 0.025\par
+    @context.SARmaxacceleration = 0.15\par
+\par
+handle: ->\par
+    instrument =   @data.instruments[0]\par
+    price      =   instrument.close[instrument.close.length - 1]\par
+\par
+    # RSI - Relative Strength Index  \par
+    rsi = (data, lag, period) ->\par
+        results = talib.RSI\par
+            inReal   : data\par
+            startIdx : 0\par
+            endIdx   : data.length - lag\par
+            optInTimePeriod : period\par
+            \par
+    rsiResults = rsi(instrument.close, 1, @context.period_rsi)\par
+    rsi_last   = _.last(rsiResults)\par
+    \par
+    # EMA - Exponential Moving Average\par
+    ema_short = instrument.ema(context.ema_period_short)\par
+    ema_long = instrument.ema(context.ema_period_long)\par
+    \par
+    ema_fast   = instrument.ema(@context.period_fast)\par
+    ema_slow   = instrument.ema(@context.period_slow)\par
+    \par
+    # MACD - Moving Average Convergence Divergence\par
+    macd = Functions.macd(instrument.close,context.lag,context.FastPeriod,context.SlowPeriod,\par
+    context.SignalPeriod)\par
+    macd_zero = 600\par
+    macdp = macd.macd*5 + 600\par
+    signal = macd.signal*5 + 600\par
+    histogram = macd.histogram*12 + 600\par
+    \par
+    # Aroon\par
+    AROONresults = talib.AROON\par
+    high: instrument.high\par
+    low: instrument.low\par
+    startIdx: 0\par
+    endIdx: instrument.close.length-1\par
+    optInTimePeriod: context.aroon_period\par
+            \par
+    AroonUp = _.last(AROONresults.outAroonUp)\par
+    AroonDown = _.last(AROONresults.outAroonDown)\par
+    \par
+    # Bollinger Bands\par
+    BBANDSresult = talib.BBANDS\par
+    inReal: instrument.close\par
+    startIdx: 0\par
+    endIdx: instrument.close.length-1\par
+    optInTimePeriod: context.BBANDS_period\par
+    optInNbDevUp: 2\par
+    optInNbDevDn: 2\par
+    optInMAType: 1\par
+            \par
+    bbandsupper = _.last BBANDSresult.outRealUpperBand\par
+    bbandsmiddle = _.last BBANDSresult.outRealMiddleBand\par
+    bbandslower = _.last BBANDSresult.outRealLowerBand\par
+    \par
+    # Ichmoku Cloud\par
+    if context.init\par
+        for i in [0...instrument.close.length]\par
+            t =\par
+                open: instrument.open[..i]\par
+                close: instrument.close[..i]\par
+                high: instrument.high[..i]\par
+                low: instrument.low[..i]\par
+            context.ichi.put(t)\par
+        context.init = false\par
+    context.ichi.put(instrument)\par
+    c = context.ichi.current()\par
+    diff = 100 * ((c.tenkan - c.kijun) / ((c.tenkan + c.kijun)/2))\par
+    diff = Math.abs(diff)\par
+    min_tenkan = _.min([c.tenkan,c.kijun])\par
+    max_tenkan = _.max([c.tenkan,c.kijun])\par
+    min_senkou = _.min([c.senkou_a,c.senkou_b])\par
+    max_senkou = _.max([c.senkou_a,c.senkou_b])\par
+    results = talib.SAR\par
+        high: instrument.high\par
+        low: instrument.low\par
+        startIdx: 0\par
+        endIdx: instrument.close.length-1\par
+        optInAcceleration: context.SARacceleration\par
+        optInMaximum: context.SARmaxacceleration\par
+    SAR = _.last(results)\par
+    \par
+    # Fibonacci Retracement\par
+    max = context.fibonacci_max\par
+    min = context.fibonacci_min\par
+    \par
+    fibonacci_38 = (max - min) * (1 - 0.382) + min\par
+    fibonacci_50 = (max - min) * 0.5 + min\par
+    fibonacci_61 = (max - min) * (1 - 0.618) + min\par
+    \par
+    # Financial Transaction Code\par
+    currency_amount =  @portfolio.positions[instrument.curr()].amount\par
+    asset_amount    =  @portfolio.positions[instrument.asset()].amount\par
+\par
+    min_amount  =  0.0001\par
+    amount_buy  =  currency_amount / price\par
+    amount_sell =  asset_amount\par
+    \par
+    # Plotting Code\par
+    plot\par
+        ema_short: ema_short\par
+        ema_long: ema_long\par
+        macd_zeroa: macd_zero\par
+        macd_zerob: macd_zero\par
+        macd_zero: macd_zero\par
+        histogram: histogram\par
+        macd: macdp\par
+        signal: signal\par
+        Bollinger_supper: bbandsupper\par
+        Bollinger_middle:bbandsmiddle\par
+        Bollinger_lower: bbandslower\par
+        AroonUp: AroonUp + 850\par
+        AroonDown: AroonDown + 850\par
+\par
+    # Buy/Sell Code\par
+    if (_rsi)\par
+        if ema_fast < ema_slow and rsi_last < @context.threshold_rsi_low\par
+                if amount_buy > min_amount\par
+                    trading.buy instrument, 'limit/2', amount_buy, price \par
+    else if ema_fast > ema_slow and rsi_last > @context.threshold_rsi_high\par
+        if asset_amount > min_amount\par
+                trading.sell instrument, 'limit/2', amount_sell, price\par
+                \par
+    if (_fibonacci)\par
+        if ema_short < fibonacci_61\par
+            if amount_buy > min_amount\par
+                    trading.buy instrument, 'limit', amount_buy, price\par
+    else if ema_short > fibonacci_38 and ema_long > ema_short\par
+        if asset_amount > min_amount\par
+                trading.sell instrument, 'limit', amount_sell, price\par
+    \par
+    if (_ichimoku)            \par
+        if diff >= context.close\par
+            if context.pos == "long" and c.tenkan < c.kijun and c.chikou < SAR\par
+                if asset_amount > min_amount\par
+                    trading.sell instrument, 'limit', amount_sell, price\par
+        else if context.pos == "short" and c.tenkan > c.kijun and c.chikou > SAR\par
+            if amount_buy > min_amount\par
+                    trading.buy instrument, 'limit', amount_buy, price\par
+    else if diff >= context.open\par
+        if c.tenkan > c.kijun and min_tenkan > max_senkou and c.chikou > c.lag_chikou\par
+            context.pos = "long"\par
+            if amount_buy > min_amount\par
+                    trading.buy instrument, 'limit', amount_buy, price\par
+        else if c.tenkan < c.kijun and max_tenkan < min_senkou and c.chikou < c.lag_chikou \par
+            context.pos = "short"\par
+            if asset_amount > min_amount\par
+                trading.sell instrument, 'limit', amount_sell, price\par
+}
+ 
