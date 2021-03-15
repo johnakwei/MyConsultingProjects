@@ -1,0 +1,493 @@
+---
+title: "<center>Topic Modeling Of IRI Documents</center>"
+subtitle: "<center>https://contextbase.github.io</center>"
+author: "<center>All programming by John Akwei, ECMp ERMp Data Scientist</center>"
+date: "<center>March 9, 2021</center>"
+output:
+  html_document: default
+  word_document: default
+---
+
+<br />
+<br />
+
+## Table of Contents  
+Section 1 - Abstract  
+Section 2 - Data Import  
+Section 3 - Exploratory Data Analysis  
+Section 4 - Structural Topic Modeling  
+Section 5 - Topic Modeling of IRI Document Data  
+Section 6 - Topic Probabilities  
+Section 7 - Conclusion  
+Section 8 - Appendix  
+Section 8.1 - Required Packages  
+Section 8.2 - Session Information  
+Section 9 - References
+
+<br />
+<br />
+
+## Section 1 - Abstract  
+This paper presents the topic modeling technique known as Latent Dirichlet Allocation (LDA), An intertemporal bimodal network to analyze the evolution of the semantic content of a scientific field and a form of text-mining aiming at discovering the hidden (latent) thematic structure in large archives of documents.  
+
+This project applies unsupervised Machine Learning Topic Modeling to map a corpus of IRI documents.  
+
+List of IRI Documents:  
+Establishing University-Industry Joint Ventures  
+Cyert, R.M. (1985). “Establishing University-Industry Joint Ventures,” Research Management, Vol. 28, No. 1 (January-February), pp. 27-28.  
+https://iriwebblog.org/2015/08/13/establishing-university-industry-joint-ventures/  
+
+Strategies for retaining employees in the hospitality industry  
+https://scholarworks.waldenu.edu/dissertations/1802/  
+
+Employers, It’s Time to Talk About Infertility  
+https://hbr.org/2020/11/employers-its-time-to-talk-about-infertility by
+Serena G. Sohrab and Nada Basir  
+
+Employee Retention: Big Company Tactics for Small Businesses  
+https://hiring.monster.com/employer-resources/workforce-management/employee-retention-strategies/employee-retention-tactics/  
+
+```{r, echo=F, warning=F, message=F}
+# Set Working Directory (to folder with project files):
+# setwd('C:/Users/johna/Dropbox/Programming/NLP/TwitterSentimentAnalysis/ContextBase_Topic_Modeling')
+
+# Uncomment and install packages if not previously installed:
+# install.packages("topicmodels")
+# install.packages("stm")
+# install.packages("quanteda")
+# install.packages("LDAvis")
+# install.packages("xml2")
+# install.packages("tidyverse")
+# install.packages("tidytext")
+# install.packages("tidyr")
+# install.packages("tm")
+# install.packages("syuzhet")
+# install.packages("lsa")
+# install.packages("car")
+# install.packages("broom")
+# install.packages("scales")
+# install.packages("stringr")
+# install.packages("plyr")
+# install.packages("dplyr")
+# install.packages("lattice")
+# install.packages("data.table")
+# install.packages("ggplot2")
+# install.packages("RColorBrewer")
+# install.packages("gridExtra")
+# install.packages("igraph") 
+# install.packages("bursts")
+# install.packages("wordcloud")
+# install.packages("visNetwork")
+# install.packages("knitr")
+
+# Required Libraries:
+library(topicmodels)
+library(stm)
+library(quanteda)
+library(LDAvis)
+library(xml2)
+library(tidyverse)
+library(jstor)
+library(magrittr)
+library(tidytext)
+library(tidyr)
+library(tm)
+library(syuzhet)
+library(lsa)
+library(car)
+library(plyr)
+library(dplyr)
+library(reshape2)
+library(lattice)
+library(broom)
+library(scales)
+library(data.table)
+library(stringr)
+library(ggplot2)
+library(RColorBrewer)
+library(gridExtra)
+library(igraph)
+library(bursts)
+library(wordcloud)
+library(visNetwork)
+library(knitr)
+```
+
+<br />
+<br />
+
+## Section 2 - Data Import  
+The data imported for this project is a collection of IRI text documents about employee retention.  
+
+```{r, echo=F, warning=F, message=F}
+# Import Data
+project_data <- readLines("IRI_Documents.txt" )
+```
+
+<br />
+<br />
+
+## Section 3 - Exploratory Data Analysis  
+This Exploratory Data Analysis of the IRI Dataset uses a function to extract text data into a R data frame.   
+
+```{r, echo=F, warning=F, message=F}
+# Explore dataset structure
+# Examine data
+knitr::kable(project_data[1:5], caption = "Table 1. First 5 lines of IRI Document Data.")
+```
+
+<br />
+<br />
+
+## Section 4 - Structural Topic Modeling  
+Topic Modeling treats each document as a mixture of topics, and each topic as a mixture of words, (or "terms"). Each document may contain words from several topics in particular proportions. The content of documents usually merge continously with other documents, instead of existing in discrete groups. The same way as in the use of natural language by individuals usually merges continously.  
+
+```{r, echo=F, warning=F, message=F}
+# STM Package processing to determine the optimal number of Topics.
+
+# Process data using function textProcessor()
+processed <- textProcessor(project_data)
+
+# Prepare data using function prepDocuments()
+out <- prepDocuments(processed$documents, processed$vocab,
+                     processed$meta, lower.thresh = 2)
+
+# MODEL SELECTION
+# Run diagnostic using function searchK()
+# kResult <- searchK(out$documents, out$vocab, K = c(5,10,15,20,40),
+#                    init.type = "Spectral", data = out$meta)
+
+# Save the "KResult" dataframe for quicker processing
+# saveRDS(kResult, "kResult.rds")
+kResult <- readRDS("kResult.rds")
+
+# Plot diagnostic results using function plot()
+print(paste("Figure 4. Diagnostic Values"))
+plot(kResult)
+
+# Semantic coherence-exclusivity plot using function plot()
+plot(kResult$results$semcoh, kResult$results$exclus,
+     xlab = "Semantic Coherence", ylab = "Exclusivity",
+     main = "Figure 5. Semantic Coherence-Exclusivity Plot")
+text(kResult$results$semcoh, kResult$results$exclus, labels = paste("K", kResult$results$K), pos = 1)
+
+# Semantic coherence-exclusivity table
+knitr::kable(kResult$results,
+             caption = "Table 6. Semantic Coherence-Exclusivity Table")
+
+# STM Modeling
+# From the "Semantic Coherence-Exclusivity Plot,
+# the optimal number of Topic Models is set to 18
+# model <- stm(out$documents, out$vocab, K = 10, max.em.its = 150,
+#              data = out$meta, init.type = "Spectral")
+
+# Save the "model" stm Topic Modeling file for quicker processing
+# saveRDS(model, "model.rds")
+model <- readRDS("model.rds")
+
+# POST-ESTIMATION DIAGNOTICS 
+# Model summary using function summary()
+print(paste("Table 7. Topic Model - Highest Probability Words."))
+summary(model)
+
+# RESULTS
+# Plot model results using function plot()
+plot(model, type = "summary", main = "Figure 6. Topic Model Proportions",
+     bty="n",col="grey40",lwd=5)
+
+# Network Plots
+# Topic correlations using function topicCorr()
+mod.out.coor <- topicCorr(model, method = "simple", cutoff = 0.01)
+
+# Plot model graph using function plot()
+plot(mod.out.coor, main = "Figure 8. Topic Network")
+
+topicNames <- labelTopics(model, n = 5)
+topic <- data.frame(
+  TopicNumber = 1:10,
+  TopicProportions = colMeans(model$theta))
+# output links and simplify
+links2 <- as.matrix(mod.out.coor$posadj)
+net2 <- graph_from_adjacency_matrix(links2, mode = "undirected")
+net2 <- igraph::simplify(net2)
+
+# create the links and nodes
+links <- igraph::as_data_frame(net2, what="edges")
+nodes <- igraph::as_data_frame(net2, what="vertices")
+
+# set parameters for the network
+nodes$shape <- "dot"
+nodes$title <- paste0("Topic ", topic$TopicNumber)
+nodes$label <- apply(topicNames$prob, 1, function(x) paste0(x, collapse = " \n ")) # Node label
+nodes$size <- (topic$TopicProportions / max(topic$TopicProportions)) * 30
+nodes$font <- "18px"
+nodes$id <- as.numeric(1:10)
+
+visNetwork(nodes, links, width="100%",  height="800px", main="Figure 10. 5 Topics Network ") %>% 
+  visOptions(highlightNearest = list(enabled = TRUE, algorithm = "hierarchical")) %>%
+  visNodes(scaling = list(max = 60)) %>%
+  visIgraphLayout(smooth = T) %>%
+  visInteraction(navigationButtons = T)
+
+
+# Constrast between two topics
+plot(model, type = "perspectives", topics = c(1,2),
+     main = "Figure 12. Contrast Between Topic 1 and Topic 2")
+
+plot(model, type = "perspectives", topics = c(1,3),
+     main = "Figure 13. Contrast Between Topic 1 and Topic 3")
+
+plot(model, type = "perspectives", topics = c(2,3),
+     main = "Figure 14. Contrast Between Topic 2 and Topic 3")
+
+#  Topic proportions within documents 
+plot(model, type = "hist", topics = sample(1:8, size = 8),
+     main = "Figure 15. Histogram of the topic shares within the documents")
+```
+
+<br />
+<br />
+
+## Section 5 - Topic Modeling of IRI Document Data  
+This table examines the dataset documents, and matches those documents with the topic category that the document's terms indicate the documents correspond, and includes the probabilities with which each topic is assigned to a document. The gamma of the topics per document represent the correspondence level of the document and topic. Each document is considered to be a mixture of all topics (24 in this case). The assignments in the first file list the topic with the highest probability.    
+The highest probability in each row corresponds to the topic assigned to that document. The “goodness of fit” of the primary assignment can be assessed by taking the ratio of the highest to second-highest probability and the second-highest to the third-highest probability and so on.  
+
+```{r, echo=F, warning=F, message=F}
+# Text Mining Function
+dtmCorpus <- function(df) {
+  df_corpus <- Corpus(VectorSource(df))
+  df_corpus <- tm_map(df_corpus, function(x) iconv(x, to='ASCII'))
+  df_corpus <- tm_map(df_corpus, removeNumbers)
+  df_corpus <- tm_map(df_corpus, removePunctuation)
+  df_corpus <- tm_map(df_corpus, stripWhitespace)
+  df_corpus <- tm_map(df_corpus, tolower)
+  df_corpus <- tm_map(df_corpus, removeWords, stopwords('english'))
+  DocumentTermMatrix(df_corpus)
+}
+
+# Set parameters for Gibbs sampling
+burnin <- 4000
+iter <- 2000
+thin <- 500
+seed <- list(2003,5,63,100001,765)
+nstart <- 5
+best <- TRUE
+
+# Create Document Term Model (dtm)
+dtm <- dtmCorpus(project_data)
+
+# Find the sum of words in each Document
+rowTotals <- apply(dtm, 1, sum)
+
+# Remove all docs without words
+dtm.new <- dtm[rowTotals > 0,]
+
+# Number of topics
+k <- 10
+
+# Run LDA using Gibbs sampling
+# ldaOut <- LDA(dtm.new, k, method="Gibbs",
+#               control=list(nstart=nstart, seed=seed,
+#                            best=best, burnin=burnin,
+#                            iter=iter, thin=thin))
+
+# Save the "ldaOut" stm Topic Modeling file for quicker processing
+# saveRDS(ldaOut, "ldaOut.rds")
+ldaOut <- readRDS("ldaOut.rds")
+
+# Docs to topics
+ldaOut.topics <- as.matrix(topics(ldaOut))
+
+# Top 6 terms in each topic
+ldaOut.terms <- as.matrix(terms(ldaOut,6))
+kable(ldaOut.terms, caption = "Table 9. Top 6 Terms Per Topic")
+
+# Probabilities associated with each topic assignment
+topicProbabilities <- as.data.frame(ldaOut@gamma)
+
+# Document Classification  
+documents_gamma <- tidy(ldaOut, matrix = "gamma")
+
+kable(documents_gamma[1:10,], caption = "Table 10. Document Classification Via Topic Modeling")
+
+documents_gamma[1:8,] %>%
+  mutate(title = reorder(document, gamma * topic)) %>%
+  ggplot(aes(factor(topic), gamma)) +
+  geom_boxplot() +
+  facet_wrap(~ title) +
+  labs(subtitle="Figure 16. Per Document Classification.",
+       title="Document Classification By Gamma",
+       caption = "Source: IRI Document Data")
+
+# Find probability of term being generated from topic
+ap_topics <- tidy(ldaOut, matrix = "beta")
+kable(head(ap_topics, 10), caption = "Table 12. One Topic Per Term Model")
+
+# Find top terms for 5 topics
+ap_top_terms <- ap_topics %>%
+  group_by(topic) %>%
+  top_n(5, beta) %>%
+  ungroup() %>%
+  arrange(topic, -beta)
+
+# Create histogram of top 5 terms per topic
+ap_top_terms %>%
+  mutate(term = reorder(term, beta)) %>%
+  ggplot(aes(term, beta, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip() +
+  labs(subtitle="Figure 17. Top 5 Terms within IRI Document Data.",
+       title="Top Terms Per Topic - Histogram",
+       caption = "Source: IRI Document Data")
+
+# Top 40 Terms Per Topic
+ap_lda.terms <- as.matrix(terms(ldaOut,50))
+kable(as.matrix(terms(ldaOut, 50)), caption = "Table 13. Top 40 Terms Per Topic")
+
+```
+
+<br />
+<br />
+
+## Section 6 - Topic Probabilities  
+The beta spread allows for the characterization of topics
+by terms that have a high probability of appearing within
+the topic.  
+```{r, echo=F, warning=F, message=F}
+# Table of beta spread of terms per topic.
+beta_spread <- ap_topics %>%
+  mutate(topic = paste0("topic", topic)) %>%
+  spread(topic, beta) %>%
+  filter(topic1 > .001 | topic2 > .001) %>%
+  mutate(log_ratio = log2(topic2 / topic1))
+
+# Print table of beta spread of terms per topic
+kable(beta_spread[1:5,], caption = "Table 14: Probability of Term being generated from Topic")
+
+# Plot of Beta Distribution
+plot_data <- arrange(beta_spread[1:20,], desc(log_ratio))
+ggplot(plot_data[1:20,], aes(reorder(term,log_ratio), log_ratio)) +
+geom_bar(stat = "identity", fill = "blue") +
+coord_flip() +
+labs(x="Terms",
+     subtitle="Figure 19. Words with the greatest beta difference between topic 2 and topic 1 .",
+     title="Topic Modeling Beta Distribution",
+     caption = "Source: IRI Document Data")
+
+# Histogram of Topic Models    
+# This figure is a histogram of the count and gamma spread of
+# topics throughout the entire IRI dataset.  
+
+# Create table of topics per document
+ap_documents <- tidy(ldaOut, matrix="gamma")
+
+# Topic Model Distribution Plot
+ggplot(ap_documents, aes(gamma, fill=factor(topic))) +
+  geom_histogram() +
+  labs(subtitle="Figure 20. Distribution of Topic Models.",
+           title="Histogram of Topic Modeling Distribution", 
+           caption = "Source: IRI Document Data")
+
+# LDA Topic Modeling
+abstract.dfm <- dfm(project_data, remove_numbers = TRUE, remove_punct = TRUE, remove_symbols = TRUE, remove = c(stopwords("english")))
+dfm.trim <- dfm_trim(abstract.dfm, min_termfreq = 2, max_termfreq = 75)
+dfm.trim
+n.topics <- 18
+dfm2topicmodels <- convert(dfm.trim, to = "topicmodels")
+lda.model <- LDA(dfm2topicmodels, n.topics)
+
+# Save the "ldaOut" stm Topic Modeling file for quicker processing
+# saveRDS(lda.model, "lda.model.rds")
+lda.model <- readRDS("lda.model.rds")
+
+# The ten most closely related terms for each of the 18 topics.
+kable(terms(lda.model, 10),
+      caption = "Table 15. Topic Models - Related Terms")
+
+# The topic with the highest proportion for each text. “texts” are paragraphs from individual journals.
+Topics_Data <- data.frame(Topic = topics(lda.model))
+
+# Terms > Topics
+kable(head(as.data.frame(t(lda.model@beta), row.names = lda.model@terms)),
+      caption = "Table 16. Terms vs Topics")
+
+# Documents > Topics
+kable(head(as.data.frame(lda.model@gamma, row.names = lda.model@documents)),
+      caption = "Table 17. Documents > Topics")
+
+# Wordclouds
+
+print(paste("Figure 23. Topic 4 Wordcloud"))
+stm::cloud(model, topic = 4, scale=c(8,.2),
+           min.freq=2,
+           max.words=100, random.order=T,
+           rot.per=.15,
+           colors=brewer.pal(8, "Dark2"))
+
+plot(ldaOut.topics, type = "summary", text.cex = 0.5,
+     xlab = "Documents",
+     ylab = "Topic Models",
+     main = "Figure 24. Topic shares on the corpus as a whole")
+
+# Topic Similarities
+lda.similarity <- as.data.frame(lda.model@beta) %>%
+  scale() %>%
+  dist(method = "euclidean") %>%
+  hclust(method = "ward.D2")
+
+par(mar = c(0, 4, 4, 2))
+plot(lda.similarity,
+     main = "Figure 26. Topic Model Similarity",
+     xlab = "Topic Models", ylab = "",
+     sub = "")
+```
+
+<br />
+<br />
+
+## Section 7 - Conclusions  
+The LDA algorithm Topic Model contains a voluminous amount of useful information. This analysis outputs the top terms in each topic, document to topic assignment, and the probabilities within the Topic Model.  
+
+Gibbs sampling usually finds an optimal solution, that is variable mathematically for specific analyses. A variety of trial settings of parameters allows ContextBase to optimize of the stability of Topic Modeling results.  
+
+<br />
+<br />
+
+## Section 8 - Appendix  
+## Section 8a - Required Packages  
+The needed R programming language packages are installed and included in the package library. The R packages included are packages for Topic Modeling, Natural Language Processing, data manipulation, and plotting.     
+```{r, echo=F, warning=F, message=F}
+PackageTable <- data.frame(matrix(nrow=1, ncol=1))
+rownames(PackageTable) <- "Required Packages"
+colnames(PackageTable) <- "List of Required Packages"
+PackageTable[1,] <- paste("'topicmodels'","'stm'","'quanteda'",
+                          "'tidytext'","'tidyr'","'tidyverse'",
+                          "'tm'","'syuzhet'","'plyr'","'dplyr'",
+                          "'data.table'","'stringr'","'lattice'",
+                          "'broom'","'scales'","'magrittr'",
+                          "'lsa'","'car'","'xml2'","'jstor'",
+                          "'LDAvis'","'ggplot2'","'RColorBrewer'",
+                          "'gridExtra'","'igraph'","'bursts'",
+                          "'visNetwork'","'knitr'")
+kable(PackageTable, caption = "Table 18. R Packages used for this analysis")
+```
+
+## Section 8b - Session Information  
+Session information is provided for reproducible research. The Session Information below is for reference when running the required packages, and R code.   
+```{r, echo=F, warning=F, message=F}
+session <- sessionInfo()
+SessionTable <- data.frame(matrix(nrow=5, ncol=1))
+rownames(SessionTable) <- c("R Version", "Platform", "Running",
+                         "RStudio Citation","RStudio Version")
+colnames(SessionTable) <- "Session Information"
+SessionTable[1,] <- session$R.version$version.string
+SessionTable[2,] <- session$platform
+SessionTable[3,] <- session$running
+SessionTable[4,] <- "RStudio: Integrated Development Environment for R"
+SessionTable[5,] <- "1.0.153"
+kable(SessionTable, caption = "Table 19: Session Information")
+```
+
+<br />
+<br />

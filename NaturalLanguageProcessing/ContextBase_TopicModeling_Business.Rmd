@@ -1,0 +1,427 @@
+---
+title: "<center>ContextBase - Topic Modeling</center>"
+subtitle: "<center>https://contextbase.github.io</center>"
+author: "<center>All programming by John Akwei, ECMp ERMp Data Scientist</center>"
+date: "<center>June 29, 2019</center>"
+output:
+  html_document: default
+  word_document: default
+---
+
+<br />
+<br />
+
+<center><img src="ContextBase_Logo.jpg" alt="ContextBase Logo"  width="550" height="300"></center>
+
+<br />
+<br />
+
+## Table of Contents  
+
+The Problem  
+Our Solution  
+
+Section 1 - Data Import  
+
+Section 2 - Document Term Matrix  
+
+Section 3 - Topic Modeling  
+
+Section 4 - Tables and Charts  
+
+Section 5 - Conclusions  
+
+Section 6 - Appendix  
+Section 6a - Required Packages  
+Section 6b - Session Information 
+
+Section 7 - References  
+
+<br />
+<br />
+
+## The Problem  
+The volume and complexity of text-based business data has increased exponentially, and now greatly exceeds the processing capabilities of humans. The vast majority of online Business data is unorganized, and exists in textual form such as emails, support tickets, chats, social media, surveys, articles, and documents. Manually sorting through online Business data, (in order to gain hidden insights), would be difficult, expensive, and impossibly time-consuming.  
+
+The internet has also introduced complexity to the demands from Customers to Businesses. The effectiveness of Marketing has been affected by the complexity of the Internet. Growing databases of Customer Responses present difficulties of interpreting the basic requirements from Customers, and the indicators of Customer intent are getting more complex.  
+
+New Machine Learning methods are required for improved extraction of business knowledge. New linguistic techniques are needed to mine Customer Response text data.  
+
+<br />
+<br />
+
+<center><img src="Topic_Modeling_001.png" alt="Topic_Modeling"  width="602" height="386"></center>
+
+<br />
+<br />
+
+## Our Solution  
+A result of the above demand is the attention Topic Modeling has been gaining in recent years. ContextBase provides Topic Modeling of Client text data to precisely refine Business Policies and Marketing material. Topic Modeling is a text mining method derived from Natural Language Programming and Machine Learning. Topic Models are a solution for classifying document terms into themes, (or "topics"), and is appliable to the analysis of themes within novels, documents, reviews, forums, discussions, blogs, and micro-blogs. 
+
+ContextBase begins the process of Topic Modeling with Data Scientist/Programmer awareness of the sensitivity of Topic Modeling algorithms. After the Topic Modeling of Client text data, ContextBase manually characterizes the resulting topics to refine the arbitariness of the topics. ContextBase also maintains awareness of Topic Model changes dependent on varying document contents.  
+
+The goal of ContextBase's Topic Modeling of Client data is to accomplish the programmatic deduction of stable Topic Models. As a result, ContextBase Topic Modeling allows for improvement in the Client's business processes.  
+
+This document is a Topic Modeling of customer response text data posted to https://www.yelp.com/. The programming language used is R. The analysis includes information on required R packages, session information, data importation, normalization of the text, creation of a document term matrix, Topic Modeling coding, and outputted tables/graphs demonstrating the results of Topic Modeling.  
+
+<br />
+<br />
+
+```{r, echo=F, warning=F, message=F}
+# Set Working Directory (to folder with project files):
+# setwd("C:/Users/johna/Dropbox/Programming/NLP/ContextBase_Topic_Modeling")
+```
+
+```{r, echo=F, warning=F, message=F}
+# Required Libraries:
+library(topicmodels)
+library(stm)
+library(quanteda)
+library(LDAvis)
+library(xml2)
+library(jstor)
+library(magrittr)
+library(tidyverse)
+library(tidytext)
+library(tidyr)
+library(tm)
+library(syuzhet)
+library(lsa)
+library(car)
+library(plyr)
+library(dplyr)
+library(lattice)
+library(broom)
+library(scales)
+library(data.table)
+library(stringr)
+library(ggplot2)
+library(RColorBrewer)
+library(gridExtra)
+library(igraph)
+library(bursts)
+library(wordcloud)
+library(visNetwork)
+library(knitr)
+```
+
+## Section 1 - Data Import  
+The data imported for this project is a collection of 10,000 customer feedback comments, posted to https://www.yelp.com/. To reduce the extensive amount of time required to process 10,096 comments, only the first 1000 comments were selected for processing. The column of comment data within the dataframe was formatted as character variables for subsequent Natural Language Processing algorithms.  
+```{r, warning=F, message=F}
+# Import Data
+import_data <- read.csv("yelp.csv")
+project_data <- data.frame(import_data$text)
+rm(import_data)
+names(project_data) <- "Data"
+project_data$Data <- as.character(project_data$Data)
+
+# Examine data
+knitr::kable(head(project_data,1), caption = "Table 1. Yelp Data.")
+```
+
+<br />
+<br />
+
+## Section 2 - Document Term Matrix  
+The following function normalizes the text within the 1000 selected customer responses by removing numbers, punctuation, and white space. Upper case letters are converted to lower case, and irrelevant stop words, ("the", "a", "an", etc.) are removed. Lastly, a "Document Term Matrix" is created to classify the dataset terms into frequency of usage.  
+```{r, warning=F, message=F}
+# Text Mining Function
+dtmCorpus <- function(df) {
+  df_corpus <- Corpus(VectorSource(df))
+  df_corpus <- tm_map(df_corpus, function(x) iconv(x, to='ASCII'))
+  df_corpus <- tm_map(df_corpus, removeNumbers)
+  df_corpus <- tm_map(df_corpus, removePunctuation)
+  df_corpus <- tm_map(df_corpus, stripWhitespace)
+  df_corpus <- tm_map(df_corpus, tolower)
+  df_corpus <- tm_map(df_corpus, removeWords, stopwords('english'))
+  DocumentTermMatrix(df_corpus)
+}
+```
+
+<br />
+<br />
+
+## Section 3 - Topic Modeling        
+Topic Modeling treats each document as a mixture of topics, and each topic as a mixture of words, (or "terms"). Each document may contain words from several topics in particular proportions. The content of documents usually merge continously with other documents, instead of existing in discrete groups. The same way as in the use of natural language by individuals usually merges continously.   
+
+An example of a two-topic Topic Model of a journalism document is the modeling of the journalism document into "local" and "national" topics. The first topic, "local", would contain terms like "traffic", "mayor", "city council", "neighborhood", and the second topic might contain terms like, "Congress", "federal", and "USA". Topic Modelling would also statistically examine the terms that are common between topics.    
+```{r, warning=F, message=F, eval=F}
+# Set parameters for Gibbs sampling
+burnin <- 4000
+iter <- 2000
+thin <- 500
+seed <- list(2003,5,63,100001,765)
+nstart <- 5
+best <- TRUE
+
+# Number of topics
+k <- 4
+
+# Create Document Term Model (dtm)
+dtm <- dtmCorpus(project_data$Data[1:1000])
+
+# Find the sum of words in each Document
+rowTotals <- apply(dtm, 1, sum)
+
+# Remove all docs without words
+dtm.new <- dtm[rowTotals > 0,]
+
+# Run LDA using Gibbs sampling
+# ldaOut <- LDA(dtm.new, k, method="Gibbs", control=list(nstart=nstart, seed=seed, best=best, burnin=burnin, iter=iter, thin=thin))
+
+# Save the variable, "ldaOut", for faster processing
+# saveRDS(ldaOut, "ldaOut_Yelp.rds")
+
+# Docs to topics
+ldaOut.topics <- as.matrix(topics(ldaOut))
+# write.csv(ldaOut.topics,file=paste("LDAGibbs",k,"DocsToTopics_Yelp.csv"))
+
+# Top 6 terms in each topic
+ldaOut.terms <- as.matrix(terms(ldaOut,6))
+# write.csv(ldaOut.terms,file=paste("LDAGibbs",k,"TopicsToTerms_Yelp.csv"))
+
+# Probabilities associated with each topic assignment
+topicProbabilities <- as.data.frame(ldaOut@gamma)
+# write.csv(topicProbabilities,file=paste("LDAGibbs",k,"TopicProbabilities_Yelp.csv"))
+```
+
+```{r, warning=F, message=F, echo=F}
+# "Evaluate" is set to "False" for the previous set of coding. Run the previous program lines manually in order to create the .csv files to run in this section of coding.
+
+# This section of coding conviently runs in "Knit HTML" mode via importing previously created .csv files.
+
+ldaOut <- readRDS("ldaOut_Yelp.rds")
+
+# Docs to topics
+# ldaOut.topics <- read.csv("LDAGibbs 4 DocsToTopics_Yelp.csv")
+
+# Top 6 terms in each topic
+# ldaOut.terms <- read.csv("LDAGibbs 4 TopicsToTerms_Yelp.csv")
+
+# probabilities associated with each topic assignment
+# topicProbabilities <- read.csv("LDAGibbs 4 TopicProbabilities_Yelp.csv")
+```
+
+<br />
+<br />
+
+## Section 4 - Structural Topic Modeling  
+Topic Modeling treats each document as a mixture of topics, and each topic as a mixture of words, (or "terms"). Each document may contain words from several topics in particular proportions. The content of documents usually merge continously with other documents, instead of existing in discrete groups. The same way as in the use of natural language by individuals usually merges continously. 
+
+```{r, warning=F, message=F, eval=F}
+project_data_stm <- stm(asSTMCorpus(project_data), K = c(5,10,15),
+                   init.type = "Spectral", data = project_data)
+
+# Process data using function textProcessor()
+processed <- textProcessor(project_data_stm$abstract,
+                           metadata = project_data_stm )
+
+# Prepare data using function prepDocuments()
+out <- prepDocuments(processed$documents, processed$vocab,
+                     processed$meta, lower.thresh = 25)
+
+# MODEL SELECTION
+# Run diagnostic using function searchK()
+# kResult <- searchK(out$documents, out$vocab, K = c(5,10,15,20,40),
+#                    init.type = "Spectral", data = out$meta)
+
+# Save the "KResult" dataframe for quicker processing
+# saveRDS(kResult, "kResult.rds")
+kResult <- readRDS("kResult.rds")
+
+# Plot diagnostic results using function plot()
+print(paste("Figure 4. Diagnostic Values"))
+plot(kResult)
+
+# Semantic coherence-exclusivity plot using function plot()
+plot(kResult$results$semcoh, kResult$results$exclus,
+     xlab = "Semantic Coherence", ylab = "Exclusivity",
+     main = "Figure 5. Semantic Coherence-Exclusivity Plot")
+text(kResult$results$semcoh, kResult$results$exclus, labels = paste("K", kResult$results$K), pos = 1)
+
+# Semantic coherence-exclusivity table
+knitr::kable(kResult$results,
+             caption = "Table 6. Semantic Coherence-Exclusivity Table")
+```
+
+<br />
+<br />
+
+## Section 4 - Tables and Charts      
+Below are tables and graphic visualizations of the results of Topic Modeling of the Yelp dataset.    
+
+```{r, warning=F, message=F, echo=F}
+# Find probability of term being generated from topic 
+ap_topics <- tidy(ldaOut, matrix = "beta")
+```
+
+<br />
+<br />
+
+#### Figure 1: "Top Terms Per Topic"  
+This graph displays the top ten terms for the Yelp dataset's five topics. The probability of the terms appearing in the topic is represented by the histogram bars. Each topic contains all terms (words) in the corpus, albeit with different probabilities.   
+```{r, warning=F, message=F, echo=F}
+# Find top terms for 5 topics
+ap_top_terms <- ap_topics %>%
+  group_by(topic) %>%
+  top_n(10, beta) %>%
+  ungroup() %>%
+  arrange(topic, -beta)
+
+# Create histogram of top terms per topic
+ap_top_terms %>%
+  mutate(term = reorder(term, beta)) %>%
+  ggplot(aes(term, beta, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip() +
+  ggtitle("Figure 1: Top Terms Per Topic")
+```
+
+<br />
+<br />
+
+#### Table 1: "Probability of Term being generated from Topic"  
+The first table displays the beta spread of terms per five topics. The beta spread allows for the characterization of topics by terms that have a high probability of appearing within the topic.  
+```{r, warning=F, message=F, echo=F}
+# Create table of beta spread of terms per topic
+beta_spread <- ap_topics %>%
+  mutate(topic = paste0("topic", topic)) %>%
+  spread(topic, beta) %>%
+  filter(topic1 > .001 | topic2 > .001) %>%
+  mutate(log_ratio = log2(topic2 / topic1))
+
+# Print table of beta spread of terms per topic
+kable(beta_spread[1:5,], caption = "Table 1: Probability of Term being generated from Topic")
+```
+
+<br />
+<br />
+
+#### Table 2: Table of Topics Per Document  
+This table examines the first five dataset documents, (or customer responses comments), and matches those documents with the topic category that the document's terms indicate the documents correspond, and includes the probabilities with which each topic is assigned to a document. The gamma of the topics per document represent the correspondence level of the document and topic. Each document is considered to be a mixture of all topics (4 in this case). The assignments in the first file list the topic with the highest probability.  
+
+The highest probability in each row corresponds to the topic assigned to that document. The “goodness of fit” of the primary assignment can be assessed by taking the ratio of the highest to second-highest probability and the second-highest to the third-highest probability and so on.  
+```{r, warning=F, message=F, echo=F}
+# Create table of topics per document
+ap_documents <- tidy(ldaOut, matrix="gamma")
+
+# Print table of topics per document
+kable(ap_documents[1:5,], caption = "Table 2: Table of Topics Per Document")
+```
+
+<br />
+<br />
+
+#### Figure 2: Histogram of Topic Models    
+This figure is a histogram of the count and gamma spread of topics throughout the entire Yelp dataset.  
+```{r, warning=F, message=F, echo=F}
+# Create histogram of topics per document
+ggplot(ap_documents, aes(gamma, fill=factor(topic))) +
+  geom_histogram() +
+  ggtitle("Figure 2: Histogram of Topics Models")
+```
+
+<br />
+<br />
+
+## Section 5 - Conclusions  
+The LDA algorithm Topic Model contains a voluminous amount of useful information. This analysis outputs the top terms in each topic, document to topic assignment, and the probabilities within the Topic Model.  
+
+Gibbs sampling usually finds an optimal solution, that is variable mathematically for specific analyses. A variety of trial settings of parameters allows ContextBase to optimize of the stability of Topic Modeling results.  
+
+Figure 1 demonstrates the arbitariness of Topic Models. ContextBase makes a manual determination of the specific topics:  
+
+1) The top words in Topic 1, "just", "can", "dont", "one", "get", "also", "make", "better", "think", "around", indicate this topic within the Yelp dataset is the topic of resolving a complaint with a business.  
+
+2) Topic 2's top words, "good", "food", "try", "chicken", "restaurant", "ordered", "menu", "cheese", "pizza", "lunch", indicate Topic 2 refers to food ordered at restaurants.  
+
+3) Topic 3's top words, "place", "great", "good", "service", "food", "love", "ive", "best", "always", "like", indicate Topic 3 refers to reasons customers liked businesses.  
+
+4) Topic 4's top words, "back", "time", "really", "even", "like", "got", "didnt", "first", "much", "want", very possibly refer to reasons customers returned to businesses.  
+
+Table 1 allows for the verification of optimal beta spread generated by the LDA algorithm.  
+
+Table 2 provides a final determination of the topic of each document within the corpus of Yelp comments.  
+
+Figure 2 displays the gamma spread of the 4 topics determined by setting the value of "k".  
+
+The generated Topic Model demonstrates that the primary topic assignments are optimal when the ratios of probabilities are highest. Different values of "k" optimise the topic distributions.    
+
+<br />
+<br />
+
+## Section 6 - Appendix  
+## Section 6a - Required Packages  
+The needed R programming language packages are installed and included in the package library. The R packages included are packages for Topic Modeling, Natural Language Processing, data manipulation, and plotting.     
+```{r, echo=F, warning=F, message=F}
+# Uncomment and install packages if not previously installed:
+
+# install.packages("topicmodels")
+# install.packages("tidytext")
+# install.packages("tidyr")
+# install.packages("tm")
+# install.packages("syuzhet")
+# install.packages("plyr")
+# install.packages("dplyr")
+# install.packages("data.table")
+# install.packages("ggmap")
+# install.packages("ggplot2")
+# install.packages("knitr")
+
+# Required Libraries:
+# library(topicmodels)
+# library(tidytext)
+# library(tidyr)
+# library(tm)
+# library(syuzhet)
+# library(plyr)
+# library(dplyr)
+# library(data.table)
+# library(stringr)
+# library(ggplot2)
+# library(knitr)
+
+PackageTable <- data.frame(matrix(nrow=1, ncol=1))
+rownames(PackageTable) <- "Required Packages"
+colnames(PackageTable) <- "List of Required Packages"
+PackageTable[1,] <- paste("'topicmodels'","'tidytext'",
+                          "'tidyr'","'tm'","'syuzhet'",
+                          "'plyr'","'dplyr'","'data.table'",
+                          "'stringr'","'ggplot2'","'knitr'")
+kable(PackageTable)
+```
+
+<br />
+<br />
+
+## Section 6b - Session Information  
+Session information is provided for reproducible research. The Session Information below is for reference when running the required packages, and R code.   
+```{r, echo=F, warning=F, message=F}
+session <- sessionInfo()
+SessionTable <- data.frame(matrix(nrow=5, ncol=1))
+rownames(SessionTable) <- c("R Version", "Platform", "Running",
+                         "RStudio Citation","RStudio Version")
+colnames(SessionTable) <- "Session Information"
+SessionTable[1,] <- session$R.version$version.string
+SessionTable[2,] <- session$platform
+SessionTable[3,] <- session$running
+SessionTable[4,] <- "RStudio: Integrated Development Environment for R"
+SessionTable[5,] <- "1.0.153"
+kable(SessionTable)
+```
+
+<br />
+<br />
+
+## Section 7 - References  
+1) https://eight2late.wordpress.com/2015/09/29/a-gentle-introduction-to-topic-modeling-using-r/  
+
+2) https://www.tidytextmining.com/topicmodeling.html  
+
+3) https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5028368/  
+
+4) https://www.researchgate.net/publication/303563965_A_Text_Mining_Research_Based_on_LDA_Topic_Modelling  
+
+<br />
+<br />
