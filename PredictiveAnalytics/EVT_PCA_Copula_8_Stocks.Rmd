@@ -1,0 +1,766 @@
+---
+title: "<center>EVT - PCA - Copula Analysis of Amsterdam Heavy Investment Fund, 8 Stocks</center>"
+author: "<center>ContextBase, http://contextbase.github.io</center>"
+date: "<center>May 24, 2020</center>"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+subtitle: <center>All programming by John Akwei, ECMp ERMp Data Scientist</center>
+---
+
+<br />
+<br />
+
+<center><img src="ContextBase_Logo.jpg" alt="ContextBase Logo"  width="440" height="240"></center>
+
+<br />
+<br />
+
+## Table of Contents  
+Synopsis  
+References  
+
+Section 1a - Working Directory, Required Packages, and Session Information   
+Section 1b - Loading Stock Ticker Data  
+Section 1c - Formatting Proprietary Data  
+
+Section 2a - Exploratory Data Analysis  
+Section 2b - Principal Component Analysis of 8 Stocks Portfolio  
+Section 2c - Copula Pair Analysis from the 8 Stocks  
+
+Section 3a - VaR Estimation of the 8 Stocks Portfolio  
+Section 3b - Estimated Shortfall (CvaR) 8 Stocks Portfolio  
+Section 3c - Hill Estimation of 8 Stocks Portfolio  
+Section 3d - Anderson-Darling Test of Normal Distribution  
+
+Section 4a - EVT Block Maxima Estimation of 8 Stocks Portfolio  
+Section 4b - VaR Forecasting of Block Maxima  
+Section 4c - Estimated Shortfall (CvaR) of Block Maxima  
+Section 4d - Hill Estimation of Block Maxima  
+Section 4e - Anderson-Darling Test of Normal Distribution  
+
+Section 5a - EVT Peaks-Over-Threshold Estimation - 8 Stocks Portfolio  
+Section 5b - 100, and 500 days VaR Forecasting of POT  
+Section 5c - Estimated Shortfall (CvaR) of POT  
+Section 5d - Hill Estimation of POT  
+Section 5e - Anderson-Darling Test of Normal Distribution  
+
+Section 6a - Table of Estimation Method Influence  
+Section 6b - Conclusions  
+
+<br />
+<br />
+
+# Synopsis  
+The Client, Amsterdam Heavy Investment Fund, is opening a new fund with the 8 Stocks examined by this document.  
+
+The analysis emcompasses the following areas:  
+1) PCA on dailyreturns. Report all the usual PCA diagnostics and interpret the principal components on the basis of their loadings.  
+
+2) Factor Analysis (you can do it for example as non-orthogonal PCA such as PCA with oblique rotations, or choose for any other way to perform non-orthogonal FA). Compare the interpretation of factors with PCA. &lt;- OPTIONAL for tip.  
+
+3) Fit copulas to several pairs of asset returns(your choice which pairs)and give visual representation of these copulas, as well as determine which would be the best copula and report estimated copula parameters.  
+
+4) Choose asset in your portfolio with heaviest tails of returns –use QQ plot or histogram of returns to determine that.Perform EVT analysis to these returns, i.e., choose threshold, collect threshold exceedances, estimate parameters of GPD from these exceedances, give your opinion on heaviness of the tail (xi-parameter),estimate high quantile VaR and ES from EVT results and compare them with those obtained from historical simulation method and Student-t distribution (for that same asset).  
+
+5) Conclusions  
+
+This document also implements Extreme Value Theory (EVT) to determine Value at Risk, (and Conditional VaR), of an Portfolio of 8 stocks, utilizing the R programming language. The combined data on 8 stocks is tested for normality with an Anderson-Darling Test, and the EVT methods of Block Maxima and Peak-Over-Threshold are used for VaR/CvaR estimation. Finally, Generalized AutoRegression of Conditional Heteroskadacity (GARCH) processing is used to predict future values of the index, 20 days into the future. This document will determine the influence on model results of different methods for calculating Risk Factors.  
+
+Extreme Value Theory, (initially developed by Fisher, Tippett, and Gnedenko), demonstrates that the distribution of the block-maxima of a sample of independent identically distributed, (iid), variables converges to one of the three Extreme Value distributions.  
+
+Renewed interest by Statisticians to modeling Extreme Values has recently occurred. Extreme Value Thoery has proven useful in a variety of Risk Factor cases. After Financial Market instabilities from 1999 - 2008, Extreme Value Analysis gained in effectiveness, as opposed to previous Value-at-Risk analysis. Extreme Values represent extreme fluctuations of a system. EVT offers the ability to model the relationships of probability of extreme events, magnitude, damage, and cost of protection.  
+<br />
+
+## References  
+https://arxiv.org/pdf/1310.3222.pdf  
+https://www.ma.utexas.edu/mp_arc/c/11/11-33.pdf  
+http://evt2013.weebly.com/uploads/1/2/6/9/12699923/penalva.pdf  
+http://pubs.sciepub.com/ijefm/2/5/4/  
+
+http://www4.stat.ncsu.edu/~mannshardt/st810EVA/Lectures/Lec3GEV.pdf  
+http://www.sfu.ca/~rjones/econ811/readings/McNeil%201999.pdf  
+http://www.bankofcanada.ca/wp-content/uploads/2010/01/wp00-20.pdf  
+
+<br />
+<br />
+
+```{r, echo=F, eval=F}
+setwd("C:/Users/johnakwei/Dropbox/Programming/DiversifiedPortfolioAnalytics")
+```
+
+## Section 1a - Working Directory, Required Packages, and Session Information     
+To begin the analysis, the Working Directory is set to the folder containing the stock ticker comma separated values files. Then, the needed R programming language packages are installed and included in the package library. The R packages include packages for Extreme Value Theory functions, VaR functions, time series analysis, quantitative trade analysis, regression analysis, plotting, and html formatting.    
+```{r, echo=F, message=F, warning=F}
+# Set Working Directory to the directory with .csv, or .RData, files
+# setwd(" ")
+
+# Required Packages
+# install.packages("dplyr")
+# install.packages("magrittr")
+# install.packages("ggplot2")
+# install.packages("tseries")
+# install.packages("vars")
+# install.packages("evd")
+# install.packages("evir")
+# install.packages("POT")
+# install.packages("fBasics")
+# install.packages("fExtremes")
+# install.packages("quantmod")
+# install.packages("PerformanceAnalytics")
+# install.packages("rugarch")
+# install.packages("fGarch")
+# install.packages("nortest")
+# install.packages("knitr")
+
+# Initialize libraries
+library(dplyr)
+library(magrittr)
+library(ggplot2)
+library(tseries)
+library(vars)
+library(evd)
+library(evir)
+library(POT)
+library(fBasics)
+library(fExtremes)
+library(quantmod)
+library(PerformanceAnalytics)
+library(rugarch)
+library(fGarch)
+library(nortest)
+library(knitr)
+
+PackageTable <- data.frame(matrix(nrow=1, ncol=1))
+rownames(PackageTable) <- "Required Packages"
+colnames(PackageTable) <- "List of Required Packages"
+PackageTable[1,] <- paste("'dplyr'", "'magrittr'", "'ggplot2'",
+                          "'tseries'", "'vars'", "'evd'", "'evir'",
+                          "'POT'", "'fBasics'", "'fExtremes'",
+                          "'quantmod'", "'PerformanceAnalytics'",
+                          "'rugarch'", "'fGarch'", "'nortest'",
+                          "'knitr'")
+kable(PackageTable)
+```
+
+<br />
+<br />
+
+The session information below is for reference when running the required packages, and R code.  
+```{r, echo=F, warning=F, message=F}
+session <- sessionInfo()
+
+SessionTable <- data.frame(matrix(nrow=5, ncol=1))
+rownames(SessionTable) <- c("R Version", "Platform", "Running",
+                         "RStudio Citation","RStudio Version")
+colnames(SessionTable) <- "Session Information"
+SessionTable[1,] <- session$R.version$version.string
+SessionTable[2,] <- session$platform
+SessionTable[3,] <- session$running
+SessionTable[4,] <- "RStudio: Integrated Development for R."
+SessionTable[5,] <- "1.0.44"
+kable(SessionTable)
+```
+
+<br />
+<br />
+
+## Section 1b - Loading Stock Ticker Data  
+The stock price data was read into the R programming environment. The files contain stock ticker data for 8 Stocks listed on the Amsterdam Exchange with the last 5 years of stock price information. Each row of the resulting dataframe represents one business day of the 5 years of recorded stock prices.   
+```{r, message=F, warning=F, echo=F}
+ABN.AS <- read.csv("./Data/ABN.AS.csv", header = F)
+AGN.AS <- read.csv("./Data/AGN.AS.csv", header = F)
+AKZA.AS <- read.csv("./Data/AKZA.AS.csv", header = F)
+AMG.AS <- read.csv("./Data/AMG.AS.csv", header = F)
+FUR.AS <- read.csv("./Data/FUR.AS.csv", header = F)
+HEIJM.AS <- read.csv("./Data/HEIJM.AS.csv", header = F)
+KPN.AS <- read.csv("./Data/KPN.AS.csv", header = F)
+RDSA.AS <- read.csv("./Data/RDSA.AS.csv", header = F)
+
+companyList <- c("Amro Bank", "AEGON", "Akzo Nobel", "Advanced Metallurgical Group", "Fugro", "Heijmans", "Koninklijke KPN", "Royal Dutch Shell")
+
+kable(companyList, caption = "Table 1. Company List")
+
+stockSymbols <- c("ABN", "AGN", "AKZA", "AMG", "FUR", "HEIJM", "KPN", "RDSA")
+
+kable(stockSymbols, caption = "Table 2. Stock Symbols")
+```
+
+<br />
+<br />
+
+## Section 1c - Formatting the Proprietary Data  
+The returns are calculated with "Open Price / Close Price - 1", and the data from the ten corporations is combined in one dataframe, (with one column per corporation).  The means for each row in the dataframe is then calculated. A column of 5 years of dates is appended to the dataframe. A second dataframe containing only the row means, and date information, is also created.  
+```{r, message=F, warning=F, echo=F}
+returnsFunction <- function(x) {
+   as.numeric(x$V2) / as.numeric(x$V5) - 1
+ }
+
+returnsData_ABN <- returnsFunction(ABN.AS)
+returnsData_AGN <- returnsFunction(AGN.AS)
+returnsData_AKZA <- returnsFunction(AKZA.AS)
+returnsData_AMG <- returnsFunction(AMG.AS)
+returnsData_FUR <- returnsFunction(FUR.AS)
+returnsData_HEIJM <- returnsFunction(HEIJM.AS)
+returnsData_KPN <- returnsFunction(KPN.AS)
+returnsData_RDSA <- returnsFunction(RDSA.AS)
+
+allData <- cbind(returnsData_ABN, returnsData_AGN, returnsData_AKZA, returnsData_AMG, returnsData_FUR, returnsData_HEIJM, returnsData_KPN, returnsData_RDSA)
+
+allData <- data.frame(allData)
+names(allData) <- c("Amro Bank", "AEGON", "Akzo Nobel", "Advanced Metallurgical Group", "Fugro",  "Heijmans", "Koninklijke KPN", "Royal Dutch Shell")
+
+allData_Means <- rowMeans(allData)
+
+names(ABN.AS) <- c("Date", "Open", "High", "Low",
+                              "Close", "Adj Close", "Volume")
+allData$Time <- as.Date(ABN.AS$Date[1:1279], format="%Y-%m-%d")
+
+allDF <- data.frame(allData$Time, allData_Means)
+names(allDF) <- c("Time", "Observations")
+
+# save(allData, file = "allData.RData")
+# load("allData.RData")
+```
+
+<br />
+<br />
+
+# Section 2a - Exploratory Data Analysis  
+A table of dataframe statistics is created containing the Minimum, Median, Mean, Maximum, Standard Deviation, 1% Quantile, 5% Quantile, 95% Quantile, 99% Quantile, and Number of Observations for each column, (or Corporation).  The quantile percentages are for extreme values. A times series chart of the means of all the returns is also created.   
+```{r, message=F, warning=F, echo=F}
+tableStats <- matrix(nrow=10, ncol=8)
+tableStats <- data.frame(tableStats)
+names(tableStats) <- c("ABN", "AGN", "AKZA", "AMG", "FUR", "HEIJM", "KPN", "RDSA")
+
+tableStats$Stats <- c("Min.", "Median", "Mean", "Max.", "Std. Dev.",
+                    "1% Quantile", "5% Quantile", "95% Quantile",
+                    "99% Quantile", "No. Of Observations")
+
+statsFunction <- function(x) {
+  tableStats$x <- c(min(x), median(x), mean(x),
+                    max(x), sd(x), quantile(x, .01),
+                    quantile(x, .05), quantile(x, .95),
+                    quantile(x, .99), length(x))
+  tableStats$x
+}
+
+tableStats$ABN <- round(statsFunction(returnsData_ABN), 2)
+tableStats$AGN <- round(statsFunction(returnsData_AGN), 2)
+tableStats$AKZA <- round(statsFunction(returnsData_AKZA), 2)
+tableStats$AMG <- round(statsFunction(returnsData_AMG), 2)
+tableStats$FUR <- round(statsFunction(returnsData_FUR), 2)
+tableStats$HEIJM <- round(statsFunction(returnsData_HEIJM), 2)
+tableStats$KPN <- round(statsFunction(returnsData_KPN), 2)
+tableStats$RDSA <- round(statsFunction(returnsData_RDSA), 2)
+
+tableStats$mean <- rowMeans(tableStats[,2:8])
+
+firstTable <- cbind(tableStats[,9], tableStats[,1:8])
+colnames(firstTable) <- c("Stats", "ABN", "AGN", "AKZA", "AMG",
+                          "FUR", "HEIJM", "KPN", "RDSA")
+
+kable(firstTable, caption = "Table 3. Statistics of 8 Stocks")
+
+tsData_All <- ts(allData_Means, start=c(2015, 05, 11), frequency=250)
+plot.ts(tsData_All, ylab="Returns", main="Figure 1. Time Series of All Data")
+```
+
+<br />
+<br />
+
+## Section 2b - Principal Component Analysis of 8 Stocks Portfolio  
+This section examines Principal Components on dailyreturns, reports the PCA diagnostics, and interprets the principal components on the basis of their loadings.  
+
+The process performed involves scaling the data, then a covariance matrix is generated, then an Eigenecomposition is performed. A scree plot is generated to evalaute the strength of the eigen values. Eigen vectors are matrix multiplied by the scaled vectors. Although a scree plot is generated, one can simply evaluate the number themselves. In this case the scree plot shows that the first principal component explains over 50 percent of the variance.  
+
+```{r, message=F, warning=F, echo=F}
+library(tidyquant)
+
+allData2 <- allData[,c(9,1,2,3,4,5,6,7,8)]
+allData2 <- allData2[-1,]
+allData3 <- allData2[,2:9]
+
+# Eigen Decomposition
+stockReturns.scaled <- scale(allData3)
+
+# create covariance matrix
+stockReturns.cov <- cov(stockReturns.scaled)
+
+# eigendecomposition
+stockReturns.eigen <- eigen(stockReturns.cov)
+
+# set eigen values and vectors
+eigenValues <- stockReturns.eigen$values
+eigenVectors <- stockReturns.eigen$vectors
+
+# Scree Plot
+# par(pin=c(6,6))
+plot(eigenValues, type = "b")
+
+# Create Principal Components, check on correctness, eigenVetors %*% t(eigenVetors)
+
+# create principal component analysis
+pcaOne <- as.matrix(stockReturns.scaled) %*% eigenVectors[,1]
+pcaTwo <- as.matrix(stockReturns.scaled) %*% eigenVectors[,2]
+pcaThree <- as.matrix(stockReturns.scaled) %*% eigenVectors[,3]
+
+pca <- data.frame(pcaOne, pcaTwo, pcaThree)
+
+# examine result
+head(pca)
+tail(pca)
+
+# Analysis
+print(paste("Table 4. Principal Component Analysis of 8 Stocks"))
+
+# Interpreted PCA values
+pca_AMRO <- lm(allData3$`Amro Bank` ~ pcaOne + pcaTwo + pcaThree)
+print(paste("AMRO Bank PCA Analysis"))
+summary(pca_AMRO)
+
+pca_AEGON <- lm(allData3$AEGON ~ pcaOne + pcaTwo + pcaThree)
+print(paste("AEGON PCA Analysis"))
+summary(pca_AEGON)
+
+pca_AMG <- lm(allData3$`Advanced Metallurgical Group` ~ pcaOne + pcaTwo + pcaThree)
+print(paste("Advanced Metallurgical Group PCA Analysis"))
+summary(pca_AMG)
+
+pca_Fugro <- lm(allData3$Fugro ~ pcaOne + pcaTwo + pcaThree)
+print(paste("Fugro PCA Analysis"))
+summary(pca_Fugro)
+
+pca_Heijmans <- lm(allData3$Heijmans ~ pcaOne + pcaTwo + pcaThree)
+print(paste("Heijmans PCA Analysis"))
+summary(pca_Heijmans)
+
+pca_KPN <- lm(allData3$`Koninklijke KPN` ~ pcaOne + pcaTwo + pcaThree)
+print(paste("Koninklijke KPN PCA Analysis"))
+summary(pca_KPN)
+
+pca_RDS <- lm(allData3$`Royal Dutch Shell` ~ pcaOne + pcaTwo + pcaThree)
+print(paste("Royal Dutch Shell PCA Analysis"))
+summary(pca_RDS)
+
+pca_Akzo <- lm(allData3$`Akzo Nobel` ~ pcaOne + pcaTwo + pcaThree)
+print(paste("Akzo Nobel PCA Analysis"))
+summary(pca_Akzo)
+```
+
+<br />
+<br />
+
+## Section 2c -  Copula Pair Analysis from the 8 Stocks  
+This section fits copulas to several pairs of the 8 Stocks returns, and creates visual representation of these copulas, and reporting estimated copula parameters.  
+```{r, message=F, warning=F, echo=F}
+library(copula)
+library(VineCopula)
+library(scatterplot3d)
+
+# Perform copula selection
+u <- pobs(as.matrix(cbind(allData$`Amro Bank`,allData$AEGON)))[,1]
+v <- pobs(as.matrix(cbind(allData$`Amro Bank`,allData$AEGON)))[,2]
+AMRO_AEGON_Copula <- BiCopSelect(u,v,familyset=NA)
+AMRO_AEGON_Copula
+
+# Check the parameters fitting.
+t.cop <- tCopula(dim=2)
+set.seed(500)
+m <- pobs(as.matrix(cbind(allData$`Amro Bank`,allData$AEGON)))
+fit <- fitCopula(t.cop,m,method='ml')
+print(paste("Table 5. Coeffienct - Amro Bank ~ AEGON"))
+coef(fit)
+
+rho <- coef(fit)[1]
+df <- coef(fit)[2]
+persp(tCopula(dim=2,rho,df=df),dCopula, main = "Figure 2. Amro Bank ~ AEGON")
+
+# Perform copula selection
+u <- pobs(as.matrix(cbind(allData$`Akzo Nobel`,allData$`Advanced Metallurgical Group`)))[,1]
+v <- pobs(as.matrix(cbind(allData$`Akzo Nobel`,allData$`Advanced Metallurgical Group`)))[,2]
+AKZO_AMG_Copula <- BiCopSelect(u,v,familyset=NA)
+AKZO_AMG_Copula
+
+# Check the parameters fitting.
+t.cop <- tCopula(dim=2)
+set.seed(500)
+m <- pobs(as.matrix(cbind(allData$`Akzo Nobel`,allData$`Advanced Metallurgical Group`)))
+fit <- fitCopula(t.cop,m,method='ml')
+print(paste("Table 6. Coeffienct - AKZO ~ AMG"))
+coef(fit)
+
+rho <- coef(fit)[1]
+df <- coef(fit)[2]
+persp(tCopula(dim=2,rho,df=df),dCopula, main = "Figure 3. AKZO ~ AMG")
+
+# Perform copula selection
+u <- pobs(as.matrix(cbind(allData$Fugro,allData$Heijmans)))[,1]
+v <- pobs(as.matrix(cbind(allData$Fugro,allData$Heijmans)))[,2]
+FUGRO_HEIJMANS_Copula <- BiCopSelect(u,v,familyset=NA)
+FUGRO_HEIJMANS_Copula
+
+# Check the parameters fitting.
+t.cop <- tCopula(dim=2)
+set.seed(500)
+m <- pobs(as.matrix(cbind(allData$Fugro,allData$Heijmans)))
+fit <- fitCopula(t.cop,m,method='ml')
+print(paste("Table 7. Coeffienct - FUGRO ~ HEIJMANS"))
+coef(fit)
+
+rho <- coef(fit)[1]
+df <- coef(fit)[2]
+persp(tCopula(dim=2,rho,df=df), dCopula, main = "Figure 4. FUGRO ~ HEIJMANS")
+
+# Perform copula selection
+u <- pobs(as.matrix(cbind(allData$`Koninklijke KPN`,allData$`Royal Dutch Shell`)))[,1]
+v <- pobs(as.matrix(cbind(allData$`Koninklijke KPN`,allData$`Royal Dutch Shell`)))[,2]
+KPN_RDSA_Copula <- BiCopSelect(u,v,familyset=NA)
+KPN_RDSA_Copula
+
+# Check the parameters fitting.
+t.cop <- tCopula(dim=2)
+set.seed(500)
+m <- pobs(as.matrix(cbind(allData$`Koninklijke KPN`,allData$`Royal Dutch Shell`)))
+fit <- fitCopula(t.cop,m,method='ml')
+print(paste("Table 8. Coeffienct - KPN ~ RDSA"))
+coef(fit)
+
+rho <- coef(fit)[1]
+df <- coef(fit)[2]
+persp(tCopula(dim=2,rho,df=df), dCopula, main = "Figure 5. KPN ~ RDSA")
+```
+
+<br />
+<br />
+
+## Section 3a - VaR Estimation of the 8 Stocks Portfolio  
+To begin estimation of the future events implied by the data, an initial Value at Risk estimation is made. First the dataframe of all row means and date information is converted to time series format, then a VaR is calculated from this time series. Predictions are made from the VaR calculation of values 100, and 500, days in the future. In the subsequent predictions-only plot, the blue circles represent values for 100 days in the future, and red circles represents return values for 500 days.  
+```{r, message=F, warning=F, echo=F}
+detach("package:tidyquant", unload = TRUE)
+detach("package:copula", unload = TRUE)
+detach("package:VineCopula", unload = TRUE)
+
+# VaR estimation of Block Maxima data
+allDF_var_ts <- ts(allDF)
+allDF_var.2c <- VAR(!is.na(allDF_var_ts), p = 2, type = "const")
+
+# Predict the values for the next 100 days, and 500 days
+allDF_var.prd.100 <- predict(allDF_var.2c, n.ahead = 100, ci = 0.9)
+allDF_var.prd.500 <- predict(allDF_var.2c, n.ahead = 500, ci = 0.9)
+
+plot(allDF_var.prd.100, main="Figure 6. Forecast - 100 Days")
+plot(allDF_var.prd.500, main="Figure 7. Forecast - 500 Days")
+
+plot(allDF_var.prd.500$fcst$Time[1:2000],
+     allDF_var.prd.500$fcst$Observations[1:2000], col='red',
+     xlab = "Time", ylab = "Observations",
+     main="Figure 8. Plot of VaR Forecasts")
+points(allDF_var.prd.100$fcst$Time[1:2000],
+       allDF_var.prd.100$fcst$Observations[1:2000], col='blue')
+legend('topleft', legend=c('100 Days = blue', '500 Days = red'),
+       col=c('blue','red'))
+```
+
+<br />
+<br />
+
+## Section 3b - Estimated Shortfall (CvaR) 8 Stocks Portfolio    
+For comparison purposes, the Conditional Value at Risk (CvaR or Estimated Shortfall), of the 8 Stocks Portfolio data is calculated. First, the times series of the data is utilized to find the maximum of the worst 0.95% drawdowns. Then, an Estimated Shortfall is calculated, via the "gaussian" method, and the results of both calculations are presented in table format.  
+```{r, message=F, warning=F, echo=F}
+# The conditional drawdown is the the mean of the worst 0.95% drawdowns
+mdd <- maxdrawdown(allDF_var_ts[,2])
+
+# CvaR (Expected Shortfall) Estmation
+estSF <- ES(ts(allDF[1:1279, 2, drop=FALSE]), p=0.95, method="gaussian",
+            portfolio_method = "component", invert = F, operational = F)
+
+estSFtable <- data.frame(mdd, estSF$ES)
+rownames(estSFtable) <- ""
+colnames(estSFtable) <- c("Max Drawdown", "from", "to", "Estimated Shortfall")
+kable(estSFtable, caption = "Table 9. Estimated Drawdown Table")
+```
+
+<br />
+<br />
+
+## Section 3c - Hill Estimation of 8 Stocks Portfolio  
+Because it is presumed that the 8 Stocks Portfolio data is a heavy-tailed distribution, with infrequent extreme changes in the data, Hill Estimation is used for parametric estimation of the tail index. The objective is to verify that the 8 Stocks data is an Extreme Value Distribution. The plot generated by the Hill Estimation confirmes that is factual.  
+```{r, message=F, warning=F, echo=F}
+print(paste("Figure 9. Hill Estimation of the Tail Index"))
+hill(allDF$Observations, option="xi", start=15, end=45)
+```
+
+<br />
+<br />
+
+## Section 3d - Anderson-Darling Test of Normal Distribution  
+The Anderson-Darling Test is mainly used on families of distributions, and is a powerful determinent of non-normality of a distribution. With a large sample size, (as in the 8 Stocks Portfolio), a P-Value of less than 0.05 indicates that the distribution varies from normality. That is expected of an Extreme Value Distribution. Probability Value found with the Anderson-Darling Test was 3.7^-24, therefore confirming non-normality.  
+```{r, message=F, warning=F, echo=F}
+adtest <- ad.test(allDF$Observations)
+adtestDF <- data.frame(adtest$statistic, adtest$p.value)
+names(adtestDF) <- c("Statistic", "P-Value")
+print(paste("Table 10. Anderson-Darling Test for Normal Distribution"))
+adtestDF
+```
+
+<br />
+<br />
+
+# Section 4a - EVT Block Maxima Estimation of 8 Stocks Portfolio  
+The Block Maxima approach in Extreme Value Theory is the most basic method of EVT analysis. Block Maxima consists of dividing the observation period into non-overlapping periods of equal size, and restricts attention to the maximum observation in each period. The observations created follow domain of attraction conditions, approximately an Extreme Value Distribution. Parametric statistical methods for Extreme Value Distributions are then applied to those observations.
+
+Extreme Value Theorists have developed the Generalized Extreme Value Distribution. The GEV contains a family of continuous probability distributions, the Gumbel, Frechet and Weibull distributions, (also known as Type I, II and III Extreme Value Distributions).
+
+In the following EVT Block Maxima analysis, the 8 Stocks Portfolio data is fitted to a GEV. The resulting distribution is plotted. A time series plot is created in order to localize the extreme events on a timeline, from 2015 to 2020. Four plots of the order of Block Maxima data are then created. Finally, table of the Block Maxima analysis parameters is created from the gev() function.    
+```{r, message=F, warning=F, echo=F}
+allGEV <- dgev(allData_Means, xi=0.8, mu=0)
+allGEVDF <- data.frame(allDF$Time, allGEV)
+names(allGEVDF) <- c("Time", "Returns")
+
+plot(allGEVDF, col="green", pch=19, cex=0.8, ylab="Returns",
+     main="Figure 10. Plot of Extreme Value Distribution - All Data")
+
+tsGEVDF <- ts(allGEVDF, start=c(2015, 05, 11), frequency=250)
+plot.ts(tsGEVDF, col="green", pch=19, cex=0.8, ylab="Data",
+     main="Figure 11. Times Series Plot of Extreme Value Distribution")
+
+par(mfrow = c(2,2))
+plot(density(allGEVDF$Returns), xlab="Returns",
+     main="Figure 12. Block Maxima of All Data", lwd=2)
+hist(allGEVDF$Returns, xlab="Returns",
+     main="Figure 13. Histogram of Block Maxima")
+plot(allGEVDF[640:1279,], xlab="Time", ylab="Observations",
+     main="Figure 14. Left Tail Plot of Block Maxima", lwd=2)
+plot(allGEVDF[1:639,], xlab="Time", ylab="Observations",
+     main="Figure 15. Right Tail Plot of Block Maxima", lwd=2)
+par(mfrow = c(1,1))
+
+all_BM_GEV <- gev(as.numeric(allGEV))
+all_BM_FGEV <- fgev(allGEV, std.err = FALSE)
+
+BlockMaximaTable <- matrix(nrow=6, ncol=1)
+BlockMaximaTable <- data.frame(BlockMaximaTable)
+BlockMaximaTable[1:3,] <- all_BM_GEV$par.ests[1:3]
+BlockMaximaTable[4:6,] <- all_BM_FGEV$param[1:3]
+rownames(BlockMaximaTable) <- c(names(all_BM_GEV$par.ests[1:3]),
+                                names(all_BM_FGEV$param[1:3]))
+colnames(BlockMaximaTable) <- "Block Maxima Parameters"
+kable(BlockMaximaTable, caption="Table 11. Block Maxima Table")
+```
+
+<br />
+<br />
+
+## Section 4b - VaR Forecasting of Block Maxima  
+In order to create a Value at Risk, (VaR), estimation from the Block Maxima data, the 8 Stocks Portfolio GEV data is converted into a time series. A VaR estimation is made from the GEV time series data. Predictions of future values, (100 and 500 days in the future), are extrapolated from the VaR data. In the resulting plot, the blue circles represent values for 100 days in the future, and red circles represents return values for 500 days.    
+```{r, message=F, warning=F, echo=F}
+# VaR estimation of Block Maxima data
+allGEV_var_ts <- ts(allGEVDF)
+allGEV_var.2c <- VAR(!is.na(allGEV_var_ts), p = 2, type = "const")
+
+# Predict the values for the next 125, 250, and 500 days
+allGEV_var.prd.100 <- predict(allGEV_var.2c, n.ahead = 100, ci = 0.9)
+allGEV_var.prd.500 <- predict(allGEV_var.2c, n.ahead = 500, ci = 0.9)
+
+plot(allGEV_var.prd.100, main = "Figure 16. Forecast of Extreme Values - 100 Days")
+plot(allGEV_var.prd.500, main = "Figure 17. Forecast of Extreme Values - 500 Days")
+
+plot(allGEV_var.prd.500$fcst$Time[1:2000],
+     allGEV_var.prd.500$fcst$Returns[1:2000], col='red',
+     main="Figure 18. Plot of GEV VaR Forecasts", xlab = "Time",
+     ylab = "Returns")
+points(allGEV_var.prd.100$fcst$Time[1:1200], allGEV_var.prd.100$fcst$Returns[1:1200], col='blue')
+legend('topleft', legend=c('100 Days = blue', '500 Days = red'),
+       col=c('blue','red'))
+```
+
+<br />
+<br />
+
+## Section 4c - Estimated Shortfall (CvaR) of Block Maxima    
+The Conditional Value at Risk, ("CvaR" or "Estimated Shortfall"), of the 8 Stocks Portfolio GEV data is calculated. First, the times series of the data is utilized to find the maximum of the worst 0.95% drawdowns. Then, an Estimated Shortfall is calculated via the "modified" method for extreme distributions, and the results of both calculations are presented in table format.  
+```{r, message=F, warning=F, echo=F}
+# The conditional drawdown is the the mean of the worst 0.95% drawdowns
+mddGEV <- maxdrawdown(allGEV_var_ts[,2])
+
+# CvaR (Expected Shortfall) Estmation
+estSFGEV <- ES(ts(allGEV), p=0.95, method="modified",
+               portfolio_method = "component", weights = ts(allGEV[2]),
+               invert = F, operational = F)
+
+estSFGEVtable <- data.frame(mddGEV, estSFGEV$MES)
+rownames(estSFGEVtable) <- ""
+colnames(estSFGEVtable) <- c("Max Drawdown", "from", "to", "Estimated Shortfall")
+kable(estSFGEVtable, caption = "Table 12. Estimated Shortfall (CVaR) of Block Maxima")
+```
+
+<br />
+<br />
+
+## Section 4d - Hill Estimation of Block Maxima  
+The Hill Estimation, (used for parametric estimation of the tail index), verifies that the 8 Stocks GEV data is an Extreme Value Distribution.  
+```{r, message=F, warning=F, echo=F}
+print(paste("Figure 19. Hill Estimation of Block Maxima Tail Index"))
+hill(allGEVDF$Returns, option="xi", start=15 , end=45)
+```
+
+<br />
+<br />
+
+## Section 4e - Anderson-Darling Test of Normal Distribution  
+The Anderson-Darling Test is a powerful determinent of non-normality of large sample size distributions. If the P-Value is less than 0.05, the distribution varies from normality. An insignificant Probability Value of 3.7^-24 was found via this test.   
+```{r, message=F, warning=F, echo=F}
+adtestGEV <- ad.test(allGEVDF$Returns)
+adtestGEVdf <- data.frame(adtestGEV$statistic, adtestGEV$p.value)
+names(adtestGEVdf) <- c("Statistic", "P-Value")
+rownames(adtestGEVdf) <- ""
+print(paste("Table 13. Anderson-Darling Test of Normal Distribution"))
+adtestGEVdf
+```
+
+<br />
+<br />
+
+# Section 5a - Peaks-Over-Threshold Estimation - 8 Stocks Portfolio  
+In the peaks-over-threshold approach in EVT, the initial observations that exceed a certain high threshold are selected. The probability distribution of those selected observations is approximately a generalized Pareto distribution. A maximum likelihood estimation (mle) is created by fitting a Generalized Pareto Distribution. The MLE statistics are presented in tabular form. The resulting estimation is then graphically diagnosed via MLE plotting.  
+```{r, message=F, warning=F, echo=F}
+# Determine threshold
+par(mfrow = c(1,2))
+tcplot(allDF$Observations, u.range=c(0.3, 0.35))
+par(mfrow = c(1,1))
+
+# Fit the Generalizaed Pareto Distribution
+mle <- fitgpd(allDF$Observations, thresh=.35, shape=0, est="mle")
+
+POTtable <- matrix(nrow=6, ncol=1)
+POTtable <- data.frame(POTtable)
+POTtable[1,] <- mle$fitted.values
+POTtable[2,] <- mle$std.err
+POTtable[3,] <- mle$std.err.type
+POTtable[4,] <- mle$logLik
+POTtable[5,] <- mle$hessian
+POTtable[6,] <- mle$threshold
+rownames(POTtable) <- c("Fitted Values", "Standard Error",
+                        "Standard Error Type", "Log Likelihood",
+                        "Hessian", "Threshold")
+colnames(POTtable) <- "POT Parameters"
+kable(POTtable, caption="Table 14. Peaks-Over-Threshold Table")
+
+# graphic diagnostics for the fitted model
+par(mfrow=c(2,2))
+plot(mle, npy = 1, which = 1, main = "Figure 20. Probability Plot")
+plot(mle, npy = 1, which = 4, main = "Figure 21. Return Level Plot")
+plot(mle$data[1:638], xlab="Time", ylab="Observations",
+     main="Figure 22. Left Tail Plot of POT", lwd=2)
+plot(mle$data[639:1279], xlab="Time", ylab="Observations",
+     main="Figure 23. Right Tail Plot of POT", lwd=2)
+par(mfrow=c(1,1))
+```
+
+<br />
+<br />
+
+## Section 5b - VaR Forecasting of POT  
+A Value at Risk, (VaR), estimation from the POT data is created via converting the 8 Stocks Portfolio MLE data into a time series. A VaR estimation is made from the MLE time series data. Predictions of future values, (100 and 500 days in the future), are extrapolated from the MLE VaR data. In the resulting plot, the blue circles represent values for 100 days in the future, and red circles represents return values for 500 days.    
+```{r, message=F, warning=F, echo=F}
+newMLE <- data.frame(allDF$Time, mle$data)
+mle_var_ts <- ts(newMLE)
+mle.var.2c <- VAR(!is.na(mle_var_ts), p = 2, type = "const")
+
+# Predict the values for the next 125, 250, and 500 days
+mle_var.prd.100 <- predict(mle.var.2c, n.ahead = 100, ci = 0.9)
+mle_var.prd.500 <- predict(mle.var.2c, n.ahead = 500, ci = 0.9)
+
+plot(mle_var.prd.100, main = "Figure 24. POT Forecast - 100 Days")
+plot(mle_var.prd.500, main = "Figure 25. POT Forecast - 500 Days")
+
+plot(mle_var.prd.500$fcst$allDF.Time[1:2000],
+     mle_var.prd.500$fcst$mle.data[1:2000], col='red',
+     main="Figure 26. Plot of POT VaR Forecasts", xlab = "Time",
+     ylab = "Returns")
+points(mle_var.prd.100$fcst$allDF.Time[1:2000],
+       mle_var.prd.100$fcst$mle.data[1:2000], col='blue')
+legend('topleft', legend=c('100 Days = blue', '500 Days = red'),
+       col=c('blue','red'))
+```
+
+<br />
+<br />
+
+## Section 5c - Estimated Shortfall (CvaR) Forecasting of POT    
+The Conditional Value at Risk, ("CvaR" or "Estimated Shortfall"), of the 8 Stocks Portfolio MLE data is then calculated. The times series of the data is utilized to find the maximum of the worst 0.95% drawdowns. An Estimated Shortfall is calculated, via the "modified" method for extreme distributions, and the results of both calculations are presented in table format.  
+```{r, message=F, warning=F, echo=F}
+# The conditional drawdown is the the mean of the worst 0.95% drawdowns
+mddMLE <- maxdrawdown(mle_var_ts[,2])
+
+# CvaR (Expected Shortfall) Estmation
+estSFmle <- ES(ts(mle$data), p=0.95, method="modified",
+               portfolio_method = "component", weights = ts(allGEV[2]),
+               invert = F, operational = F)
+
+estSFMLEtable <- data.frame(mddMLE, estSFmle$MES)
+rownames(estSFMLEtable) <- ""
+colnames(estSFMLEtable) <- c("Max Drawdown", "from", "to", "Estimated Shortfall")
+kable(estSFMLEtable, caption = "Table 15. Estimated Shortfall (CvaR) POT Forecast")
+```
+
+<br />
+<br />
+
+## Section 5d - Hill Estimation of Peaks-Over-Threshold   
+The Hill Estimation, (used for parametric estimation of the tail index), verifies that the 8 Stocks MLE data is an Extreme Value Distribution.  
+```{r, message=F, warning=F, echo=F}
+print(paste("Figure 27. Hill Estimation of POT Tail Index"))
+hill(mle$data, option="xi", start=15 , end=45)
+```
+
+<br />
+<br />
+
+## Section 5e - Anderson-Darling Test of Normal Distribution  
+The Anderson-Darling Test is a powerful determinent of non-normality of large sample size distributions. If the P-Value is less than 0.05, the distribution varies from normality. The resulting P-Value was 3.7^-24 for this test.   
+```{r, message=F, warning=F, echo=F}
+adtestMLE <- ad.test(mle$data)
+adtestMLEdf <- data.frame(adtestMLE$statistic, adtestMLE$p.value)
+names(adtestMLEdf) <- c("Statistic", "P-Value")
+rownames(adtestMLEdf) <- ""
+print(paste("Table 16. POT ADT Test of NOrmal Distribution"))
+adtestMLEdf
+```
+
+<br />
+<br />
+
+# Section 6a - Table of Estimation Method Influence  
+The following table assembles the results of the four methods of examining the Extreme Distribution 8 Stocks Portfolio. The first column has the names of the four estimation methods. Statistics on VaR, ES, mu (or "shape") statistic, and Anderson-Darling P-Values are presented.  
+```{r, message=F, warning=F, echo=F}
+All_Results <- matrix(nrow = 4, ncol = 5)
+All_Results <- data.frame(All_Results)
+colnames(All_Results) <- c("Test","VaR","ES","mu","P-Value")
+All_Results[1,] <- c("VaR",
+          round(mean(allDF_var.2c$varresult$Observations$coefficients),4),
+          "NA", "NA", adtest$p.value)
+
+All_Results[2,] <- c("ES", "NA", estSF$ES, "NA", adtest$p.value)
+
+All_Results[3,] <- c("Block Maxima",
+              round(mean(allGEV_var.2c$varresult$Returns$coefficients),4),
+              estSFGEV$MES, all_BM_GEV$par.ests[3], adtestGEV$p.value)
+
+All_Results[4,] <- c("Peaks Over Threshold", 
+              round(mean(mle.var.2c$varresult$mle.data$coefficients), 4),
+                estSFmle$MES, mle$fitted.values, adtestMLE$p.value)
+
+kable(All_Results, caption = "Table 17. Table of Estimation Method Influence")
+```
+
+<br />
+<br />
+
+## Section 6b - Conclusions  
+After thorough examination of 5 years of stock returns of 8 Corporations, (listed on the Amsterdam stock exchange), the validity of characterising the changes in return percentage as an Extreme Value Distribution is confirmed. All Anderson-Darling Tests of the fitted values of the four analysis methods show insignificant probabilty that the distribution has normality, or all non-exteme values. The methods are in agreement regarding the Value at Risk within the returns data. The Block Maxima method produces a slight devergence of VaR estimation. Traditional VaR estimation, and POT estimation, produce the same Value at Risk. The 2 EVT methods predict lower Expected Shortfall, versus traditional CvaR estimation of stock return data. In the case of the Portfolio of 8 Stocks, Peaks-Over-Threshold is the most reliable estimation method of infrequent EXtreme changes in the value of the Amsterdam Heavy Investment Fund 8 Stocks Portfolio.  
+
+<br />
+<br />
