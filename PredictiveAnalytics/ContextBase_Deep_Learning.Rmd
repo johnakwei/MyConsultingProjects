@@ -1,0 +1,139 @@
+---
+title: "<center>ContextBase Deep Learning</center>"
+author: "<center>All programming by John Akwei, ECMp ERMp Data Scientist</center>"
+date: "<center>September 22, 2017</center>"
+output:
+  html_document: default
+  word_document: default
+subtitle: <center>http://contextbase.github.io</center>
+---
+
+<br />
+
+<center><img src="ContextBase_Logo.jpg" alt="ContextBase Logo"  width="440" height="240"></center>
+
+<br />
+
+```{r, warning=F, message=F, echo=F, eval=F}
+setwd("C:/Users/johnakwei/Dropbox/Programming/DeepLearning")
+```
+
+<br />
+<br />
+
+## Table of Contents  
+1) References  
+2) Synopsis  
+3) Import Data  
+4) Preparing Fit  
+5) Fitting Neural Network  
+6) Neural Network Plot  
+7) Predictions  
+8) Evaluation  
+9) Evaluation Plot  
+
+<br />
+<br />
+
+## References  
+http://www.kdnuggets.com/2016/08/begineers-guide-neural-networks-r.html  
+https://www.r-bloggers.com/fitting-a-neural-network-in-r-neuralnet-package/  
+https://cran.r-project.org/web/packages/neuralnet/neuralnet.pdf  
+
+<br />
+<br />
+
+## Synopsis  
+Neural Networks are a machine learning framework that attempts to mimic the learning pattern of natural biological neural networks. Biological neural networks have interconnected neurons with dendrites that receive inputs, then based on these inputs they produce an output signal through an axon to another neuron. We will try to mimic this process through the use of Artificial Neural Networks (ANN), which we will just refer to as neural networks from now on. The process of creating a neural network begins with the most basic form, a single perceptron.  
+
+A perceptron has one or more inputs, a bias, an activation function, and a single output. The perceptron receives inputs, multiplies them by some weight, and then passes them into an activation function to produce an output. There are many possible activation functions to choose from, such as the logistic function, a trigonometric function, a step function etc. We also make sure to add a bias to the perceptron, this avoids issues where all inputs could be equal to zero (meaning no multiplicative weight would have an effect).  
+
+<br />
+<br />
+
+## Importing Data, and Checking for Missing Values  
+```{r, warning=F, message=F}
+set.seed(500)
+library(MASS)
+data <- Boston
+
+# Check columns for missing values 
+apply(data,2,function(x) sum(is.na(x)))
+```
+
+<br />
+<br />
+
+## Preparing to Fit the Neural Network  
+```{r, warning=F, message=F}
+maxs <- apply(data, 2, max) 
+mins <- apply(data, 2, min)
+
+scaled <- as.data.frame(scale(data, center = mins, scale = maxs - mins))
+
+index <- sample(1:nrow(data),round(0.75*nrow(data)))
+
+train_ <- scaled[index,]
+test_ <- scaled[-index,]
+```
+
+<br />
+<br />
+
+## Fitting a Neural Network  
+```{r, warning=F, message=F}
+library(neuralnet)
+n <- names(train_)
+f <- as.formula(paste("medv ~", paste(n[!n %in% "medv"], collapse = " + ")))
+nn <- neuralnet(f,data=train_,hidden=c(5,3),linear.output=T)
+```
+
+<br />
+<br />
+
+## Plot of Neural Network Model  
+We can visualize the Neural Network by using the plot(nn) command. The black lines represent the weighted vectors between the neurons. The blue line represents the bias added. Unfortunately, even though the model is clearly a very powerful predictor, it is not easy to directly interpret the weights. This means that we usually have to treat Neural Network models more like black boxes.  
+```{r, warning=F, message=F}
+plot(nn)
+```
+
+<br />
+<br />
+
+<center><img src="NeuralNetwork001.JPG" alt="Neural Network"  width="683" height="351"></center>
+
+<br />
+<br />
+
+## Predictions for the Neural Network Model  
+```{r, warning=F, message=F}
+pr.nn <- compute(nn,test_[,1:13])
+
+pr.nn_ <- pr.nn$net.result*(max(data$medv)-min(data$medv))+min(data$medv)
+test.r <- (test_$medv)*(max(data$medv)-min(data$medv))+min(data$medv)
+head(pr.nn_)
+```
+
+<br />
+<br />
+
+## Evalution Models for Linear Regression / Neural Network  
+```{r, warning=F, message=F}
+MSE.nn <- sum((test.r - pr.nn_)^2)/nrow(test_)
+MSE.nn
+```
+
+<br />
+<br />
+
+## Plotting evaluation results  
+```{r, warning=F, message=F}
+test <- data[-index,]
+
+plot(test$medv, pr.nn_, col='red',main='Real vs Predicted NN',pch=18,cex=0.7)
+abline(0,1,lwd=2)
+legend('bottomright',legend='NN',pch=18,col='red', bty='n')
+```
+
+<br />
+<br />
