@@ -1,0 +1,248 @@
+---
+title: "<center>Repertory Grid Analysis of Innovation Management Methodologies</center>"
+date: "<center>June 9, 2019</center>"
+output:
+  html_document: default
+  word_document: default
+---
+
+<br />
+<br />
+
+## Table of Contents  
+
+Synopsis  
+Introduction  
+
+Section 1a - Working Directory  
+Section 1b - Required Packages  
+Section 1c - Session Information  
+
+Section 2 - Data Import  
+
+Section 3a - Basic Statistics for each Construct in the Repertory Grid  
+Section 3b - Correlations Between Elements  
+
+Section 4 - Bertin Plots  
+
+Section 5 - 3D PCA Biplot 
+
+Section 6 - Conclusions  
+
+<br />
+<br />
+
+## Synopsis  
+With increased competition and quicker time-to-market, organisations are forced to reduce their time-to-market. Therefore, the product lifecycle of products, and services, are getting incresingly shorter. As a result, innovation of new products is required to occur with decreased development time. New methods of innovation management that maintain product quality, and meet the needs of markets, are the presumed solution to faster product lifecycles.  
+
+Innovation management assists organizations to grasp opportunities and create new ideas, processes, or products. Creativity is the basis of innovation management. The objective of Innovation Management is a change in services, or business process. Innovation is accomplished via imitation and invention.  
+
+Innovation management involves tools that allow managers, and users, to cooperate on processes and goals of innovation. These tools include brainstorming, prototyping, product lifecycle management, idea management, design thinking, TRIZ, Phase–gate model, project management, product line planning and portfolio management. Innovation management usually considers the requirement of organizations to continuosly respond to external or internal opportunities, and use its creativity to incorporate new ideas, processes, and products. Unlike R&D, Innovation Management facilitates the contributions of workers, or users, at every level of organizations to innovate product or services.  
+
+Innovation management applies to innovation processes and change management of products, business processes, marketing and organizational innovation. Innovation management, (based on some of the ideas put forth by the Austrian economist Joseph Schumpeter, working during the 1930s, who identified innovation as a significant factor in economic growth), is the subject of ISO 56000 (formerly 50500) series standards being developed by ISO TC 279.  
+
+This document is a Repertory Grid Analysis of Innovation Management methods. The Innovation Management methods reviewed in this document are "Design Thinking", "Innovation Events",	"Ci2 (VSM)", "Idea Capture System",	"Open Innovation", "Idea Review", "High Quality Projects", "Stakeholder Management", "Ownership", "Defined process for Test & Learn",	"Blended Pipeline",	"Prototyping Process", "TRL Check", "Governance Review",	"Success Criteria",	"Roadmaps", "Landscape Reviews", and "Knowledge Management System".  
+
+Innovation processes are either pushed or pulled through development. A pushed process finds profitable applications for the already-existing technology, and is based on existing or newly invented technology. A pulled process finds areas where customers' needs are not met and finds solutions to those needs. An understanding of both the market and the problems are required for both method. All dimensions are solved by implementing multi-functional development teams of both workers or users, plus marketers.  
+
+Innovation is a prerequisite for the continued survival and development of organizations. The most direct path of innovation is through technology, disruption, or social innovation. Management of innovation significantly affects technological and institutional innovation.  
+
+<br />
+<br />
+
+## Introduction  
+In order to build a Requirements Goal Model for Innovation Management Methodologies, the early aspects of the requirements for Innovation Management are analyzed, via "Repertory Grid Analysis". Repertory Grid Analysis expresses the way in which a particular stakeholder views the domain and in what terms s/he seeks to make sense of the underlying elements. The repertory grid is a technique for identifying the ways stakeholders construct their experiences with Innovation Management. This technigue of evaluation is developed from "Personal Construct Theory" developed by George Kelly, first published in 1955.  
+
+"Early aspects" are stakeholder concerns that crosscut the problem domain, with possible broad impact on questions of scoping, prioritization, and architectural design. Analyzing early aspects improves early stage decision-making, and helps trace stakeholder interests throughout the review process. However, analysis of early aspects is hard because stakeholders are often vague about the concepts involved, and may use different vocabularies to express their concerns.  
+
+The repertory grid technique identifies terminological interference between stakeholders’ descriptions of their goals, and formalizes concept analysis to uncover conflicts and trade-offs between these goals. This results in the clarification and elaboration of early aspects. Preliminary qualitative evaluation indicates that the approach can be readily adopted in existing requirements analysis processes, and can yield significant insights into crosscutting concerns in the problem domain.  
+
+The dimensions, (or "constructs") of Innovation Management are expressed in personally meaningful terms, and is significant to the interviewed person. The personal construct system of stakeholders  partially merges with others in varying degrees. This makes it possible for people to share their individual perceptions in a structured manner via survey data. The goal of Repertory Grid Analysis is to reduce the cognitive burden of survey takers, and still provide insightful interference analysis. Common sets of requirements are extracted to determine whether two stakeholders have consensus or conflict in their use of terminology and concepts. Only concrete tasks are exchanged, instead of abstract constructs that only express individual conceptual system.  
+
+A Repertory Grid consists of four parts:
+
+1) A topic: it is about some part of a person's experience. In the case of this document, the topic is "Innovation Management Techniques".  
+
+2) A set of Elements, which are examples or instances of the topic. Any well-defined set of words, phrases, or even brief behavioral vignettes can be used as elements. For example, to see how a person construes the purchase of a car, a list of vehicles within that person's price range could be a set of elements.    
+
+3) A set of Constructs. These are the basic terms that the stakeholder uses to make sense of the Elements, and are always expressed as a contrast. Thus the meaning of "good" depends on whether you intend to say "good versus poor", as if you were construing a theatrical performance, or "good versus evil", as if you were construing the moral or ontological status of some more fundamental experience. A Construct is a discriminator, not a verbal label.  
+
+4) A set of ratings of Elements on Constructs. In this documentd each Element is positioned repeatedly between the two extremes of the Construct of a 7-point rating scale system. Therefore, stakeholder interpretation of Innovation Management Methodologies are modeled, and a wide range of statistical analysis, (from simple counting to more complex multivariate analysis), is enabled.  
+
+In this document the 30 constructs on the left side of the Repertory Grid are "Challenges", "Status Quo", "Knowledge gathering", "Process driven", "Accountability', "Execution", "Project generation", "Vision current/future", "product/technology focus", "Planning", "Sourcing", "Methodology", "Extreme user/Customer centric", "operating mechanism", "Scaling operation", "Satiability", "Business Driver", "Progress of activity", "Investment (time/money)", "Scoped", "Proven technology (TRL5)", "Transformational", "Individual driven (own initiative)", "Business DNA", "Disruptive", "Low Risk", "Growth", "Value", "Evaluated", "Advancement", and "Return on Investment".  
+
+The 30 constructs on the right side of the Repertory Grid are "Does Not Challenge Status Quo", "Does not gather Knowledge", "Not a process driver", "No Accountability", "Not a Execution step", "Does not  generate projects", "No Vision", "No product/technology focus", "No Planning", "Does not Source", "No Methodology", "Not Extreme user/Customer centric", "Not a operating mechanism", "Not a Scaling operation", "Not Satiability", "Not a Business Driver", "Does not Progress activity", "Involves No Investment (time/money)", "Not Scoped", "Unproven technology (TRL5)", "Not Transformational", "Not Individually driven (own initiative)", "No Business DNA", "Not Disruptive", "Very Risk", "Does not drive Growth",
+"Delivers no Value", "Not Evaluated", "Does not drive Advancement", and "Has no Return on Investment".
+
+Depending on the extent to which individuals would tend to use similar constructs, Constructs are regarded as personal, even though psychologically similar to other people, and related to a particular set of Elements.  
+
+The stakeholder considers the Elements three at a time, and identify a way in which two of the Elements might be alike, but distinct from, contrasted to, the third. Good grid interview technique would identify behaviorally explicit descriptions. All the Elements are rated on the Construct, further triads of Elements are compared and further Constructs elicited, and the interview would continue until no further Constructs are obtained.  
+
+<br />
+<br />
+
+## Section 1a - Working Directory  
+In order to begin the the R programming language Repertaory Grid analysis, the Working Directory is set to the folder containing the data files for analysis.       
+```{r, warning=F, message=F}
+# Set Working Directory (to folder with project files):
+# setwd("C:/Users/johna/Downloads")
+```
+
+<br />
+<br />
+
+## Section 1b - Required Packages  
+The needed R programming language packages are installed and included in the package library. The R packages included are packages for Repertory Grid Analysis, plotting, and data importation.  
+```{r, echo=F, warning=F, message=F}
+# Uncomment and install packages if not previously installed:
+
+# install.packages("OpenRepGrid")
+# install.packages("readxl")
+# install.packages("devtools")
+# install.packages("plotly")
+# install.packages("ggplot2")
+# install.packages("knitr")
+
+# Required Libraries:
+library(OpenRepGrid)
+library(readxl)
+library(devtools)
+library(plotly)
+library(ggplot2)
+library(knitr)
+
+PackageTable <- data.frame(matrix(nrow=1, ncol=1))
+rownames(PackageTable) <- "Required Packages"
+colnames(PackageTable) <- "List of Required Packages"
+PackageTable[1,] <- paste("'OpenRepGrid'","'readxl'",
+"'devtools'","'plotly'","'ggplot2'","'knitr'")
+kable(PackageTable)
+```
+
+<br />
+<br />
+
+
+## Section 1c - Session Information  
+Session information is provided for reproducible research. The Session Information below is for reference when running the required packages, and R code.   
+```{r, echo=F, warning=F, message=F}
+session <- sessionInfo()
+SessionTable <- data.frame(matrix(nrow=5, ncol=1))
+rownames(SessionTable) <- c("R Version", "Platform", "Running",
+                         "RStudio Citation","RStudio Version")
+colnames(SessionTable) <- "Session Information"
+SessionTable[1,] <- session$R.version$version.string
+SessionTable[2,] <- session$platform
+SessionTable[3,] <- session$running
+SessionTable[4,] <- "RStudio: Integrated Development Environment for R"
+SessionTable[5,] <- "1.0.153"
+kable(SessionTable)
+```
+
+<br />
+<br />
+
+## Section 2 - Data Import  
+The data imported for this project is the Innovation Management Methodologies Repertory Grid, in .xlsx format, resulting from a survey of opinions about Innovation Management methods. 30 Innovation Management methods are reviewed by the survey participants, whom rated the 30 Innovation Management methods, (or "Elements") according to 30 categories of opinions, (or "Constructs").  
+```{r, warning=F, message=F}
+# Import Data
+x <- importExcel("gridtest2.xlsx")
+```
+
+<br />
+<br />
+
+## Section 3a - Basic Statistics for each Construct in the Repertory Grid  
+This section explores descriptive statistics for the Constructs of the Repertory Grid. The following basic measures are returned as a dataframe:  
+1) item name  
+2) number of valid cases  
+3) mean  
+4) standard deviation  
+5) trimmed mean (with trim defaulting to .1)  
+6) median (standard or interpolated)  
+7) mad: median absolute deviation (from the median)  
+8) minimum  
+9) maximum  
+10) skew  
+11) kurtosis  
+12) standard error  
+```{r, warning=F, message=F}
+# Basic statistics for each construct in grid
+stats <- statsConstructs(x, index=F)
+kable(stats, caption = "Table 1: Descriptive Statistics for Repertory Grid Constructs")
+```
+
+<br />
+<br />
+
+## Section 3b - Correlations Between Elements  
+This section calculates the correlations between Repertory Grid Elements. A correlation index invariant to construct reflection is Cohen’s rc measure (1969), which can be calculated using the argument rc=TRUE which is the default option. Product moment correlations as a measure of similarity are occasionally flawed as they are not invariant to construct reflection (Bell, 2010; Mackay, 1992).   
+```{r, warning=F, message=F}
+# Correlations between elements
+corrs <- elementCor(x, index=F, rc=F)
+kable(corrs, caption = "Table 2: Correlations Between Elements")
+```
+
+<br />
+<br />
+
+## Section 4 - Bertin Plots  
+This section displays grid data in the form of an reordable matrix, comprised of graphical displays for each cell of a matrix, allowing to identify structures by eye-balling reordered versions of the data matrix. This is deried from Bertin’s (1966) graphical proposals.  
+
+In the context of Repertory Grids, the Bertin display is made up of a simple colored rectangle where the color denotes the corresponding score. Bright values correspond to low, dark to high scores. Within Bertin plots dark red values show low importance and white ones high intuitive.  
+
+The clustered Bertin plot contains a standard Bertin display in its center, and dendrograms at the sides. As a default Euclidean distance and Ward clustering is applied to the grid.  
+```{r, warning=F, message=F}
+# Bertin plots shows relationship between different values which is dark red values show low importance and white ones high Intuitively.
+bertin(x,color=c("white", "darkred"),cex.elements=.55)
+```
+
+```{r, warning=F, message=F}
+c <- cluster(x,along=1, print=FALSE)
+
+plot.new()
+
+# The Bertin plots are clustered into groups.
+bertinCluster(c,color=c("white", "darkred"),cex.elements=.55)
+```
+
+<br />
+<br />
+
+## Section 5 - 3D PCA Biplot Representation  
+3D PCA Biplotting allows for easily visualization of the relationships of Elements and Constructs within the Repertory Grid data. Thereby, this final plotting method allows for the gaining of insights from the Repertory Grid Analysis.  
+```{r, warning=F, message=F}
+# Perform PCA analysis and create 3D biplot.
+biplotPseudo3d(x)
+```
+
+<br />
+<br />
+
+## Section 6 - Conclusions  
+This document applied Requirements Goal Modeling to determine the early aspects of the requirements for Innovation Management, via use of “Repertory Grid Analysis”. The results of this analysis are displayed in the document's two tables and four plots.  
+
+The first table, "Basic Statistics for each Construct in the Repertory Grid", provides a variety of statistics unique to each "Construct", or subjective impression of individuals, in the analysis of Innovation Management Methodologies. These statistics give the analyst a good concept of the range of responses by survey takers to the list of Constructs that explain the survey taker's opinions of the sub-topics of the main topic. Via Table 1, the analyst can understand the median of responses, the standard deviasion, and the range of responses.   
+
+The second table, "Correlations Between Elements", allows the analyst to determine the level of correlation between, "Elements", or sub-topics. Elements with high levels of correlation are then identifiable, as well as low correlation levels. These correlation levels greatly aid in understanding the characteristics of Innovation Management methods.  
+
+Figure 1, the first Bertin plot, displays the relationship between Elements and Constructs, both numerically and via hue of intersection colors. This allows for quick visual inspection of the data gathered via Repertory Grid Analysis.  
+
+Figure 2, the clustered Bertin plot, groups together related Elements and Constructs visually for easy inspection. Finding pathways through subsections of data is therefore facilitated, thereby allowing for efficient methods of selecting an Innovation Management method.  
+
+Figure 3, is a 3D biplot of the Principal Component Analysis (PCA) of the Repertory Data. This biplot displays Element categories on the inside of a graphic square, with Construct categories arrayed outside the square with a 3-dimensional tangent. This allows for easy visual determination of the relationships between different Elements, the relationships between different Constructs, and the relationship between the entire set of Elements and Constructs. The quadrant that the data points are located in allow for an overview of the entire dataset. Via interactive exploration of the distribution of data points within the survey results, determination of an optimal Innovation Management Methodology is possible.  
+
+Within the 3D PCA biplot, analysts and stakeholders can observe that the Innovation Management methods "Strategic Projects", "COGS", "Idea Capture System", and "Roadmap" have high "Growth", "Value", "Business DNA", and "Return On Investment". However, "TRL Check", "Governance Review", and "Change Management" are on the opposite side of the quadrant, and have the qualities of "Has No Return On Investment", "No Business DNA", and "Delivers No Value", according to the survey takers.
+
+The Elements, (or Sub-topics of the Topic "Innovation Management Methods"), "Idea Review", "Cost Benefit Analysis", and "Optimise" fall in the center of the PCA Biplot and have neutral Construct qualities. Thereby, indicating ambivalent results from the survey takers.
+
+The 3D PCA Biplot further indicates that if stakeholders selecting an Innovation Management method are interested in a "Low Risk", "Not Scoped", and "Disruptive" innovation management method, then "Design Thinking", "Landscape Reviews", and "Culture of Innovation" are optimal choices.
+
+Due to the very nature of Innovation Management, quantitative research gaps can emerge in the supporting evidence. The use of Repertory Grid Analysis has enhanced the information gathered, and substantiated the findings drawn from the range of open innovation initiatives. The Repertory Grids take longer to complete than many routine interviews, approximately thirty to forty minutes, however the results offer a rare insight into Innovation Management. The relevance of Repertory Grid Elements and Constructs is easily understandable to all individuals within an organization. Traditional research methods using questionnaires implicitly assume respondents construe the material present in a similar fashion. Usually, a small proportion of participants find the Rep Grid challenging. Confusion about score reversal can possibly occur.  
+
+The Repertory Grid is not a standardized "psychological test", it is the mutual negotiation of a person's meanings. Careful interviewing is required to identify what the individual means by the element/construct ratings. Usually, a 1 indicates that the left pole of the construct applies and a 7 indicating that the right pole of the construct applies. Typically, stakeholders have a limited number of genuinely different Constructs for any one topic. The richness of people's meaning structures comes from the many different ways in which a limited number of Constructs can be applied to individual Elements.  
+
+Repertory Grid Analysis has gained popularity with academics and practitioners in a great variety of fields. Repertory Grids describe people's perceptions without prejudging the terms of reference, a kind of personalized grounded theory. Unlike a conventional rating-scale questionnaire, it is not the investigator but the interviewee who provides the Constructs on which a topic is rated. In conclusion, Market researchers, new product developers, and knowledge capture specialists will find the above Early Aspects Review via Repertory Grid Analysis of Innovation Management Techniques helpful.  
+
+<br />
+<br />

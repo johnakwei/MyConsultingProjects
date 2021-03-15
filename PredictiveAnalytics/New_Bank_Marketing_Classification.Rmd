@@ -1,0 +1,671 @@
+---
+title: "<center>Bank Marketing Data Classification</center>"
+author: "<center>All programming by John Akwei, ECMp ERMp Data Scientist</center>"
+date: "<center>November 14, 2017</center>"
+output:
+  html_document: default
+  word_document: default
+subtitle: <center>http://contextbase.github.io</center>
+---
+
+<br />
+<br />
+
+<center><img src="ContextBase_Logo.jpg" alt="ContextBase Logo"  width="440" height="240"></center>
+
+<br />
+<br />
+
+## Table of Contents  
+
+Acknowledgments  
+
+Section 1 - Abstract  
+Section 1.1 - Synopsis  
+Section 1.2	- Working Directory, and Required Packages  
+Section 1.3	- Session Information  
+Section 1.4	- Data Importing  
+Section 1.5	- Exporting Cleaned Datasets  
+
+Section 2 - Characteristics of the Data  
+Section 2.1	- The Categories of the Datasets  
+Section 2.2 - Definition of Input Variables  
+Section 2.3 - Sample of Records Processed for Classification  
+Section 2.4 - Data Visualization of the Bank Additional Dataset  
+Section 2.5 - Examination of Bank Marketing Data via Cross-Tabulation  
+
+Section 3 - Data Clustering of the Bank Additional Dataset  
+Section 3.1 - Data Correlation Analysis   
+Section 3.2 - Predictive Analytics of Bank Marketing Data via SVM  
+Section 3.3 - Predictive Analytics of Bank Additional via RF  
+Section 3.4 - Machine Learning of Bank Additional Data, with Cross-Validation    
+
+Section 4 - Conclusions  
+
+Section 5 - References  
+
+Section 6 - Glossary  
+
+<br />
+<br />
+
+## Acknowledgments  
+Sergio Moro, Paulo Cortez and Paulo Rita  
+Dean F. Amel and Martha Starr-McCluer  
+Myron L. Kwast, and John D. Wolken  
+Marianne P. Bitler, and Alicia M. Robb  
+
+<br />
+<br />
+
+<center><img src="Bank_Marketing.jpeg" alt="Bank_Marketing"  width="720" height="580"></center>
+
+<br />
+<br />
+
+## Abstract  
+This document sequentially applies a set of Data Science techniques to gain insights from the Direct Marketing campaign of a Portuguese Banking Institution. Data Science analysis of this data will benefit the business processes of the Banking and Financial Management Industry.  
+
+The Portuguese Bank that initiated the telemarketing campaign, (that provided the data examined by this document), contacted potential savings account depositors for a 5 year period, 2008 through 2013. This data therefore reflects the influence of the financial crisis of 2008. The original study gathered information on 150 different data categories, that covered information about clients, the bank's products, social factors and economics. The original data was processed through data modelling with the objective of reducing the feature set. The data examined during that process was pre-July 2012 data. The result of the feature selection was a dataset of 22 of the starting 150 categories. This document examines the dataset of 22 marketing campaign metadata categories. A final set of 2 data categories, "Housing" and "Loan", was determined as having the greatest effect on bank customers subscribing to "Term Deposit" accounts. Thereby, allowing for prediction of Term Deposit subscriptions by bank customers.  
+
+Another reason the examination of the telemarketing data of this Portuguese Bank is important is the controversy related to local marketing of banking products. National networks of large banks have encroached on the accessibility in local areas to small, locally-based banks. This expansion into the local territories of small banks has increased with legislation friendly to powerful, national banking enterprises. The results of this phenomena are the movement of bank deposit funds to large national banks, and the setting of prices for banking services on a non-local scale, the ubiquitousness of compatible ATM machines, and the availability of internet banking.  
+
+Thereby, not only is the availability of local banks affected by the expansion of national banks, the availability of banking products unique to local banks are also affected. Competition between banking institutions have moved from a local focus defined as the area of one city or one county, to a national focus defined as the area of one country. The large national banks in question are not limited to supplying banking products and services only, unlike previous local banks. The Horizontal Merger Guidelines of the Department of Justice and Federal Trade Commission, defines a market as a "product or group of products and a geographic area such that a hypothetical profit-maximizing firm, not subject to price regulation, that was the only present and future producer or seller of those products in that area likely would impose at least a 'small but significant and nontransitory' increase in price, assuming the terms of sale of all other products are held constant."  
+
+In 1963, the Supreme Court held that the antitrust laws, and in particular section 7 of the Clayton Act (1914), applied to banking. In 1966, Congress reaffirmed the Supreme Court's opinion regarding application of the Clayton Act via amending the Bank Merger Act of 1960, and the Bank Holding Company Act of 1956. In 1978, Congress further reaffirmed the Supreme Court's opinion via passing the Change in Bank Control Act.  
+
+Modern geographic and product definitions used by banking institutions were examined by the Supreme Court during the Philadelphia National Bank case. The Court determined that because banking institutions were mostly local in scope, the local geographic area is relevant for analysis of competition in banking. The Supreme Court determined that "the cluster of products (various kinds of credit) and services (such as checking accounts and trust administration) denoted by the term 'commercial banking' composes a distinct line of commerce." Therefore, local banking services and products are possibly free of effective competition from other banking institutions because of the locally distinctive characteristics of the services. Local banking institutions are also possibly exempted from competition by cost advantages, and customer preferences. Substitution of these services was often not possible on a local level.  
+
+Since 1963, antitrust courts have had to adapt to financial sector changes involving product line diversity, and access to local markets by national institutions. However, not until recently has evidence emerged of a shift to banking with services and products provided by national institutions. Antitrust Courts now have the statistical evidence needed for a redefinition of banking services and products. The evidence of changes in financial services includes research on the Survey of Consumer Finances (SCF) and the Surveys of Small Business Finances (SSBF) in 1993, 1998, and 2003.  
+
+The SSBF indicated that within the USA, small businesses obtain an average of two financial services from a local financial institution, and a local depository institution, that are primarily commercial banks. This is contrasted by small businesses obtaining only one banking service from a non-local institution. From 1989 to 1998, evidence of a shift to non-local services by individual households began to appear. During that time, consumers had began to rely on an increased amount of financial services, and the percentage of financial services obtained from one institution had decreased. As of 2003, most banking services and products were obtained by households and businesses from local banking institutions.  
+
+In 1998, 82 percent of all small business financial services were obtained from local banking institutions, with 94 percent of checking and savings services, and over 75 percent of financial management services. A survey conducted by the National Federation of Independent Businesses found that small businesses perceived local banking as a preferential option. Past SCF research indicated that households primarily relied on local banking institutions for banking transactions, certificates of deposits, and lines of credits. Yet households had started to rely on non-local services for alternate forms of banking. Even though the local areas in question had divergent deposit and loan rates, the suppliers of banking services remained local. In the early 1990s, higher loan interest rates, and significantly lower deposit interest rates were available via local banking.  
+
+The period from 2008 - 2013 represented an accelerated period of expansion of non-local, internet based banking options for individuals searching for banking services. During that period of time the services from local banks that were sought out by customers moved to national institutions. In order for new large national banking enterprises to sell banking products to previously local banking customers, an understanding of local factors of banking product selection is required. In 1994, only 1 percent of banking institutions did not have a branch in the local marketing area their customers lived in. By 2004, 18 percent of banking institutions did not have a local branch in order to respond to the individual needs of their customers.  
+
+Via Customer Segmentation with Data Science techniques, the previous local demands of banking services are conformable to corresponding segments of the population, determined by Customer Data characteristics. This segmentation is then usable by banking regulation institutions, and by businesses seeking to provide innovative banking services on a national scale. The effects of national banking services on all populations, national and local, are measureable with the causes of interest by individuals defined by data categories that are measurable with a national or local focus.  
+
+The Financial Services Modernization Act of 1999, has introduced complexity to the definition of banking service demand, and therefore the measurement of banking service marketing effectiveness and scope. As a result, the variety of banking services has grown to encompass the growing complexity of services defined as banking services.  
+
+Via the internet, banking service providers have expanded the range of services they have traditionally offered to customers. The expanded services now exist has separate business areas that provide deposit, loan, mortgage, credit, transaction card, vehicle loan, and business loan services. High risk short term loans, and investment brokerages, have become available with the same convenience of all other types of banking services. The origin corporations associated with new internet banking products have been obscured. Thereby, acceptance of banking product services has become independent of the enterprise providing the service.  
+
+Thereby, a customer-based focus of analysis of banking services via Data Science, allows for understanding of the possible effects of the concentration of a wide variety of banking resources into a small group of national enterprises. Divergent demographic and economic characteristics of consumers are now examinable independent of geographic area, in order to determine the likelihood of  procurement of financial services.  
+
+<br />
+<br />
+
+<center><img src="Banking-Icon-on-KeyBoard.jpg" alt="Banking-Icon-on-KeyBoard"  width="640" height="480"></center>
+
+<br />
+<br />
+
+## Synopsis
+This document utilizes Data Classification to examine a dataset related with direct marketing campaigns (phone calls) of a Portuguese banking institution. The objective of the classification is to predict if the client will subscribe to a Term Deposit. "Data Classification" is the use of Machine Learning techniques to organize datasets into related sub-populations, not previous specified in the dataset. This can uncover hidden characteristics within data, and identify hidden categories that new data belongs within.  
+
+This document mainly utilizes the Data Science technique of "Data Classification" to examine a dataset related with direct marketing campaigns (telemarketing phone calls) of a Portuguese banking institution. The objective of the classification is to predict if the client will subscribe to a Term Deposit. "Data Classification" is the use of Machine Learning techniques to organize datasets into related sub-populations, not previous specified in the dataset. This can uncover hidden characteristics within data, and identify hidden categories that new data belongs within.  
+
+The Data Science techniques used within this research effort are Exploratory Data Analysis, Data Classification via K-means Clustering, Data Correlation Testing, Predictive Analytics, and Machine Learning with Cross-Validation.  
+
+The above forms of analysis are sequentially applied to refine the exploration of the Bank Marketing data, in order to determine if a given bank customer, (after the metadata that describes them has been recorded), will have a propensity to select a Term Deposit account as the form of account they are using to save their money. The most efficient method of deducing whether a customer will select a Term Deposit plan, after Exploratory Data Analysis, is Cross-Tabulation of the metadata categories to determine the distribution of previous Term Deposit acceptance. Via Cross-Tabulation, the categories of data with the least independent relationship to Term Deposits are selected for Classification according to the means of numeric variables. This form of Classification, K-means Clustering, creates easily visualized data clusters where future customer data are grouped within to facilitate Customer Segmentation for marketing purposes.  
+
+The next stage of Data Science processing of the Bank Marketing data involves Correlation Analysis of the explanatory data categories discovered via Cross-Tabulation and verified with K-Means Clustering. The Correlation test provides the ability to select a final set of data categories in the Bank Marketing data, that will allow for the greatest effectiveness, accuracy, and precision in selecting the form of Predictive Analytics to use for the final Machine Learning algorithm, (that will process future Bank Marketing data to determine affinity for subscribing to a  Term Deposit). The Correlation test provides the status of the Alternate Hypothesis of data correlation, (whether it is possible to say the data is not in any way correlated), the Probability Value of a change in one data category causing a change in the second examined data category, and the 95% Confidence Interval of data independence.  
+
+After Correlation testing, the data variables within the Bank Marketing dataset that have indicated the greatest correlation to Term Deposit acceptance, are examined with two methods of Predictive Analytics to determine the Predictive Analytics algorithm to use for Cross-Validated Machine Learning. Predictive Analytics is a form of Data Science, where Probability Theory, (derived from the mathematical discoveries of Bayes, Kolmogorov. and Bernoulli), are applied to data categories to determine causality in data variables. Given the probability of data categories having an effect on other data categories, it is possible to deduce previous unknown information in datasets. The data that was hidden, before Predictive Analytics, is usable in a wide variety of business and government applications. Predictive Analytics examines data variables as Explanatory, or Independent, variables that possible have an effect on Response, or Dependent, variables. Usually several Explanatory Variables are processable via Predictive Analytics to discern the unknown state of one Response variable, however overfitting of Explanatory variables is possible, thereby leading to inaccurate prediction of the unknown state of the examined Response variable.  
+
+In choosing a Predictive Analytics algorithm for this project, high bias/low variance classifiers such as Naive Bayes, Linear Regression, Linear Discriminant Analysis and Logistic Regression were eliminated, considered the large amount of records in the Bank Marketing dataset. High bias suggest a wider variety of assumptions about the target data, than exists in this dataset. Low variance suggests small changes to the target as the training dataset changes. This isn't the case with the categories of the dataset.
+Instead the classifiers considered for this analysis were low bias/high variance. Low bias presumes less assumptions about the target value. High variance presumes the target function will change greatly with slight changes in the training data. The low bias/high variance classifiers considered were Decision Trees, K-Nearest Neighbors, Support Vector Machines, and Random Forest.  
+
+Decision Trees were rejected because of inability to learn after initial processing, and possible overfitting of the data, therefore non-adaptable to new data. KNN was rejected because of the internal random number function causing irregular predictions, deemed not desirable for the goals of this project. Neural Networks were rejected because of inaccuracy with training datasets that do not have an extremely high dimensionality.
+Support Vector Machines were chosen for the trial stage of selecting a Predictive Algorithm for Machine Learning for high accuracy, resistance to overfitting, and the high dimensionality of the dataset. The Random Forest algorithm was chosen for the variety of classes, numeric/categorical, within the Bank Marketing dataset. Random Forest is also probability-based, thereby compensating for the distance-based scheme of Support Vector Machines.  
+
+<br />
+<br />
+
+<center><img src="Bank Marketing Project Diagram.jpg" alt="Bank Marketing Project Diagram"  width="658" height="698"></center>
+
+<br />
+<br />
+
+## Working Directory, and Required Packages  
+The RStudio IDE is used for interactive programming of the Data Science analysis, of the Bank Marketing data. In addition to the basic capabilities of the R programming language, several R language packages of pre-programmed functions are used for the analysis. These R packages include, "ggplot2", "knitr", "cluster", "HSAUR", "fpc", "lattice", "rpart", "kernlab", and "randomForest". The Bank Marketing datasets are cleaned via use of "strings as factors" importing of the unorganized .csv files containing the data. The cleaned datasets are then stored as new .csv files, with new names designating that they are the cleaned version of the original dataset files.  
+
+The "knitr" table function, "kable()" is used for formatting the document's tables. "ggplot2" bar graphs are used for the initial Exploratory Data Analysis. The base R function, "xtabs()" is used for Cross-Tabulation. Subsetting methods in R assist to create readability of subsequent clustering graphs. K-means Clustering and Plotting are used for Data Classification exploration. The "cor.test()" and "levelplot()" functions are used for correlation testing of the dataset's explanatory variables. The "ksvm()" and "randomForest()" functions are used for Predictive Analytics. 100 Decision Trees are created for the Random Forest Machine Learning of the dataset, with a Cross-Validation scheme of 90% Training data, and 10% Testing data. Finally, the categorical variables in the dataset, that were converted to numeric variables for linear modelling within Predictive Analytics, are converted back to categorical variables, using the "lapply()" function. "lapply()" allows for complex looping through the dataset, without writing loop functions. The "unique()" function finds the category names, and the "unlist()" function accesses the output of the "lapply()" function for matching of converted numeric variables with original categorical variables.  
+
+Dataset link:
+https://archive.ics.uci.edu/ml/datasets/bank+marketing  
+Go to data folder and then "bank-additional.zip"  
+
+The datasets found within the bank-additional folder are:  
+1) "bank-additional-full.csv"  
+2) "bank-additional.csv"  
+3) "bank-additional-names.txt"  
+
+The function, "setwd()", sets the filepath that is then the current working directory of the R environment. The permanence of the filepath varies with different operating systems, and the status of the R language environment, and Integrated Development Environment.  
+
+The function, "install.packages()", downloads and installs R programming language packages from CRAN-like repositories or from local files.  
+```{r, warning=F, message=F}
+# Set Working Directory to folder containing the folder with bank additional data,
+# and the Bank_Marketing_Classification.Rmd file
+setwd("C:/Users/Administrator/Dropbox/Programming/DataClassification")
+
+# Required Packages
+# install.packages("ggplot2") # plotting
+# install.packages("knitr") # report formatting
+# install.packages("cluster") # kmeans clustering
+# install.packages("HSAUR") # silhouette plotting
+# install.packages("fpc") # numbers cluster plot
+# install.packages("lattice") # cluster plotting
+# install.packages("rpart") # Decision Tress data classification
+# install.packages("kernlab") # Support Vector Machines machine learning
+# install.packages("randomForest") # Random Forest machine learning
+
+library(ggplot2)
+library(knitr)
+library(cluster)
+library(HSAUR)
+library(fpc)
+library(lattice)
+library(rpart)
+library(kernlab)
+library(randomForest)
+```
+
+<br />
+<br />
+
+## Session Information  
+Data Science technology applies scientific methods and processes to the analysis of datasets stored in modern voluminous data storage, accessible via the internet. The objective in analyzing business datasets with Data Science methods is to extract knowledge to increase the competitiveness of businesses, or to provide insights that can lead to increased efficiency in business processes. Businesses can benefit from the Data Science analysis of proprietary datasets, or the datasets stored on the internet by other business, or by governments, or other institutions. Internet datasets are usually available in formats that are readable by modern Data Science programming languages.  
+
+The primary categories of data found within internet datasets are "structured data" and "unstructured data". Structured data is characterized by having an organized, and easily processable format. Unstructured data is characterized by having a difficult to interpret structure of observations, and data samples. Unstructured data usually requires re-organization of data cells for easier algorithmic processing.  
+
+The R programming language is derived from the statistical programming language "S", that is derived from the statistical database programming language "SAS". The R programming language emerged with the advent of Data Science, and is uniquely capable of handling the processes required by Data Science. The R programming language allows for convenient dataset access, efficient algorithmic manipulation of datasets, (for example, the ability to apply functions across datasets without FOR loops), and efficient statistical processing of dataset records, and observations. The R programming language has a vast collection of dataset processing packages that encompass  a wide variety of modern statistical and scientific methods. R also provides for convenient graphical processing of data contained within internet datasets.  
+```{r, echo=F, warning=F, message=F}
+session <- sessionInfo()
+SessionTable <- data.frame(matrix(nrow=5, ncol=1))
+rownames(SessionTable) <- c("R Version", "Platform", "Running",
+                         "RStudio Citation","RStudio Version")
+colnames(SessionTable) <- "Session Information"
+SessionTable[1,] <- session$R.version$version.string
+SessionTable[2,] <- session$platform
+SessionTable[3,] <- session$running
+SessionTable[4,] <- "RStudio: Integrated Development Environment for R"
+SessionTable[5,] <- "1.0.153"
+kable(SessionTable)
+```
+
+<br />
+<br />
+
+## Data Importing  
+In order to begin processing the Bank Marketing Datasets, "bank-additional.csv" and "bank-additional-full.csv" are imported into the R programming environment with the "read.csv()" function. After import of the data, we find the datasets contains 4119 and 41188 records of 21 different observations/variables. A sample of the data is displayed in tabular format.  
+```{r, warning=F, message=F}
+# Data Import
+bank_additional <- read.csv("bank-additional.csv", sep=";", stringsAsFactors=FALSE)
+bank_additional_full <- read.csv("bank_additional_full.csv", sep=";", stringsAsFactors=FALSE)
+```
+
+<br />
+<br />
+
+# Exporting Cleaned Datasets  
+```{r, warning=F, message=F}
+write.csv(bank_additional, "cleaned_bank_additional.csv")
+write.csv(bank_additional_full, "cleaned_bank_additional_full.csv")
+```
+
+<br />
+<br />
+
+## Characteristics of the Data 
+The dataset examined by this document was collected from a telemarketing campaign by a Portuguese banking institution. Occasionally, customers were contacted more than once, in order to attempt to sell Term Deposit subscriptions. The Bank Marketing dataset includes 41188 records, with 21 observations per record. Each record includes 20 explanatory observations about the client contacted, and 1 response observation of whether the client subscribed to a Term Deposit.  
+
+The 20 explanatory observations contain 4 types of client data:  
+1) Customer data: age, job, marital status, education, default, housing and loan.  
+2) Telemarketing data: contact, month, day of the week, and duration.  
+3) Socioeconomic data: employment variation rate, consumer price index, consumer confidence index, 3 month Euribor rate, and number of employees.  
+4) Other data: campaign, past days, previous, and past outcome.  
+
+The Bank Marketing dataset contains numeric variables, (useful for predictive analytics and machine learning), categorical variables, discrete and continuous variables. 19 of the 20 explanatory variables initially appear useful for prediction of future Term Deposit subscriptions. The explanatory variable, "duration", records the amount of time the telemarketer spends speaking with customers, and therefore isn't a factor in real-time prediction of likelihood of obtaining a Term Deposit.  
+
+The R programming language functions of "any()" and "is.na()" efficiently demonstrate that the Bank Marketing dataset has been cleaned of all missing values:  
+any(is.na(bank_additional_full)) [1] FALSE  
+
+<br />
+<br />
+
+## The Categories of the Datasets  
+```{r, echo=F, warning=F, message=F}
+cat(paste("The observation categories of the bank_additional dataset:"))
+cat("\n")
+names(bank_additional)
+
+cat(paste("The observation categories of the bank_additional_full dataset:"))
+cat("\n")
+names(bank_additional_full)
+```
+
+<br />
+<br />
+
+## Definition of Input Variables  
+<b>age</b> - Age of the client- (numeric)  
+
+<b>job</b> - Client's occupation - (categorical)  
+(admin, bluecollar, entrepreneur, housemaid, management, retired, selfemployed, services, student, technician, unemployed, unknown)  
+
+<b>marital</b> - Client's marital status - (categorical)  
+(divorced, married, single, unknown, note: divorced means divorced or widowed)  
+
+<b>education</b> - Client's education level - (categorical)  
+(basic.4y, basic.6y, basic.9y, high.school, illiterate, professional.course, university.degree, unknown)  
+
+<b>default</b> - Indicates if the client has credit in default - (categorical)  
+(no, yes, unknown)  
+
+<b>housing</b> - Does the client as a housing loan? - (categorical)  
+(no, yes, unknown)  
+
+<b>loan</b> - Does the client as a personal loan? - (categorical)  
+(no, yes, unknown')  
+
+<b>contact</b> - Type of communication contact - (categorical)  
+(cellular, telephone)  
+
+<b>month</b> - Month of last contact with client - (categorical)  
+(January - December)  
+
+<b>day_of_week</b> - Day of last contact with client - (categorical)  
+(Monday - Friday)  
+
+<b>duration</b> - Duration of last contact with client, in seconds - (numeric)  
+For benchmark purposes only, and not reliable for predictive modeling  
+
+<b>campaign</b> - Number of client contacts during this campaign - (numeric)  
+(includes last contact)  
+
+<b>pdays</b> - Number of days from last contacted from a previous campaign - (numeric)  
+(999 means client was not previously contacted)  
+
+<b>previous</b> - Number of client contacts performed before this campaign - (numeric)  
+
+<b>poutcome</b> - Previous marketing campaign outcome - (categorical)  
+(failure, nonexistent , success)  
+
+<b>emp.var.rate</b> - Quarterly employment variation rate - (numeric)  
+
+<b>cons.price.idx</b> - Monthly consumer price index - (numeric)  
+
+<b>cons.conf.idx</b> - Monthly consumer confidence index - (numeric)  
+
+<b>euribor3m</b> - Daily euribor 3 month rate - (numeric)  
+
+<b>nr.employed</b> - Quarterly number of employees - (numeric)  
+
+Output variable (desired target) - <b>Term Deposit</b> - subscription verified  
+(binary: 'yes','no')  
+
+<br />
+<br />
+
+## Sample of Records Processed for Classification  
+```{r, echo=F, warning=F, message=F}
+# Dataset Observations
+kable(head(bank_additional[1:11]), caption = "Sample of Records processed for Classification")
+```
+
+<br />
+<br />
+
+## Data Visualization of the Bank Additional Dataset  
+```{r, echo=F, warning=F, message=F}
+ggplot(bank_additional, aes(x = bank_additional$marital)) +
+  geom_bar(aes(fill = bank_additional$marital)) +
+  theme(axis.text.x = element_blank()) +
+  labs(title = "Bank Additional - Marital",
+       x = "Marital", y = "Count") +
+  guides(fill=guide_legend(title="Bank Additional - Marital"))
+
+ggplot(bank_additional, aes(x= education, fill = factor(education))) +
+  geom_bar() +
+  theme(axis.text.x = element_blank()) +
+  labs(title = "Bank Additional - Education", x = "Education", y = "Count") +
+  guides(fill=guide_legend(title="Education"))
+
+ggplot(bank_additional[bank_additional$education %in% "university.degree",],
+       aes(x = job, fill = job)) +
+  geom_bar() + theme(axis.text.x = element_blank()) + 
+    labs(title = "Jobs with University Degree ",
+         x = "Jobs", y = "Count") +
+  guides(fill=guide_legend(title="Jobs"))
+
+ggplot(bank_additional, aes()) +
+  geom_histogram(aes(x=age, color=age)) +
+  labs(title = "Density Plot of Bank Marketing dataset - Age",
+         x = "Age", y = "Count")
+```
+
+<br />
+<br />
+
+## Examination of Bank Marketing Data via Cross-Tabulation  
+This section of the Exploratory Data Analysis utilizes cross-tabulation of the dataset categories. The objective is to determine the categories that have the greatest effect on Term Deposit successes, via frequencies of occurrences.  
+```{r, echo=F, warning=F, message=F}
+# Frequency of the Dependent Variable, Term Deposit, (or "y")
+kable(data.frame(xtabs(~y, data=bank_additional)),
+      caption = "Frequency of Response Variable")
+
+# Frequency of Term Deposit by Job
+kable(data.frame(ftable(xtabs(~y + job, data=bank_additional))),
+      caption = "Frequency of Term Deposits by Job")
+
+# Frequency of Term Deposit by Marital
+kable(data.frame(ftable(xtabs(~y + marital, data=bank_additional))),
+      caption = "Frequency of Term Deposits by Marital")
+
+# Frequency of Term Deposit by Education
+kable(data.frame(ftable(xtabs(~y + education, data=bank_additional))),
+      caption = "Frequency of Term Deposits by Education")
+
+# Frequency of Term Deposit by Housing
+kable(data.frame(ftable(xtabs(~y + housing, data=bank_additional))),
+      caption = "Frequency of Term Deposits by Housing")
+```
+
+<br />
+<br />
+
+## Data Clustering of the Bank Additional Dataset 
+In this section, the Bank Marketing data is processed via Kmeans Clustering to create 5 data clusters. "Component 1" and "Component 2" are the first 2 "principal components" determined by "Principal Component Analysis", a tool in exploratory data analysis, and for making predictive models. PCA is often used to visualize relatedness between populations.  
+```{r, warning=F, message=F}
+# Selecting observations to determine cluster parameters
+BankAdditionalNum <- data.frame(as.numeric(as.factor(bank_additional$age)),
+                                as.numeric(as.factor(bank_additional$job)),
+                                as.numeric(as.factor(bank_additional$marital)),
+                                as.numeric(as.factor(bank_additional$education)),
+                                as.numeric(as.factor(bank_additional$housing)),
+                                as.numeric(as.factor(bank_additional$loan)))
+
+# Rename the columns
+colnames(BankAdditionalNum) <- c("Age", "Job", "Marital", "Education", "Housing", "Loan")
+
+# Reduce the amount of dataset records for legibility within clusters
+BankAdditionalNum2 <- BankAdditionalNum[sample(nrow(BankAdditionalNum),500),]
+
+# Kmeans clustering to create 5 clusters
+set.seed(12345)
+BankAdditionalNum_k5 <- kmeans(BankAdditionalNum2, centers=5)
+```
+
+<br />
+<br />
+
+```{r, echo=F, warning=F, message=F}
+# Prints the partition size of the 5 clusters
+cat(paste("Partition Size of the 5 Clusters:"))
+cat("\n")
+cat("The amount of respondents in Cluster 1 =", BankAdditionalNum_k5$size[1])
+cat("The amount of respondents in Cluster 2 =", BankAdditionalNum_k5$size[2])
+cat("The amount of respondents in Cluster 3 =", BankAdditionalNum_k5$size[3])
+cat("The amount of respondents in Cluster 4 =", BankAdditionalNum_k5$size[4])
+cat("The amount of respondents in Cluster 5 =", BankAdditionalNum_k5$size[5])
+
+kable(BankAdditionalNum_k5$centers, caption = "Centers of the 5 clusters")
+
+# Cluster plot
+clusplot(BankAdditionalNum2, BankAdditionalNum_k5$cluster, color=T,
+         shade=T, labels=5, lines=0, main = "Bank Additional - Data Clusters")
+
+plot(BankAdditionalNum2, col=BankAdditionalNum_k5$cluster)
+points(BankAdditionalNum_k5$center,col=1:2,pch=8,cex=1)
+
+plotcluster(BankAdditionalNum2, BankAdditionalNum_k5$cluster)
+```
+
+<br />
+<br />
+
+## Data Correlation Analysis   
+In this section, the Correlation of "Age", "Job", "Marital", "Education", "Housing", and "Loan is examined to determine Predictive effectiveness, accuracy, and precision. A Correlation Test is performed, the results displayed, and then a Level Plot is created that displays the corresponding values. With a p-value near 0.5 correlation of the Independent Variables, ("Housing" and "Loan"), to the Dependent Variable, ("y"), is proven. The 95% Confidence Interval centers around 0. Therefore, 95% confidence in the correlation is proven.  
+```{r, echo=F, warning=F, message=F}
+# Exploratory Data Correlations Within BankAdditionalNum Data
+set.seed(12345)
+cat(paste("Correlation of Age to Term Deposit"))
+cat("\n")
+cor.test(as.numeric(as.factor(bank_additional$y)), BankAdditionalNum$Age)
+
+cat(paste("Correlation of Job to Term Deposit"))
+cat("\n")
+cor.test(as.numeric(as.factor(bank_additional$y)), BankAdditionalNum$Job)
+
+cat(paste("Correlation of Marital to Term Deposit"))
+cat("\n")
+cor.test(as.numeric(as.factor(bank_additional$y)), BankAdditionalNum$Marital)
+
+cat(paste("Correlation of Education to Term Deposit"))
+cat("\n")
+cor.test(as.numeric(as.factor(bank_additional$y)), BankAdditionalNum$Education)
+
+cat(paste("Correlation of Housing to Term Deposit"))
+cat("\n")
+cor.test(as.numeric(as.factor(bank_additional$y)), BankAdditionalNum$Housing)
+
+cat(paste("Correlation of Loan to Term Deposit"))
+cat("\n")
+cor.test(as.numeric(as.factor(bank_additional$y)), BankAdditionalNum$Loan)
+
+cat(paste("Correlation of Housing and Loan to Term Deposit"))
+cat("\n")
+cor.test(as.numeric(as.factor(bank_additional$y)), BankAdditionalNum$Housing +
+           BankAdditionalNum$Loan)
+
+M <- cor(BankAdditionalNum)
+M <- round(M, 2)
+levelplot(M, main = "Correlation of Bank Additional Variables")
+```
+
+<br />
+<br />
+
+## Predictive Analytics of Bank Marketing Data via Support Vector Machines  
+In order to determine the algorithm to use for Machine Learning, the Bank Additional dataset is processed via the Predicive Analytics methods of Support Vector Machines and Random Forest. For the first trial, the coefficients of SVM correlation, and the results of each trial are displayed for comparison, then the accuracy of SVM predictions of Term Deposit is compared with the actual Term Deposit values. The first 10 values are displayed.  
+```{r, warning=F, message=F}
+# Classification Tree
+form <- as.formula(as.numeric(as.factor(bank_additional$y)) ~ BankAdditionalNum$Housing + BankAdditionalNum$Loan)
+
+svp <- ksvm(form, BankAdditionalNum)
+
+# Correlation Coefficients
+svp@scaling$y.scale
+
+# Predict Term Deposit
+Predicted_BankAdditional <- predict(svp, BankAdditionalNum)
+
+# Compare Accuracy of the first 30 Predictions
+head(data.frame(bank_additional$y, Predicted_BankAdditional), 30)
+```
+
+<br />
+<br />
+
+## Predictive Analytics of Bank Additional via Random Forest  
+For the second trial, the coefficients of Random Forest correlation, and the results of each trial are displayed for comparison, then the accuracy of Random Forest predictions of Term Deposit is compared with the actual Term Deposit values. The first 10 values are displayed.  
+```{r, warning=F, message=F}
+# Fit Correlation Model
+fitRF <- randomForest(form, BankAdditionalNum)
+
+data.frame(fitRF$importance)
+
+# Predict Term Deposit
+RFpredictionsBankAdditional <- predict(fitRF, BankAdditionalNum)
+
+# Compare Accuracy of Predictions
+head(data.frame(bank_additional$y, RFpredictionsBankAdditional), 10)
+```
+
+<br />
+<br />
+
+## Machine Learning of Bank Additional Data, with Cross-Validation    
+The Random Forest method of Predicive Analytics for Machine Learning has been selected. For Data Validation, the bank_additional_full dataset is used for a  Training dataset, (containing 90% of the records), and the bank_additional dataset is used for the Testing dataset, (containing the remaining 10% of the records). The amount of occurences of Term Deposit successes, within each dataset, are displayed. A summary, and plot, of the Random Forest results are displayed, followed by a table of the coefficients of the Machine Learning prediction. Finally, the first 25 validated predictions are presented.  
+```{r, warning=F, message=F}
+# Select observations for Training Data
+TrainingData <- data.frame(as.numeric(as.factor(bank_additional_full$y)),
+                           as.numeric(as.factor(bank_additional_full$age)),
+                           as.numeric(as.factor(bank_additional_full$job)),
+                           as.numeric(as.factor(bank_additional_full$marital)),
+                           as.numeric(as.factor(bank_additional_full$education)),
+                           as.numeric(as.factor(bank_additional_full$housing)),
+                           as.numeric(as.factor(bank_additional_full$loan)))
+colnames(TrainingData) <- c("Term_Deposit", "Age", "Job", "Marital", "Education", "Housing", "Loan")
+
+# Select observations for Testing Data
+TestingData <- data.frame(as.numeric(as.factor(bank_additional$y)),
+                          as.numeric(as.factor(bank_additional$age)),
+                          as.numeric(as.factor(bank_additional$job)),
+                          as.numeric(as.factor(bank_additional$marital)),
+                          as.numeric(as.factor(bank_additional$education)),
+                          as.numeric(as.factor(bank_additional$housing)),
+                          as.numeric(as.factor(bank_additional$loan)))
+colnames(TestingData) <- c("Term_Deposit", "Age", "Job", "Marital", "Education", "Housing", "Loan")
+
+# Create formula for Random Forest prediction
+formula <- as.formula(TrainingData$Term_Deposit ~ Housing + Loan)
+
+# Fit Predictive Model
+fitML <- randomForest(formula, data=TrainingData, ntree=100, importance=TRUE)
+summary(fitML)
+plot(fitML)
+
+# Machine Learning Coefficients of Independent Variables
+kable(data.frame(fitML$importance), caption = "Machine Learning Coefficients of Independent Variables")
+
+# Predict response of client
+BankAdditionalML <- predict(fitML, newdata = TestingData)
+
+#############################
+# Calculate the Accuracy, Precision and Recall
+
+# Calculate the Confusion Matrix
+cm <- as.matrix(table(Actual = TestingData$Term_Deposit, Predicted = BankAdditionalML))
+kable(cm, caption = "Confusion Matrix")
+
+n <- sum(cm) # number of instances
+rowsums <- apply(cm, 1, sum) # number of instances per class
+colsums <- apply(cm, 2, sum) # number of predictions per class
+diag <- diag(cm) # number of correctly classified instances per class
+accuracy <- sum(diag) / n # Calculate the Accuracy
+precision <- diag / colsums # Calculate the Precision
+recall <- diag / rowsums # Calculate the Recall
+
+# Precision and Recall Table
+kable(data.frame(accuracy, mean(precision), mean(recall)),
+      caption = "Machine Learning Accuracy, Precision, and Recall Table")
+
+#############################
+
+# Match Numeric variables to Categorical variables in order to convert numeric data
+# back into categorical data
+Term_DepositIds <- data.frame(V1 = unique(as.numeric(as.factor(bank_additional$y))),
+                         V2 =unique(bank_additional$y))
+
+AgeIds <- data.frame(V1 = unique(as.numeric(as.factor(bank_additional$age))),
+                         V2 =unique(bank_additional$age))
+
+JobIds <- data.frame(V1 = unique(as.numeric(as.factor(bank_additional$job))),
+                       V2 =unique(bank_additional$job))
+
+MaritalIds <- data.frame(V1 = unique(as.numeric(as.factor(bank_additional$marital))),
+                       V2 =unique(bank_additional$marital))
+
+EducationIds <- data.frame(V1 = unique(as.numeric(as.factor(bank_additional$education))),
+                       V2 =unique(bank_additional$education))
+
+HousingIds <- data.frame(V1 = unique(as.numeric(as.factor(bank_additional$housing))),
+                       V2 =unique(bank_additional$housing))
+
+LoanIds <- data.frame(V1 = unique(as.numeric(as.factor(bank_additional$loan))),
+                       V2 =unique(bank_additional$loan))
+
+td <- lapply(bank_additional$y, function(x) setNames(Term_DepositIds$V1, Term_DepositIds$V2)[x])
+TestingData$Term_Deposit <- names(unlist(td))
+
+ag <- lapply(bank_additional$age, function(x) setNames(AgeIds$V1, AgeIds$V2)[x])
+TestingData$Age <- names(unlist(ag))
+
+jb <- lapply(bank_additional$job, function(x) setNames(JobIds$V1, JobIds$V2)[x])
+TestingData$Job <- names(unlist(jb))
+
+mr <- lapply(bank_additional$marital, function(x) setNames(MaritalIds$V1, MaritalIds$V2)[x])
+TestingData$Marital <- names(unlist(mr))
+
+ed <- lapply(bank_additional$education, function(x) setNames(EducationIds$V1, EducationIds$V2)[x])
+TestingData$Education <- names(unlist(ed))
+
+hs <- lapply(bank_additional$housing, function(x) setNames(HousingIds$V1, HousingIds$V2)[x])
+TestingData$Housing <- names(unlist(hs))
+
+ln <- lapply(bank_additional$loan, function(x) setNames(LoanIds$V1, LoanIds$V2)[x])
+TestingData$Loan <- names(unlist(ln))
+
+# Create Final Analysis Table
+FinalAnalysis <- data.frame(TestingData$Age, TestingData$Job,
+                            TestingData$Marital, TestingData$Education,
+                            TestingData$Housing, TestingData$Loan,
+                            TestingData$Term_Deposit, BankAdditionalML)
+
+names(FinalAnalysis) <- c("Age", "Job", "Marital", "Education",
+                          "Housing", "Loan", "Actual Term Deposit",
+                          "Predicted Term Deposit")
+
+kable(FinalAnalysis[1:25,], caption = "Machine Learning CrossValidated Predictions")
+```
+
+<br />
+<br />
+
+## Conclusions  
+This document has implemented Data Visualization, Cross-Tabulation, Kmeans Data
+Clustering, Statistical Analysis Data Correlation, Predictive Analytics, Cross Validation,
+and Machine Learning in order to verify that it is possible to predict Term Deposit
+successes with Bank Marketing client data.  
+
+Kmeans Clustering demonstrated the similarity of the Bank Marketing clients, and the 
+non-presence of outlier data points. Correlation Analysis demonstrated that the
+dataset variables that have the most correlation with Term Deposit subscription are
+"Housing" and "Loan". The Predictive Analytics trials demonstrated that the Random
+Forest algorithm produces the most accurate predictions of Term Deposit from
+Housing and Loan information. The accuracy of the predictions are verified with a
+Probability Value of 0.6681 and a 95 percent confidence interval of -0.03721581
+to 0.02386235. The final Cross-Validated Machine Learning predictions produce 5
+unique outputs, corresponding with 5 levels of Probability that the client will subscribe to a Term Deposit:  
+unique(FinalAnalysis$`Predicted Term Deposit`)  
+[1] 1.116311 1.110290 1.108804 1.111857 1.107977  
+
+<br />
+<br />
+
+## References  
+S. Moro, P. Cortez and P. Rita. A Data-Driven Approach to Predict the Success of Bank Telemarketing. Decision Support Systems, Elsevier, 62:22-31, June 2014  
+
+S. Moro, R. Laureano and P. Cortez. Using Data Mining for Bank Direct Marketing: An Application of the CRISP-DM Methodology. In P. Novais et al. (Eds.), Proceedings of the European Simulation and Modelling Conference - ESM'2011, pp. 117-121, Guimaraes, Portugal, October, 2011. EUROSIS.  
+
+Dean F. Amel and Martha Starr-McCluer, "Market Definition in Banking: Recent Evidence," The Antitrust Bulletin 47 (2002), pp. 63-89.  
+
+U.S. Department of Justice and the Federal Trade Commission, Horizontal Merger Guidelines, www.usdoj.gov/atr/public/guidelines/horiz_book/hmg1.html. The current guidelines were first published in 1997. United States v. Philadelphia National Bank, 374 U.S. 321, 372 (1963).  
+
+Myron L. Kwast, Martha Starr-McCluer and John D. Wolken, "Market Definition and the Analysis of Antitrust in Banking," The Antitrust Bulletin, 44 (1997), pp. 973-995, and Marianne P. Bitler, Alicia M. Robb and John D. Wolken.  
+
+"Financial Services Used by Small Businesses: Evidence from the 1998 Survey of Small Business Finances," Federal Reserve Bulletin 87 (2001), pp 183-205.  
+
+## Glossary  
+Employment Variation Rate - When an employee undertakes approved specific duties and responsibilities in addition to their normal work, or relieves in a higher level position, or is seconded to a temporary vacancy in another work unit, or increases/decreases their hours of work on either a temporary or permanent basis.  
+
+Consumer Price Index - A statistical estimate constructed using the prices of a sample of representative items whose prices are collected periodically.  
+
+Consumer Confidence Index - An indicator of degree of optimism on the state of the economy, expressed through consumer activity of savings and spending.  
+
+3 Month Euribor Rate - A daily reference rate, published by the European Money Markets Institute, based on the averaged interest rates at which Eurozone banks offer to lend unsecured funds to other banks in the euro wholesale money market (or interbank market).  
+
+<br />
+<br />

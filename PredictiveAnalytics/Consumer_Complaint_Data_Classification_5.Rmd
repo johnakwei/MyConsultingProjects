@@ -1,0 +1,465 @@
+---
+title: "<center>Consumer Complaint Data Classification, Second Analysis</center>"
+author: "<center>All programming by John Akwei, ECMp ERMp Data Scientist</center>"
+date: "<center>September 28, 2017</center>"
+output:
+  word_document: default
+  html_document: default
+subtitle: <center>http://contextbase.github.io</center>
+---
+
+<br />
+<br />
+
+## Synopsis  
+This document utilizes Data Classification to examine a database of Consumer Complaints. "Data Classification" is the use of Machine Learning techniques to organize datasets into related sub-populations, not previous specified in the dataset. This can uncover hidden characteristics within data, and identify hidden categories that new data belongs within.  
+
+<br />
+<br />
+
+## Working Directory, and Required Packages  
+```{r, warning=F, message=F}
+# Set Working Directory to folder containing "Data_Set_918.csv"
+setwd("C:/Users/Administrator/Dropbox/Programming/DataClassification")
+
+# Required Packages
+# install.packages("ggplot2") # plotting
+# install.packages("knitr") # report formatting
+# install.packages("cluster") # kmeans clustering
+# install.packages("HSAUR") # silhouette plotting
+# install.packages("fpc") # numbers cluster plot
+# install.packages("lattice") # cluster plotting
+# install.packages("rpart") # Decision Tress data classification
+# install.packages("kernlab") # Support Vector Machines machine learning
+# install.packages("randomForest") # Random Forest machine learning
+
+library(ggplot2)
+library(knitr)
+library(cluster)
+library(HSAUR)
+library(fpc)
+library(lattice)
+library(rpart)
+library(kernlab)
+library(randomForest)
+```
+
+<br />
+<br />
+
+## Import Data  
+After import of the data into the R programming environment, we find the Consumer Complaint dataset contains 4019 records of 18 different observations/variables.  A sample of the data is then displayed in tabular format.  
+```{r, echo=F, warning=F, message=F}
+# Data Import
+Final_Dataset <- read.csv("Data_Set_918.csv", header=TRUE, stringsAsFactors=FALSE)
+
+# Examine the categories of the Consumer Complaint Dataset
+cat(paste("The observation categories of the Consumer Complaints Dataset:"))
+cat("\n")
+names(Final_Dataset)
+```
+
+<br />
+<br />
+
+# Data Cleaning  
+All missing values, (or "NA"s), in this dataset are replaced with "Other". Thereby, the rows/records of the Consumer Complaints Dataset are preserved.  
+```{r, warning=F, message=F}
+Final_Dataset$Sub.product[Final_Dataset$Sub.product==""] <- "Other"
+Final_Dataset$Sub.issue[Final_Dataset$Sub.issue==""] <- "Other"
+Final_Dataset$Consumer.complaint.narrative[Final_Dataset$Consumer.complaint.narrative==""] <- "Other"
+Final_Dataset$Company.public.response[Final_Dataset$Company.public.response==""] <- "Other"
+Final_Dataset$Tags[Final_Dataset$Tags==""] <- "Other"
+Final_Dataset$State[Final_Dataset$State==""] <- "Other"
+Final_Dataset$ZIP.code[Final_Dataset$ZIP.code==""] <- "Other"
+Final_Dataset$Consumer.consent.provided.[Final_Dataset$Consumer.consent.provided.==""] <- "Other"
+Final_Dataset$Consumer.consent.provided.[Final_Dataset$Consumer.consent.provided.=="N/A"] <- "Other"
+Final_Dataset$Consumer.disputed.[Final_Dataset$Consumer.disputed.==""] <- "Other"
+
+write.csv(Final_Dataset, "Cleaned_DataSet_918.csv")
+```
+
+<br />
+<br />
+
+## Dataset Observations  
+```{r, echo=F, warning=F, message=F}
+# Dataset Observations
+kable(head(Final_Dataset[1:5,1:4]), caption = "Sample of Records processed for Classification")
+```
+
+<br />
+<br />
+
+## "Company response to consumer" options  
+```{r, echo=F, warning=F, message=F}
+cat(paste("The 'Company response to consumer' options are:"))
+cat("\n")
+unique(Final_Dataset$Company.response.to.consumer)
+cat("\n")
+cat("Total amount of Company responses to consumers =",
+    length(unique(Final_Dataset$Company.response.to.consumer)))
+```
+
+<br />
+<br />
+
+## The Products within the dataset  
+```{r, echo=F, warning=F, message=F}
+cat(paste("The Products within the dataset:"))
+cat("\n")
+unique(Final_Dataset$Product)
+cat("Total amount of Products within the dataset =",
+    length(unique(Final_Dataset$Product)))
+```
+
+<br />
+<br />
+
+## The Companies within the dataset  
+```{r, echo=F, warning=F, message=F}
+cat(paste("The first 10 Companies within the dataset:"))
+cat("\n")
+unique(Final_Dataset$Company)[1:10]
+cat("\n")
+cat("Total amount of Companies within the dataset =",
+    length(unique(Final_Dataset$Company)))
+```
+
+<br />
+<br />
+
+## The Issues within the dataset  
+```{r, echo=F, warning=F, message=F}
+cat(paste("The first 10 Issues within the dataset:"))
+cat("\n")
+unique(Final_Dataset$Issue)[1:10]
+cat("\n")
+cat("Total amount of Issues within the dataset =",
+    length(unique(Final_Dataset$Issue)))
+```
+
+<br />
+<br />
+
+## Totals of Company Responses that were disputed by Consumers  
+```{r, echo=F, warning=F, message=F}
+ConsumerDisputed <- xtabs(as.numeric(as.factor(Final_Dataset$Company.response.to.consumer))~as.numeric(as.factor(Final_Dataset$Consumer.disputed.)))
+
+names(ConsumerDisputed) <- c("Yes", "No", "Blank")
+
+# Disputed Responses
+cat(paste("Totals of Company Responses that were disputed by Consumers:"))
+cat("\n")
+ConsumerDisputed
+```
+
+<br />
+<br />
+
+## Data Visualization of the Consumer Complaints Dataset  
+```{r, echo=F, warning=F, message=F}
+ggplot(Final_Dataset, aes(x = Final_Dataset$Company.response.to.consumer)) +
+  geom_bar(aes(fill = Final_Dataset$Company.response.to.consumer)) +
+  theme(axis.text.x = element_blank()) +
+  labs(title = "Company Responses to Consumer",
+       x = "Company Response to Consumer", y = "Count") +
+  guides(fill=guide_legend(title="Company Responses to Consumer"))
+
+ggplot(Final_Dataset, aes(x= Product, fill = factor(Product))) +
+  geom_bar() +
+  theme(axis.text.x = element_blank()) +
+  labs(title = "Products", y = "Count") +
+  guides(fill=guide_legend(title="Product"))
+
+ggplot(Final_Dataset[Final_Dataset$Timely.response. %in% "No",],
+       aes(x = Product, fill = Product)) +
+  geom_bar() + theme(axis.text.x = element_blank()) + 
+    labs(title = "Products with Untimely Responses",
+         x = "Products", y = "Count") +
+  guides(fill=guide_legend(title="Product"))
+
+ggplot(Final_Dataset[Final_Dataset$Consumer.disputed. %in% "Yes",],
+       aes(x = Product, fill = Product)) +
+  geom_bar() + theme(axis.text.x = element_blank()) + 
+    labs(title = "Products with Responses Disputed by Consumers",
+         x = "Products", y = "Count") +
+  guides(fill=guide_legend(title="Product"))
+```
+
+<br />
+<br />
+
+## Data Clustering of the "Company response to consumer" variable  
+In this section, the "Company response to consumer" data is processed via Kmeans Clustering to create 5 data clusters. Each data cluster represents unique characteristics of Products combined with States, and the Company response to the Consumer. The objective is to predict what cluster a Consumer Complaint will fall into, thereby allowing for responses that are categorized based on data cluster.  
+
+"Component 1" and "Component 2" are the first 2 "principal components" determined by "Principal Component Analysis" a tool in exploratory data analysis, and for making predictive models. PCA is often used to visualize relatedness between populations.  
+```{r, warning=F, message=F}
+# Selecting observations to determine cluster parameters
+CompanyResponseNum <- data.frame(as.numeric(as.factor(Final_Dataset$Company)),
+                                 as.numeric(as.factor(Final_Dataset$Product)),
+                                 as.numeric(as.factor(Final_Dataset$State)),
+                                 as.numeric(
+                                   as.factor(Final_Dataset$Company.response.to.consumer)))
+
+# Rename the columns
+colnames(CompanyResponseNum) <- c("Company","Product", "State", "Company_Response")
+
+# Reduce the amount of dataset records for legibility within clusters
+CompanyResponseNum <- CompanyResponseNum[sample(nrow(CompanyResponseNum),500),]
+
+# Kmeans clustering to create 5 clusters
+set.seed(12345)
+CompanyResponseNum_k5 <- kmeans(CompanyResponseNum, centers=5)
+```
+
+<br />
+<br />
+
+```{r, echo=F, warning=F, message=F}
+# Prints the partition size of the 5 clusters
+cat(paste("Partition Size of the 5 Clusters:"))
+cat("\n")
+cat("The amount of responses in Cluster 1 =", CompanyResponseNum_k5$size[1])
+cat("The amount of responses in Cluster 2 =", CompanyResponseNum_k5$size[2])
+cat("The amount of responses in Cluster 3 =", CompanyResponseNum_k5$size[3])
+cat("The amount of responses in Cluster 4 =", CompanyResponseNum_k5$size[4])
+cat("The amount of responses in Cluster 5 =", CompanyResponseNum_k5$size[5])
+
+kable(CompanyResponseNum_k5$centers, caption = "Centers of the 5 clusters")
+
+# Cluster plot
+clusplot(CompanyResponseNum, CompanyResponseNum_k5$cluster, color=T,
+         shade=T, labels=5, lines=0, main = "Company Response - Data Clusters")
+
+plot(CompanyResponseNum, col=CompanyResponseNum_k5$cluster)
+points(CompanyResponseNum_k5$center,col=1:2,pch=8,cex=1)
+
+plotcluster(CompanyResponseNum, CompanyResponseNum_k5$cluster)
+```
+
+<br />
+<br />
+
+## Data Correlation Analysis   
+This section proves the independent variables, Company and State, have the optimal correlation with Company Response. A Pearson's product-moment correlation Test of the effect of Company, and Product, on Company Response is performed and the results displayed. Then a Level Plot is created that displays the corresponding categories, and the level of influence the Independent Variables have on the Dependent Variable.  
+
+With a p-value near 0.5 correlation of the Independent Variables, (Company, and Product), to the Dependent Variable, (Company Response), is proven. The 95% Confidence Interval centers around 0. Therefore, 95% confidence in the correlation is proven.  
+```{r, warning=F, message=F}
+# Exploratory Data Correlations Within CompanyResponseNum Data
+set.seed(12345)
+cor.test(CompanyResponseNum$Company_Response, CompanyResponseNum$Company +
+           CompanyResponseNum$Product)
+
+# Level Plotting
+M <- cor(CompanyResponseNum)
+M <- round(M, 2)
+levelplot(M)
+```
+
+<br />
+<br />
+
+## Predictive Analytics of Company Response via Support Vector Machines  
+In order to determine the algorithm to use for Machine Learning, the Consumer Compliants dataset is processed via the Predicive Analytics methods of Support Vector Machines and Random Forest. For the SVM trial, a formula is defined using the optimal categories to predict Company Response, (Company and Product). The coefficients of SVM correlation are displayed. The Accuracy, Precision, and Recall of the SVM predictions are calculated, and printed out. Then a table of the dataset's categories, with the SVM predictions is created for comparison of accuracy. The first 10 values are displayed.  
+```{r, warning=F, message=F}
+# Classification Tree
+form <- as.formula(CompanyResponseNum$Company_Response ~
+                     CompanyResponseNum$Company + CompanyResponseNum$Product)
+
+svp <- ksvm(form, CompanyResponseNum)
+
+# Correlation Coefficients
+svp@scaling$y.scale
+
+# Predict Company Response
+Predicted_CompanyResponse <- predict(svp, CompanyResponseNum)
+
+# Calculate the Accuracy, Precision and Recall
+
+# Calculate the Confusion Matrix
+cm = as.matrix(table(Actual = CompanyResponseNum$Company_Response, Predicted = Predicted_CompanyResponse))
+
+# number of instances
+n = sum(cm)
+
+# number of instances per class
+rowsums = apply(cm, 1, sum)
+
+# number of predictions per class
+colsums = apply(cm, 2, sum)
+
+# number of correctly classified instances per class
+diag = diag(cm)
+
+# Accuracy
+accuracy = sum(diag) / n
+accuracy
+
+# Calculate the Precision
+precision = diag / colsums
+print("Summary of the SVM Precision:")
+summary(precision)
+
+# Calculate the Recall
+recall = diag / rowsums
+print("Summary of the SVM Recall:")
+summary(recall)
+
+# Precision and Recall Table
+kable(data.frame(accuracy, mean(precision), mean(recall)),
+      caption = "SVM Accuracy, Precision, and Recall Table")
+
+# Compare Accuracy of the first 50 Predictions
+head(data.frame(CompanyResponseNum$Company_Response, Predicted_CompanyResponse), 10)
+```
+
+<br />
+<br />
+
+## Predictive Analytics of Company Response via Random Forest  
+For the Random Forest trial, the formula from the SVM analysis is re-used. The coefficients of Random Forest correlation are displayed. The Accuracy, Precision, and Recall of the Random Forest predictions are calculated, and printed out. Then a table of the dataset's categories, with the Random Forest predictions is created for comparison of accuracy. The first 10 values are displayed.  
+```{r, warning=F, message=F}
+# Fit Correlation Model
+fit <- randomForest(form, CompanyResponseNum)
+
+data.frame(fit$importance)
+
+# Predict Company Response
+RFpredictionsCompanyResponse <- predict(fit, CompanyResponseNum)
+
+# Calculate the Accuracy, Precision and Recall
+
+# Calculate the Confusion Matrix
+cmRF = as.matrix(table(Actual = CompanyResponseNum$Company_Response, Predicted = RFpredictionsCompanyResponse))
+
+# number of instances
+n = sum(cmRF)
+
+# number of instances per class
+rowsums = apply(cmRF, 1, sum)
+
+# number of predictions per class
+colsums = apply(cmRF, 2, sum)
+
+# number of correctly classified instances per class
+diag = diag(cmRF)
+
+# Accuracy
+accuracy = sum(diag) / n
+accuracy
+
+# Calculate the Precision
+precision = diag / colsums
+print("Summary of the Random Forest Precision:")
+summary(precision)
+
+# Calculate the Recall
+recall = diag / rowsums
+print("Summary of the Random Forest Recall:")
+summary(recall)
+
+# Precision and Recall Table
+kable(data.frame(accuracy, mean(precision), mean(recall)),
+      caption = "Random Forest Accuracy, Precision, and Recall Table")
+
+# Compare Accuracy of Predictions
+head(data.frame(CompanyResponseNum$Company_Response, RFpredictionsCompanyResponse), 10)
+```
+
+<br />
+<br />
+
+## Machine Learning of Company Response, with Cross-Validation    
+After selecting the Random Forest method of Predicive Analytics for Machine Learning with Data Validation, the CompanyResponseNum dataframe, (containing the Company Response, Product, and State data from the Consumer Complaints Dataset), is divided into a Training dataset containing 80% of the records, and a Test dataset containing the remaining 20% of the records for comparision with the values predicted from the Training Data. The Accuracy, Precision, and Recall of the Machine Learning predictions are calculated, and printed out. The first 25 Validated predictions are displayed.  
+```{r, warning=F, message=F}
+# The Data is divided into 80% Training Data, and 20% Test Data
+TrainingData <- CompanyResponseNum[1:400,]
+TestData <- CompanyResponseNum[401:500,]
+
+# Fit Predictive Model
+fitML <- randomForest(TrainingData$Company_Response ~ Company + Product, data=TrainingData)
+
+# Machine Learning Coefficients of Independent Variables
+data.frame(fitML$importance)
+
+# Predict Company response to consumer
+CompanyResponseML <- predict(fitML, newdata = TestData)
+
+# Calculate the Accuracy, Precision and Recall
+
+# Calculate the Confusion Matrix
+cmML = as.matrix(table(Actual = CompanyResponseNum$Company_Response[401:500], Predicted = CompanyResponseML))
+
+# number of instances
+n = sum(cmML)
+
+# number of instances per class
+rowsums = apply(cmML, 1, sum)
+
+# number of predictions per class
+colsums = apply(cmML, 2, sum)
+
+# number of correctly classified instances per class
+diag = diag(cmML)
+
+# Accuracy
+accuracy = sum(diag) / n
+accuracy
+
+# Calculate the Precision
+precision = diag / colsums
+print("Summary of the Data Validated Machine Learning Precision:")
+summary(precision)
+
+# Calculate the Recall
+recall = diag / rowsums
+print("Summary of the Data Validated Machine Learning Recall:")
+summary(recall)
+
+# Precision and Recall Table
+kable(data.frame(accuracy, mean(precision), mean(recall)),
+      caption = "Data Validated Accuracy, Precision, and Recall Table")
+
+# Match Numeric variables to Categorical variables in order to convert numeric data
+# back into categorical data
+CompanyIds <- data.frame(V1 = unique(as.numeric(as.factor(Final_Dataset$Company))),
+                         V2 =unique(Final_Dataset$Company))
+
+ProductIds <- data.frame(V1 = unique(as.numeric(as.factor(Final_Dataset$Product))),
+                         V2 =unique(Final_Dataset$Product))
+
+StateIds <- data.frame(V1 = unique(as.numeric(as.factor(Final_Dataset$State))),
+                       V2 =unique(Final_Dataset$State))
+
+ResponseIds <- data.frame(V1 = unique(as.numeric(as.factor(Final_Dataset$Company.response.to.consumer))), V2 =unique(Final_Dataset$Company.response.to.consumer))
+
+# Set numeric TestData variable to original Categorical variable
+co <- lapply(TestData$Company, function(x) setNames(CompanyIds$V1, CompanyIds$V2)[x])
+TestData$Company <- names(unlist(co))
+
+st <- lapply(TestData$State, function(x) setNames(StateIds$V1, StateIds$V2)[x])
+TestData$State <- names(unlist(st))
+
+pr <- lapply(TestData$Product, function(x) setNames(ProductIds$V1, ProductIds$V2)[x])
+TestData$Product <- names(unlist(pr))
+
+res <- lapply(TestData$Company_Response, function(x) setNames(ResponseIds$V1, ResponseIds$V2)[x])
+TestData$Company_Response <- names(unlist(res))
+
+# Create Table to Compare Accuracy of Predictions
+FinalAnalysis <- data.frame(TestData$Company, TestData$Product, TestData$State, TestData$Company_Response, CompanyResponseML)
+
+names(FinalAnalysis) <- c("Company", "Product", "State", "Response", "Prediction")
+
+kable(FinalAnalysis[1:25,], caption = "Machine Learning CrossValidated Predictions")
+```
+
+<br />
+<br />
+
+## Conclusions  
+This document has implemented Kmeans Data Clustering, Statistical Analysis Data Correlation, and Machine Learning with Cross-Validation in order to verify that it is possible to predict the Company Response to the Consumer Complaint inquiry with Company, Product and State data. The accuracy of the predictions are verified with a p-value near 0.5, (at 0.4181), and a 95 percent confidence interval around 0 (-0.12359082 to 0.05156111).    
+
+<br />
+<br />
